@@ -11,6 +11,7 @@ in
     bat
     btop
     atuin
+    codex
     eza
     fd
     fnm
@@ -18,6 +19,7 @@ in
     gh
     jq
     lazygit
+    opencode
     ripgrep
     tmux
     zoxide
