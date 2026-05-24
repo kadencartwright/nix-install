@@ -3,6 +3,11 @@
 let
   dotfiles = inputs.dotfiles;
   onedarkWallpapers = inputs.onedark-wallpapers;
+  zshEnv =
+    builtins.replaceStrings
+      [ ''. "$HOME/.cargo/env"'' ]
+      [ ''[ -r "$HOME/.cargo/env" ] && . "$HOME/.cargo/env"'' ]
+      (builtins.readFile "${dotfiles}/zsh/.zshenv");
 in
 {
   xdg.configFile = {
@@ -57,7 +62,7 @@ in
 
   programs.zsh = {
     dotDir = "${config.xdg.configHome}/zsh";
-    envExtra = builtins.readFile "${dotfiles}/zsh/.zshenv";
+    envExtra = zshEnv;
     initContent = builtins.readFile "${dotfiles}/zsh/.zshrc";
   };
 }
