@@ -1,4 +1,4 @@
-{ config, inputs, ... }:
+{ config, inputs, pkgs, ... }:
 
 let
   dotfiles = inputs.dotfiles;
@@ -12,7 +12,12 @@ in
     "electron-flags.conf".source = "${dotfiles}/electron/electron-flags.conf";
     "fontconfig/fonts.conf".source = "${dotfiles}/fontconfig/fonts.conf";
     "fuzzel".source = "${dotfiles}/fuzzel";
-    "ghostty".source = "${dotfiles}/ghostty";
+    "ghostty/config".text =
+      builtins.replaceStrings
+        [ "/bin/zsh" ]
+        [ "${pkgs.zsh}/bin/zsh" ]
+        (builtins.readFile "${dotfiles}/ghostty/config");
+    "ghostty/themes".source = "${dotfiles}/ghostty/themes";
     "hypr/hypridle.conf".source = "${dotfiles}/hyprland/hypridle.conf";
     "hypr/hyprland.conf".source = "${dotfiles}/hyprland/hyprland.conf";
     "hypr/hyprlock.conf".source = "${dotfiles}/hyprland/hyprlock.conf";

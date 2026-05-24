@@ -1,37 +1,44 @@
-{ pkgs, ... }:
+{ pkgs, pkgsUnstable, ... }:
 
 {
-  programs.hyprland.enable = true;
+  programs.hyprland = {
+    enable = true;
+    package = pkgsUnstable.hyprland;
+    portalPackage = pkgsUnstable.xdg-desktop-portal-hyprland;
+  };
 
-  environment.systemPackages = with pkgs; [
-    alacritty
-    bemoji
-    bitwarden-desktop
-    brightnessctl
-    chromium
-    fuzzel
-    gnome-keyring
-    ghostty
-    grim
-    hypridle
-    hyprlock
-    hyprpaper
-    hyprpolkitagent
-    hyprpicker
-    hyprshot
-    networkmanagerapplet
-    nwg-displays
-    nwg-look
-    pavucontrol
-    qpwgraph
-    slurp
-    swaynotificationcenter
-    xfce.thunar
-    waybar
-    wl-clipboard
-    wl-screenrec
-    xdg-utils
-  ];
+  environment.systemPackages =
+    (with pkgs; [
+      alacritty
+      bemoji
+      bitwarden-desktop
+      brightnessctl
+      chromium
+      fuzzel
+      gnome-keyring
+      ghostty
+      grim
+      networkmanagerapplet
+      nwg-displays
+      nwg-look
+      pavucontrol
+      qpwgraph
+      slurp
+      swaynotificationcenter
+      xfce.thunar
+      waybar
+      wl-clipboard
+      wl-screenrec
+      xdg-utils
+    ])
+    ++ (with pkgsUnstable; [
+      hypridle
+      hyprlock
+      hyprpaper
+      hyprpolkitagent
+      hyprpicker
+      hyprshot
+    ]);
 
   services.gnome.gnome-keyring.enable = true;
   services.gvfs.enable = true;

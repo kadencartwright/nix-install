@@ -3,6 +3,7 @@
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.11";
+    nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixos-unstable";
 
     disko = {
       url = "github:nix-community/disko/latest";
@@ -36,6 +37,7 @@
   outputs =
     inputs@{
       nixpkgs,
+      nixpkgs-unstable,
       disko,
       home-manager,
       sops-nix,
@@ -49,10 +51,16 @@
           system ? "x86_64-linux",
           extraModules ? [ ./hosts/common/disko.nix ],
         }:
+        let
+          pkgsUnstable = import nixpkgs-unstable {
+            inherit system;
+            config.allowUnfree = true;
+          };
+        in
         lib.nixosSystem {
           inherit system;
           specialArgs = {
-            inherit inputs;
+            inherit inputs pkgsUnstable;
           };
 
           modules =
