@@ -7,6 +7,7 @@
     ../../home/git.nix
     ../../home/shell.nix
     ../../home/terminals.nix
+    ../../home/theme.nix
   ];
 
   home.username = "k";
