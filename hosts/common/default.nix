@@ -10,6 +10,7 @@
     ../../modules/common/users.nix
     ../../modules/desktop/audio.nix
     ../../modules/desktop/fonts.nix
+    ../../modules/desktop/greetd.nix
     ../../modules/desktop/hyprland.nix
     ../../modules/desktop/portals.nix
     ../../modules/hardware/bluetooth.nix
