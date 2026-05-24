@@ -6,7 +6,7 @@
     settings = {
       default_session = {
         user = "greeter";
-        command = "${pkgs.tuigreet}/bin/tuigreet --time --remember --remember-user-session --cmd ${pkgsUnstable.hyprland}/bin/Hyprland";
+        command = "${pkgs.tuigreet}/bin/tuigreet --time --remember --remember-user-session --cmd ${pkgsUnstable.hyprland}/bin/start-hyprland";
       };
     };
   };

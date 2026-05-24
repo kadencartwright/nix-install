@@ -24,6 +24,18 @@ let
       [ ''@import "/usr/lib/hyprwhspr/config/waybar/hyprwhspr-style.css";'' ]
       [ "" ]
       (builtins.readFile "${dotfiles}/waybar/style.css");
+  hyprlandConfig =
+    builtins.replaceStrings
+      [
+        ''pseudotile = yes # master switch for pseudotiling. Enabling is bound to mainMod + P in the keybinds section below
+''
+        "        preserve_split = yes"
+      ]
+      [
+        ""
+        "    preserve_split = yes"
+      ]
+      (builtins.readFile "${dotfiles}/hyprland/hyprland.conf");
 in
 {
   xdg.configFile = {
@@ -40,7 +52,7 @@ in
         (builtins.readFile "${dotfiles}/ghostty/config");
     "ghostty/themes".source = "${dotfiles}/ghostty/themes";
     "hypr/hypridle.conf".source = "${dotfiles}/hyprland/hypridle.conf";
-    "hypr/hyprland.conf".source = "${dotfiles}/hyprland/hyprland.conf";
+    "hypr/hyprland.conf".text = hyprlandConfig;
     "hypr/hyprlock.conf".source = "${dotfiles}/hyprland/hyprlock.conf";
     "hypr/macchiato.conf".source = "${dotfiles}/hyprland/macchiato.conf";
     "hypr/monitors.conf".source = "${dotfiles}/hyprland/monitors.conf";
