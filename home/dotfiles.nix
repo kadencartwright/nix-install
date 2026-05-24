@@ -8,6 +8,22 @@ let
       [ ''. "$HOME/.cargo/env"'' ]
       [ ''[ -r "$HOME/.cargo/env" ] && . "$HOME/.cargo/env"'' ]
       (builtins.readFile "${dotfiles}/zsh/.zshenv");
+  waybarConfig =
+    builtins.replaceStrings
+      [
+        "\"tray\",\n        \"custom/hyprwhspr\""
+        ",\n    \"include\": [\n        \"/home/k/.config/waybar/hyprwhspr-module.jsonc\"\n    ]"
+      ]
+      [
+        "\"tray\""
+        ""
+      ]
+      (builtins.readFile "${dotfiles}/waybar/config.jsonc");
+  waybarStyle =
+    builtins.replaceStrings
+      [ ''@import "/usr/lib/hyprwhspr/config/waybar/hyprwhspr-style.css";'' ]
+      [ "" ]
+      (builtins.readFile "${dotfiles}/waybar/style.css");
 in
 {
   xdg.configFile = {
@@ -47,7 +63,8 @@ in
     "swaylock".source = "${dotfiles}/swaylock";
     "tmux".source = "${dotfiles}/tmux";
     "vim/.vimrc".source = "${dotfiles}/vim/.vimrc";
-    "waybar".source = "${dotfiles}/waybar";
+    "waybar/config.jsonc".text = waybarConfig;
+    "waybar/style.css".text = waybarStyle;
     "hypr/hyprpaper.conf".text = ''
       wallpaper {
           monitor =
