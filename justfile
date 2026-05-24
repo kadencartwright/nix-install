@@ -35,3 +35,10 @@ x1c:
 
 pi5:
     ./scripts/vm-test.sh --local-store --host pi5 dry-build
+
+codex VERSION="latest":
+    mkdir -p "$HOME/.local/share/npm"
+    NPM_CONFIG_PREFIX="$HOME/.local/share/npm" npm install -g @openai/codex@{{VERSION}}
+
+codex-version:
+    NPM_CONFIG_PREFIX="$HOME/.local/share/npm" npm view @openai/codex version

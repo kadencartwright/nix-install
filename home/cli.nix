@@ -11,7 +11,6 @@ in
     bat
     btop
     atuin
-    codex
     eza
     fd
     fnm
@@ -19,6 +18,7 @@ in
     gh
     jq
     lazygit
+    nodejs
     opencode
     ripgrep
     tmux
@@ -26,6 +26,14 @@ in
   ] ++ [
     tm
   ];
+
+  home.sessionPath = [
+    "$HOME/.local/share/npm/bin"
+  ];
+
+  home.sessionVariables = {
+    NPM_CONFIG_PREFIX = "$HOME/.local/share/npm";
+  };
 
   xdg.configFile."tm/config.toml".text = ''
     search_path = "/home/k/code"
