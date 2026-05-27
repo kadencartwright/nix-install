@@ -6,7 +6,20 @@
     description = "k";
     extraGroups = [
       "networkmanager"
+      "podman"
       "wheel"
+    ];
+    subGidRanges = [
+      {
+        count = 65536;
+        startGid = 100000;
+      }
+    ];
+    subUidRanges = [
+      {
+        count = 65536;
+        startUid = 100000;
+      }
     ];
     shell = pkgs.zsh;
     # Bootstrap password for VM and first metal login. Change immediately after install.

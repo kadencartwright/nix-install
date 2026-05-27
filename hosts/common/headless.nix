@@ -4,6 +4,7 @@
   imports = [
     ../../modules/common/base.nix
     ../../modules/common/boot.nix
+    ../../modules/common/compat.nix
     ../../modules/common/networking.nix
     ../../modules/common/nix.nix
     ../../modules/common/security.nix

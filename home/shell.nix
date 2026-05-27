@@ -1,4 +1,4 @@
-{ osConfig, ... }:
+{ lib, osConfig, ... }:
 
 let
   host = osConfig.networking.hostName;
@@ -9,9 +9,13 @@ in
     enableCompletion = true;
     autosuggestion.enable = true;
     syntaxHighlighting.enable = true;
-    initContent = ''
+    initContent = lib.mkAfter ''
       nhos() { nh os switch github:kadencartwright/nix-install#${host} -- --refresh "$@"; }
       nhr() { nhos "$@"; }
+
+      if command -v fnm >/dev/null 2>&1; then
+        eval "$(fnm env --use-on-cd --shell zsh)"
+      fi
     '';
   };
 
