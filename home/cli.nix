@@ -9,6 +9,7 @@ let
   tm = pkgs.callPackage ../packages/tm.nix {
     tm-src = inputs.tm;
   };
+  t3 = inputs.t3code-nix.packages.${pkgs.system}.t3;
 in
 
 {
@@ -29,6 +30,7 @@ in
     tmux
     zoxide
   ] ++ [
+    t3
     tm
   ];
 

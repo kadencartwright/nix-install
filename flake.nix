@@ -4,6 +4,7 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.11";
     nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixos-unstable";
+    t3code-nix.url = "github:Sawrz/t3code-nix";
 
     disko = {
       url = "github:nix-community/disko/latest";
