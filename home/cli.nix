@@ -1,4 +1,9 @@
-{ inputs, pkgs, ... }:
+{
+  inputs,
+  lib,
+  pkgs,
+  ...
+}:
 
 let
   tm = pkgs.callPackage ../packages/tm.nix {
@@ -34,6 +39,11 @@ in
   home.sessionVariables = {
     NPM_CONFIG_PREFIX = "$HOME/.local/share/npm";
   };
+
+  home.activation.installCodex = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    $DRY_RUN_CMD mkdir -p "$HOME/.local/share/npm"
+    $DRY_RUN_CMD ${pkgs.nodejs}/bin/npm install -g @openai/codex@latest --prefix "$HOME/.local/share/npm"
+  '';
 
   xdg.configFile."tm/config.toml".text = ''
     search_path = "/home/k/code"

@@ -33,11 +33,48 @@ in
       X11Forwarding = false;
     };
     extraConfig = ''
-      AuthorizedKeysCommand ${pkgs.curl}/bin/curl -fsSL ${githubKeysUrl}
-      AuthorizedKeysCommandUser nobody
+      AuthorizedKeysFile /etc/ssh/authorized_keys.d/%u.github /etc/ssh/authorized_keys.d/%u .ssh/authorized_keys
     '';
   };
 
   services.fail2ban.enable = true;
 
+  systemd.tmpfiles.rules = [
+    "d /etc/ssh/authorized_keys.d 0755 root root -"
+  ];
+
+  systemd.services.update-github-authorized-keys = {
+    description = "Update SSH authorized keys from GitHub";
+    wants = [ "network-online.target" ];
+    after = [ "network-online.target" ];
+    before = [ "sshd.service" ];
+    wantedBy = [ "multi-user.target" ];
+    path = with pkgs; [
+      coreutils
+      curl
+    ];
+    serviceConfig.Type = "oneshot";
+    script = ''
+      set -euo pipefail
+
+      tmp="$(mktemp)"
+      trap 'rm -f "$tmp"' EXIT
+
+      curl -fsSL --retry 3 --connect-timeout 10 "${githubKeysUrl}" -o "$tmp"
+      test -s "$tmp"
+
+      install -m 0644 -o root -g root "$tmp" /etc/ssh/authorized_keys.d/k.github
+    '';
+  };
+
+  systemd.timers.update-github-authorized-keys = {
+    description = "Update SSH authorized keys from GitHub daily";
+    wantedBy = [ "timers.target" ];
+    timerConfig = {
+      OnBootSec = "5min";
+      OnUnitActiveSec = "1d";
+      RandomizedDelaySec = "30min";
+      Persistent = true;
+    };
+  };
 }
