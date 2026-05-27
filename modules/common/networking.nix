@@ -40,10 +40,4 @@ in
 
   services.fail2ban.enable = true;
 
-  users.users.k.openssh.authorizedKeys.keyFiles = [
-    (pkgs.fetchurl {
-      url = githubKeysUrl;
-      hash = "sha256-KeBzWlPuS1zo+/nKyrEg+tYb67bw/ALNBlLYHkpkYO8=";
-    })
-  ];
 }
