@@ -3,10 +3,15 @@
 let
   cursorName = "breeze_cursors";
   cursorSize = 24;
+  gtkThemeName = "adw-gtk3-dark";
+  iconThemeName = "breeze-dark";
+  qtStyleName = "adwaita-dark";
 in
 {
   home.packages = with pkgs; [
     adw-gtk3
+    adwaita-qt
+    adwaita-qt6
     kdePackages.breeze
     kdePackages.breeze-icons
   ];
@@ -21,15 +26,16 @@ in
 
   gtk = {
     enable = true;
+    colorScheme = "dark";
 
     theme = {
       package = pkgs.adw-gtk3;
-      name = "adw-gtk3-dark";
+      name = gtkThemeName;
     };
 
     iconTheme = {
       package = pkgs.kdePackages.breeze-icons;
-      name = "breeze-dark";
+      name = iconThemeName;
     };
 
     font = {
@@ -54,19 +60,26 @@ in
     color-scheme = "prefer-dark";
     cursor-theme = cursorName;
     cursor-size = cursorSize;
-    gtk-theme = "adw-gtk3-dark";
-    icon-theme = "breeze-dark";
+    gtk-theme = gtkThemeName;
+    icon-theme = iconThemeName;
+  };
+
+  qt = {
+    enable = true;
+    platformTheme.name = "adwaita";
+    style.name = qtStyleName;
   };
 
   home.sessionVariables = {
+    GTK_THEME = gtkThemeName;
     XCURSOR_THEME = cursorName;
     XCURSOR_SIZE = toString cursorSize;
   };
 
   xdg.configFile."nwg-look/config".text = lib.generators.toINI { } {
     Settings = {
-      gtk-theme = "adw-gtk3-dark";
-      icon-theme = "breeze-dark";
+      gtk-theme = gtkThemeName;
+      icon-theme = iconThemeName;
       cursor-theme = cursorName;
       cursor-size = cursorSize;
       color-scheme = "prefer-dark";

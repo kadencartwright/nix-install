@@ -24,16 +24,27 @@ let
       [ ''@import "/usr/lib/hyprwhspr/config/waybar/hyprwhspr-style.css";'' ]
       [ "" ]
       (builtins.readFile "${dotfiles}/waybar/style.css");
+  electronFlags =
+    (builtins.readFile "${dotfiles}/electron/electron-flags.conf")
+    + ''
+      --force-dark-mode
+    '';
   hyprlandConfig =
     builtins.replaceStrings
       [
         ''pseudotile = yes # master switch for pseudotiling. Enabling is bound to mainMod + P in the keybinds section below
 ''
         "        preserve_split = yes"
+        "env = QT_QPA_PLATFORMTHEME,qt6ct"
+        "env = QT_STYLE_OVERRIDE,Adwaita-Dark"
+        "env = GTK_THEME,AtomOneDarkTheme"
       ]
       [
         ""
         "    preserve_split = yes"
+        "env = QT_QPA_PLATFORMTHEME,adwaita"
+        "env = QT_STYLE_OVERRIDE,adwaita-dark"
+        "env = GTK_THEME,adw-gtk3-dark"
       ]
       (builtins.readFile "${dotfiles}/hyprland/hyprland.conf");
 in
@@ -42,7 +53,7 @@ in
     "aerospace".source = "${dotfiles}/aerospace";
     "aerospace-swipe".source = "${dotfiles}/aerospace-swipe";
     "alacritty".source = "${dotfiles}/alacritty";
-    "electron-flags.conf".source = "${dotfiles}/electron/electron-flags.conf";
+    "electron-flags.conf".text = electronFlags;
     "fontconfig/fonts.conf".source = "${dotfiles}/fontconfig/fonts.conf";
     "fuzzel".source = "${dotfiles}/fuzzel";
     "ghostty/config".text =
