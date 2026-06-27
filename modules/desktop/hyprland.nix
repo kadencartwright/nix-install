@@ -33,6 +33,7 @@
       playerctl
       qpwgraph
       slurp
+      spotify
       swaynotificationcenter
       xfce.thunar
       waybar
