@@ -193,11 +193,11 @@
         "nixpkgs": "nixpkgs_2"
       },
       "locked": {
-        "lastModified": 1782586501,
-        "narHash": "sha256-SS4bXiCUhjA+0LLwDVzxvk61XTl54BeHEIDZ/cjdLU4=",
+        "lastModified": 1782587118,
+        "narHash": "sha256-xUOTtx/uVoF23EqP89po2aZMxXF/rxYNNXvIb5w3G2M=",
         "owner": "kadencartwright",
         "repo": "openai-codex-desktop-nix",
-        "rev": "57a97198c99564027fccf21490bd7ed65e526b4b",
+        "rev": "8f8586107d5644f8ff95862eae73b28dbe956d77",
         "type": "github"
       },
       "original": {
