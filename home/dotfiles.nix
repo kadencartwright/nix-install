@@ -59,11 +59,15 @@ let
   hyprlandConfig =
     builtins.replaceStrings
       [
+        ''hl.exec_cmd("waybar")''
+        ''hl.exec_cmd("swaync")''
         ''hl.env("QT_QPA_PLATFORMTHEME", "qt6ct")''
         ''hl.env("QT_STYLE_OVERRIDE", "Adwaita-Dark")''
         oldHyprlandInlineMonitors
       ]
       [
+        ''hl.exec_cmd("wayle shell")''
+        ''-- SwayNC disabled; Wayle owns notifications.''
         ''hl.env("QT_QPA_PLATFORMTHEME", "adwaita")''
         ''hl.env("QT_STYLE_OVERRIDE", "adwaita-dark")''
         ''require("monitors")''
@@ -118,6 +122,451 @@ in
     "vim/.vimrc".source = "${dotfiles}/vim/.vimrc";
     "waybar/config.jsonc".text = waybarConfig;
     "waybar/style.css".text = waybarStyle;
+    "wayle/config.toml".text = ''
+      imports = []
+
+      [general]
+      font-sans = "Noto Sans"
+      font-mono = "T3 Code"
+      tearing-mode = false
+
+      [bar]
+      scale = 1.0
+      inset-edge = 0.25
+      inset-ends = 0.5
+      padding = 0.35
+      padding-ends = 0.5
+      module-gap = 0.35
+      location = "top"
+      exclusive = true
+      layer = "top"
+      bg = "bg-surface"
+      background-opacity = 96
+      border-location = "bottom"
+      border-width = 1
+      border-color = "border-accent"
+      rounding = "sm"
+      shadow = "none"
+      button-variant = "block-prefix"
+      button-opacity = 100
+      button-bg-opacity = 100
+      button-icon-size = 1.0
+      button-icon-padding = 0.8
+      button-label-size = 1.0
+      button-label-weight = "semibold"
+      button-label-padding = 0.9
+      button-rounding = "sm"
+      button-gap = 0.75
+      button-icon-position = "start"
+      button-border-location = "none"
+      button-border-width = 1
+      button-group-border-location = "all"
+      button-group-border-width = 1
+      button-group-padding = 0.2
+      button-group-module-gap = 0.2
+      button-group-background = "bg-elevated"
+      button-group-opacity = 100
+      button-group-border-color = "border-accent"
+      button-group-rounding = "sm"
+      dropdown-shadow = true
+      dropdown-opacity = 100
+      dropdown-autohide = true
+      dropdown-freeze-label = true
+
+      [[bar.layout]]
+      monitor = "*"
+      show = true
+      left = ["hyprland-workspaces", "window-title"]
+      center = ["clock"]
+      right = [
+        "media",
+        "systray",
+        "network",
+        "custom-power-profile",
+        "custom-battery",
+        "volume",
+        "notifications",
+        "dashboard",
+      ]
+
+      [styling]
+      scale = 1.0
+      rounding = "sm"
+      theme-provider = "wayle"
+      theming-monitor = ""
+      matugen-scheme = "tonal-spot"
+      matugen-contrast = 0.0
+      matugen-source-color = 0
+      matugen-light = false
+      wallust-palette = "dark16"
+      wallust-saturation = 0
+      wallust-check-contrast = true
+      wallust-backend = "fastresize"
+      wallust-colorspace = "labmixed"
+      wallust-apply-globally = true
+      pywal-saturation = 0.05
+      pywal-contrast = 3.0
+      pywal-light = false
+      pywal-apply-globally = true
+
+      [styling.palette]
+      bg = "#1f2329"
+      surface = "#252a31"
+      elevated = "#2b313a"
+      fg = "#a0a8b7"
+      fg-muted = "#7a818e"
+      primary = "#4fa6ed"
+      red = "#e55561"
+      yellow = "#cc9057"
+      green = "#8ebd6b"
+      blue = "#48b0bd"
+
+      [modules]
+
+      [[modules.custom]]
+      id = "power-profile"
+      command = ''''
+        profile=$(powerprofilesctl get 2>/dev/null || echo unknown)
+        case "$profile" in
+          performance) text="Perf" ;;
+          balanced) text="Balanced" ;;
+          power-saver) text="Saver" ;;
+          *) text="N/A" ;;
+        esac
+        printf '{"text":"%s","alt":"%s","tooltip":"Power profile: %s"}\n' "$text" "$profile" "$profile"
+      ''''
+      mode = "poll"
+      interval-ms = 5000
+      format = "{{ text }}"
+      tooltip-format = "Power profile: {{ alt }}"
+      icon-name = "ld-power-symbolic"
+      border-show = false
+      border-color = "border-accent"
+      icon-show = true
+      icon-color = "auto"
+      icon-bg-color = "fg-muted"
+      label-show = true
+      label-color = "fg-muted"
+      label-max-length = 0
+      button-bg-color = "bg-surface-elevated"
+      left-click = "sh -c 'case $(powerprofilesctl get) in power-saver) powerprofilesctl set balanced;; balanced) powerprofilesctl set performance;; *) powerprofilesctl set power-saver;; esac'"
+      right-click = "powerprofilesctl set power-saver"
+      middle-click = "powerprofilesctl set balanced"
+      scroll-up = "powerprofilesctl set performance"
+      scroll-down = "powerprofilesctl set power-saver"
+      on-action = ''''
+        profile=$(powerprofilesctl get 2>/dev/null || echo unknown)
+        case "$profile" in
+          performance) text="Perf" ;;
+          balanced) text="Balanced" ;;
+          power-saver) text="Saver" ;;
+          *) text="N/A" ;;
+        esac
+        printf '{"text":"%s","alt":"%s","tooltip":"Power profile: %s"}\n' "$text" "$profile" "$profile"
+      ''''
+
+      [[modules.custom]]
+      id = "battery"
+      command = ''''
+        cap=$(cat /sys/class/power_supply/BAT0/capacity 2>/dev/null) || exit 0
+        status=$(cat /sys/class/power_supply/BAT0/status 2>/dev/null || true)
+        alt=$(printf '%s' "$status" | tr '[:upper:]' '[:lower:]')
+        printf '{"percentage":%s,"alt":"%s","tooltip":"Battery: %s%% (%s)"}\n' "$cap" "$alt" "$cap" "$status"
+      ''''
+      mode = "poll"
+      interval-ms = 10000
+      format = "{{ percentage }}%"
+      tooltip-format = "Battery: {{ percentage }}%"
+      icon-names = [
+        "md-battery_android_0-symbolic",
+        "md-battery_android_frame_1-symbolic",
+        "md-battery_android_frame_2-symbolic",
+        "md-battery_android_frame_3-symbolic",
+        "md-battery_android_frame_4-symbolic",
+        "md-battery_android_frame_5-symbolic",
+        "md-battery_android_frame_6-symbolic",
+        "md-battery_android_frame_full-symbolic",
+      ]
+      icon-map = {
+        charging = "md-battery_android_frame_bolt-symbolic",
+        full = "md-battery_android_frame_full-symbolic",
+        default = "md-battery_android_frame_full-symbolic",
+      }
+      border-show = false
+      border-color = "green"
+      icon-show = true
+      icon-color = "auto"
+      icon-bg-color = "green"
+      label-show = true
+      label-color = "green"
+      label-max-length = 0
+      button-bg-color = "bg-surface-elevated"
+      left-click = ""
+      right-click = ""
+      middle-click = ""
+      scroll-up = ""
+      scroll-down = ""
+
+      [modules.hyprland-workspaces]
+      min-workspace-count = 5
+      monitor-specific = true
+      show-special = true
+      urgent-show = true
+      urgent-mode = "workspace"
+      display-mode = "label"
+      label-use-name = false
+      numbering = "absolute"
+      divider = " "
+      app-icons-show = false
+      app-icons-dedupe = true
+      app-icons-fallback = "ld-app-window-symbolic"
+      app-icons-empty = "tb-minus-symbolic"
+      icon-gap = 0.3
+      workspace-padding = 0.55
+      icon-size = 1.0
+      label-size = 1.0
+      workspace-ignore = []
+      active-indicator = "background"
+      active-color = "blue"
+      occupied-color = "fg-muted"
+      empty-color = "fg-subtle"
+      container-bg-color = "bg-surface-elevated"
+      border-show = false
+      border-color = "border-default"
+
+      [modules.hyprland-workspaces.workspace-map]
+
+      [modules.hyprland-workspaces.app-icon-map]
+
+      [modules.window-title]
+      format = "{{ title }}"
+      icon-name = "ld-app-window-symbolic"
+      border-show = false
+      border-color = "border-accent"
+      icon-show = true
+      icon-color = "auto"
+      icon-bg-color = "fg-muted"
+      label-show = true
+      label-color = "fg-muted"
+      label-max-length = 56
+      button-bg-color = "bg-surface-elevated"
+      left-click = ""
+      right-click = ""
+      middle-click = ""
+      scroll-up = ""
+      scroll-down = ""
+
+      [modules.window-title.icon-mappings]
+
+      [modules.clock]
+      format = "%a %b %d %I:%M %p"
+      icon-name = "tb-calendar-time-symbolic"
+      border-show = false
+      border-color = "border-accent"
+      icon-show = true
+      icon-color = "auto"
+      icon-bg-color = "blue"
+      label-show = true
+      label-color = "blue"
+      label-max-length = 0
+      button-bg-color = "bg-surface-elevated"
+      left-click = "dropdown:calendar"
+      right-click = ""
+      middle-click = ""
+      scroll-up = ""
+      scroll-down = ""
+      dropdown-show-seconds = false
+
+      [modules.media]
+      icon-type = "application-mapped"
+      players-ignored = []
+      player-priority = []
+      format = "{{ title }} - {{ artist }}"
+      icon-name = "ld-music-symbolic"
+      spinning-disc-icon = "ld-disc-3-symbolic"
+      border-show = false
+      border-color = "border-accent"
+      icon-show = true
+      icon-color = "auto"
+      icon-bg-color = "blue"
+      label-show = true
+      label-color = "blue"
+      label-max-length = 30
+      button-bg-color = "bg-surface-elevated"
+      left-click = "dropdown:media"
+      right-click = ""
+      middle-click = ""
+      scroll-up = ""
+      scroll-down = ""
+
+      [modules.media.player-icons]
+
+      [modules.systray]
+      icon-scale = 1.0
+      item-gap = 0.25
+      internal-padding = 0.5
+      blacklist = []
+      overrides = []
+      border-show = false
+      border-color = "border-accent"
+      button-bg-color = "bg-surface-elevated"
+
+      [modules.network]
+      wifi-disabled-icon = "cm-wireless-disabled-symbolic"
+      wifi-acquiring-icon = "cm-wireless-acquiring-symbolic"
+      wifi-offline-icon = "cm-wireless-offline-symbolic"
+      wifi-connected-icon = "cm-wireless-connected-symbolic"
+      wifi-signal-icons = [
+        "cm-wireless-signal-weak-symbolic",
+        "cm-wireless-signal-ok-symbolic",
+        "cm-wireless-signal-good-symbolic",
+        "cm-wireless-signal-excellent-symbolic",
+      ]
+      wired-connected-icon = "cm-wired-symbolic"
+      wired-acquiring-icon = "cm-wired-acquiring-symbolic"
+      wired-disconnected-icon = "cm-wired-disconnected-symbolic"
+      border-show = false
+      border-color = "border-accent"
+      icon-show = true
+      icon-color = "auto"
+      icon-bg-color = "blue"
+      label-show = true
+      label-color = "blue"
+      label-max-length = 15
+      button-bg-color = "bg-surface-elevated"
+      left-click = "dropdown:network"
+      right-click = ""
+      middle-click = ""
+      scroll-up = ""
+      scroll-down = ""
+
+      [modules.battery]
+      level-icons = [
+        "md-battery_android_0-symbolic",
+        "md-battery_android_frame_1-symbolic",
+        "md-battery_android_frame_2-symbolic",
+        "md-battery_android_frame_3-symbolic",
+        "md-battery_android_frame_4-symbolic",
+        "md-battery_android_frame_5-symbolic",
+        "md-battery_android_frame_6-symbolic",
+        "md-battery_android_frame_full-symbolic",
+      ]
+      charging-icon = "md-battery_android_frame_bolt-symbolic"
+      alert-icon = "md-battery_android_alert-symbolic"
+      border-show = false
+      border-color = "green"
+      icon-show = true
+      icon-color = "auto"
+      icon-bg-color = "green"
+      label-show = true
+      label-color = "green"
+      format = "{{ percent }}%"
+      label-max-length = 0
+      button-bg-color = "bg-surface-elevated"
+      left-click = "dropdown:battery"
+      right-click = ""
+      middle-click = ""
+      scroll-up = ""
+      scroll-down = ""
+      thresholds = []
+
+      [modules.volume]
+      level-icons = [
+        "ld-volume-symbolic",
+        "ld-volume-1-symbolic",
+        "ld-volume-2-symbolic",
+      ]
+      icon-muted = "ld-volume-x-symbolic"
+      border-show = false
+      border-color = "border-accent"
+      icon-show = true
+      icon-color = "auto"
+      icon-bg-color = "fg-muted"
+      label-show = true
+      label-color = "fg-muted"
+      format = "{{ percent }}%"
+      label-max-length = 0
+      button-bg-color = "bg-surface-elevated"
+      left-click = "dropdown:audio"
+      right-click = ""
+      middle-click = "wayle audio output-mute"
+      scroll-up = ""
+      scroll-down = ""
+      dropdown-app-icons = "mapped"
+      thresholds = []
+
+      [modules.notifications]
+      icon-name = "ld-bell-symbolic"
+      icon-unread = "ld-bell-dot-symbolic"
+      icon-dnd = "ld-bell-off-symbolic"
+      border-show = false
+      border-color = "red"
+      icon-show = true
+      icon-color = "auto"
+      icon-bg-color = "red"
+      label-show = true
+      label-color = "red"
+      label-max-length = 0
+      button-bg-color = "bg-surface-elevated"
+      left-click = "dropdown:notification"
+      right-click = "wayle notify dnd"
+      middle-click = ""
+      scroll-up = ""
+      scroll-down = ""
+      blocklist = []
+      icon-source = "automatic"
+      popup-position = "top-right"
+      popup-max-visible = 5
+      popup-stacking-order = "newest-first"
+      popup-duration = 5000
+      popup-hover-pause = true
+      popup-margin-x = 0.0
+      popup-margin-y = 0.0
+      popup-gap = 8.0
+      popup-monitor = "primary"
+      popup-layer = "overlay"
+      popup-close-behavior = "dismiss"
+      popup-shadow = true
+      popup-urgency-bar = "low"
+      thresholds = []
+
+      [modules.dashboard]
+      icon-override = ""
+      border-show = false
+      border-color = "border-accent"
+      icon-color = "auto"
+      icon-bg-color = "fg-muted"
+      right-click = ""
+      middle-click = ""
+      scroll-up = ""
+      scroll-down = ""
+      left-click = "dropdown:dashboard"
+      dropdown-lock-command = "loginctl lock-session"
+      dropdown-logout-command = "loginctl terminate-session $XDG_SESSION_ID"
+      dropdown-reboot-command = "systemctl reboot"
+      dropdown-poweroff-command = "systemctl poweroff"
+
+      [osd]
+      enabled = true
+      position = "bottom"
+      duration = 2500
+      monitor = "primary"
+      margin = 150.0
+      border = true
+      layer = "overlay"
+
+      [wallpaper]
+      engine-enabled = false
+      transition-type = "simple"
+      transition-duration = 0.7
+      transition-fps = 60
+      cycling-enabled = false
+      cycling-directory = ""
+      cycling-mode = "sequential"
+      cycling-interval-mins = 15
+      cycling-same-image = false
+      monitors = []
+    '';
     "hypr/hyprpaper.conf".text = ''
       wallpaper {
           monitor =

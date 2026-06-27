@@ -45,6 +45,7 @@
       hyprpolkitagent
       hyprpicker
       hyprshot
+      wayle
     ]);
 
   services.gnome.gnome-keyring.enable = true;
