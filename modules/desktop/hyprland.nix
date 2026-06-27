@@ -20,10 +20,12 @@
       bemoji
       bitwarden-desktop
       brightnessctl
+      chromium
       fuzzel
       gnome-keyring
       ghostty
       grim
+      libnotify
       networkmanagerapplet
       nwg-displays
       nwg-look
