@@ -6,11 +6,12 @@
 }:
 
 let
+  platformSystem = pkgs.stdenv.hostPlatform.system;
   tm = pkgs.callPackage ../packages/tm.nix {
     tm-src = inputs.tm;
   };
-  openaiCodexDesktop = inputs.openai-codex-desktop-nix.packages.${pkgs.system}.default;
-  t3Packages = inputs.t3code-nix.packages.${pkgs.system} or { };
+  openaiCodexDesktop = inputs.openai-codex-desktop-nix.packages.${platformSystem}.default;
+  t3Packages = inputs.t3code-nix.packages.${platformSystem} or { };
 in
 
 {
