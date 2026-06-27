@@ -1,4 +1,4 @@
-{ inputs, ... }:
+{ inputs, pkgsUnstable, ... }:
 
 {
   imports = [
@@ -17,7 +17,7 @@
   home-manager.useGlobalPkgs = true;
   home-manager.useUserPackages = true;
   home-manager.extraSpecialArgs = {
-    inherit inputs;
+    inherit inputs pkgsUnstable;
   };
   home-manager.users.k = import ../common/home.nix;
 

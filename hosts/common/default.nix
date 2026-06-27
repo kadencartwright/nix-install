@@ -1,4 +1,4 @@
-{ inputs, ... }:
+{ inputs, pkgsUnstable, ... }:
 
 {
   imports = [
@@ -24,7 +24,7 @@
   home-manager.useUserPackages = true;
   home-manager.backupFileExtension = "hm-backup";
   home-manager.extraSpecialArgs = {
-    inherit inputs;
+    inherit inputs pkgsUnstable;
   };
   home-manager.users.k = import ./home.nix;
 

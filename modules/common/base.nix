@@ -1,4 +1,4 @@
-{ pkgs, ... }:
+{ pkgs, pkgsUnstable, ... }:
 
 {
   time.timeZone = "America/Chicago";
@@ -13,7 +13,7 @@
     curl
     git
     just
-    neovim
+    pkgsUnstable.neovim
     ripgrep
     vim
   ];
