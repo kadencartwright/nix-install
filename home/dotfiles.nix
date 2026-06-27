@@ -191,7 +191,6 @@ in
         "custom-power-profile",
         "custom-battery",
         "volume",
-        "notifications",
         "dashboard",
       ]
 
@@ -496,8 +495,8 @@ in
       left-click = "dropdown:audio"
       right-click = ""
       middle-click = "wayle audio output-mute"
-      scroll-up = ""
-      scroll-down = ""
+      scroll-up = "wpctl set-volume -l 1.5 @DEFAULT_AUDIO_SINK@ 4%+"
+      scroll-down = "wpctl set-volume @DEFAULT_AUDIO_SINK@ 4%-"
       dropdown-app-icons = "mapped"
       thresholds = []
 
