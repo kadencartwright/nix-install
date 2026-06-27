@@ -137,7 +137,7 @@ in
       tearing-mode = false
 
       [bar]
-      scale = 1.0
+      scale = 0.92
       inset-edge = 0.25
       inset-ends = 0.5
       padding = 0.35
@@ -182,7 +182,7 @@ in
       [[bar.layout]]
       monitor = "*"
       show = true
-      left = ["hyprland-workspaces", "window-title"]
+      left = ["hyprland-workspaces"]
       center = ["clock"]
       right = [
         "media",
@@ -367,12 +367,12 @@ in
       format = "%a %b %d %I:%M %p"
       icon-name = "tb-calendar-time-symbolic"
       border-show = false
-      border-color = "border-accent"
-      icon-show = true
+      border-color = "border-default"
+      icon-show = false
       icon-color = "auto"
-      icon-bg-color = "blue"
+      icon-bg-color = "fg-muted"
       label-show = true
-      label-color = "blue"
+      label-color = "fg"
       label-max-length = 0
       button-bg-color = "bg-surface-elevated"
       left-click = "dropdown:calendar"
