@@ -241,7 +241,7 @@ in
         printf '{"text":"%s","alt":"%s","tooltip":"Power profile: %s"}\n' "$text" "$profile" "$profile"
       ''''
       mode = "poll"
-      interval-ms = 5000
+      interval-ms = 500
       format = "{{ text }}"
       tooltip-format = "Power profile: {{ alt }}"
       icon-name = "ld-power-symbolic"
@@ -254,12 +254,13 @@ in
       label-color = "fg-muted"
       label-max-length = 0
       button-bg-color = "bg-surface-elevated"
-      left-click = "sh -c 'case $(powerprofilesctl get) in power-saver) powerprofilesctl set balanced;; balanced) powerprofilesctl set performance;; *) powerprofilesctl set power-saver;; esac'"
-      right-click = "powerprofilesctl set power-saver"
-      middle-click = "powerprofilesctl set balanced"
-      scroll-up = "powerprofilesctl set performance"
-      scroll-down = "powerprofilesctl set power-saver"
+      left-click = "wayle power cycle"
+      right-click = "wayle power set power-saver"
+      middle-click = "wayle power set balanced"
+      scroll-up = "wayle power set performance"
+      scroll-down = "wayle power set power-saver"
       on-action = ''''
+        sleep 0.15
         profile=$(powerprofilesctl get 2>/dev/null || echo unknown)
         case "$profile" in
           performance) text="Perf" ;;
