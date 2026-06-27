@@ -11,5 +11,10 @@
     };
   };
 
+  systemd.services.greetd = {
+    after = [ "home-manager-k.service" ];
+    wants = [ "home-manager-k.service" ];
+  };
+
   security.pam.services.greetd.enableGnomeKeyring = true;
 }
