@@ -22,6 +22,7 @@
       nwg-displays
       nwg-look
       pavucontrol
+      playerctl
       qpwgraph
       slurp
       swaynotificationcenter
