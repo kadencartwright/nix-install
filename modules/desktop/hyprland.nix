@@ -31,6 +31,7 @@
       nwg-look
       pavucontrol
       playerctl
+      pulsemixer
       qpwgraph
       slurp
       spotify
