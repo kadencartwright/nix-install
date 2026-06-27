@@ -9,12 +9,14 @@ let
   tm = pkgs.callPackage ../packages/tm.nix {
     tm-src = inputs.tm;
   };
-  t3 = inputs.t3code-nix.packages.${pkgs.system}.t3;
+  openaiCodexDesktop = pkgs.callPackage ../packages/openai-codex-desktop { };
+  t3Packages = inputs.t3code-nix.packages.${pkgs.system} or { };
 in
 
 {
   home.packages = with pkgs; [
     bat
+    bubblewrap
     btop
     atuin
     eza
@@ -29,8 +31,9 @@ in
     ripgrep
     tmux
     zoxide
-  ] ++ [
-    t3
+  ] ++ lib.optional (t3Packages ? t3) t3Packages.t3
+  ++ lib.optional pkgs.stdenv.hostPlatform.isx86_64 openaiCodexDesktop
+  ++ [
     tm
   ];
 
