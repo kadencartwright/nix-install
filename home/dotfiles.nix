@@ -63,6 +63,9 @@ let
         ''hl.exec_cmd("swaync")''
         ''hl.env("QT_QPA_PLATFORMTHEME", "qt6ct")''
         ''hl.env("QT_STYLE_OVERRIDE", "Adwaita-Dark")''
+        ''hl.bind("XF86AudioLowerVolume", hl.dsp.exec_cmd("pactl set-sink-volume @DEFAULT_SINK@ -4%"))''
+        ''hl.bind("XF86AudioRaiseVolume", hl.dsp.exec_cmd("pactl set-sink-volume @DEFAULT_SINK@ +4%"))''
+        ''hl.bind("XF86AudioMute", hl.dsp.exec_cmd("pactl set-sink-mute @DEFAULT_SINK@ toggle"))''
         oldHyprlandInlineMonitors
       ]
       [
@@ -70,6 +73,9 @@ let
         ''-- SwayNC disabled; Wayle owns notifications.''
         ''hl.env("QT_QPA_PLATFORMTHEME", "adwaita")''
         ''hl.env("QT_STYLE_OVERRIDE", "adwaita-dark")''
+        ''hl.bind("XF86AudioLowerVolume", hl.dsp.exec_cmd("wpctl set-volume @DEFAULT_AUDIO_SINK@ 4%-"))''
+        ''hl.bind("XF86AudioRaiseVolume", hl.dsp.exec_cmd("wpctl set-volume -l 1.5 @DEFAULT_AUDIO_SINK@ 4%+"))''
+        ''hl.bind("XF86AudioMute", hl.dsp.exec_cmd("wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle"))''
         ''require("monitors")''
       ]
       (builtins.readFile "${dotfiles}/hyprland/hyprland.lua");
