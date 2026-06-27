@@ -7,13 +7,19 @@
     portalPackage = pkgsUnstable.xdg-desktop-portal-hyprland;
   };
 
+  programs.chromium = {
+    enable = true;
+    extensions = [
+      "nngceckbapebfimnlniiiahkandclblb" # Bitwarden Password Manager
+    ];
+  };
+
   environment.systemPackages =
     (with pkgs; [
       alacritty
       bemoji
       bitwarden-desktop
       brightnessctl
-      chromium
       fuzzel
       gnome-keyring
       ghostty
