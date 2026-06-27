@@ -126,6 +126,22 @@
     },
     "nixpkgs_2": {
       "locked": {
+        "lastModified": 1782467914,
+        "narHash": "sha256-pGvFkM8N0xEkIIXDe5YYfbEAvHrk4IxBrjB/x8OomhE=",
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "e73de5be04e0eff4190a1432b946d469c794e7b4",
+        "type": "github"
+      },
+      "original": {
+        "owner": "NixOS",
+        "ref": "nixos-unstable",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
+    "nixpkgs_3": {
+      "locked": {
         "lastModified": 1775888245,
         "narHash": "sha256-nwASzrRDD1JBEu/o8ekKYEXm/oJW6EMCzCRdrwcLe90=",
         "owner": "NixOS",
@@ -140,7 +156,7 @@
         "type": "github"
       }
     },
-    "nixpkgs_3": {
+    "nixpkgs_4": {
       "locked": {
         "lastModified": 1775710090,
         "narHash": "sha256-ar3rofg+awPB8QXDaFJhJ2jJhu+KqN/PRCXeyuXR76E=",
@@ -172,6 +188,25 @@
         "type": "github"
       }
     },
+    "openai-codex-desktop-nix": {
+      "inputs": {
+        "nixpkgs": "nixpkgs_2"
+      },
+      "locked": {
+        "lastModified": 1782585292,
+        "narHash": "sha256-q0a6CgLA1tffZZMK3ifkJFk9UtZ6e5fErZNfTxVBHa0=",
+        "owner": "kadencartwright",
+        "repo": "openai-codex-desktop-nix",
+        "rev": "2bb2b2eac95323631cae083f0f339abe620c115d",
+        "type": "github"
+      },
+      "original": {
+        "owner": "kadencartwright",
+        "ref": "latest",
+        "repo": "openai-codex-desktop-nix",
+        "type": "github"
+      }
+    },
     "root": {
       "inputs": {
         "disko": "disko",
@@ -181,6 +216,7 @@
         "nixpkgs": "nixpkgs",
         "nixpkgs-unstable": "nixpkgs-unstable",
         "onedark-wallpapers": "onedark-wallpapers",
+        "openai-codex-desktop-nix": "openai-codex-desktop-nix",
         "sops-nix": "sops-nix",
         "t3code-nix": "t3code-nix",
         "tm": "tm"
@@ -188,7 +224,7 @@
     },
     "sops-nix": {
       "inputs": {
-        "nixpkgs": "nixpkgs_2"
+        "nixpkgs": "nixpkgs_3"
       },
       "locked": {
         "lastModified": 1777944972,
@@ -222,7 +258,7 @@
     "t3code-nix": {
       "inputs": {
         "flake-utils": "flake-utils",
-        "nixpkgs": "nixpkgs_3"
+        "nixpkgs": "nixpkgs_4"
       },
       "locked": {
         "lastModified": 1779532838,

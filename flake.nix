@@ -5,6 +5,7 @@
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.11";
     nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixos-unstable";
     t3code-nix.url = "github:Sawrz/t3code-nix";
+    openai-codex-desktop-nix.url = "github:kadencartwright/openai-codex-desktop-nix/latest";
 
     disko = {
       url = "github:nix-community/disko/latest";

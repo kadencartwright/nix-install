@@ -9,7 +9,7 @@ let
   tm = pkgs.callPackage ../packages/tm.nix {
     tm-src = inputs.tm;
   };
-  openaiCodexDesktop = pkgs.callPackage ../packages/openai-codex-desktop { };
+  openaiCodexDesktop = inputs.openai-codex-desktop-nix.packages.${pkgs.system}.default;
   t3Packages = inputs.t3code-nix.packages.${pkgs.system} or { };
 in
 
