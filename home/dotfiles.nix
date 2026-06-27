@@ -148,7 +148,7 @@ in
       layer = "top"
       bg = "bg-surface"
       background-opacity = 96
-      border-location = "bottom"
+      border-location = "none"
       border-width = 1
       border-color = "border-accent"
       rounding = "sm"
