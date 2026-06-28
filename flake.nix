@@ -4,7 +4,10 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.11";
     nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixos-unstable";
-    t3code-nix.url = "github:Sawrz/t3code-nix";
+    t3code-nix = {
+      url = "github:Sawrz/t3code-nix";
+      inputs.nixpkgs.follows = "nixpkgs-unstable";
+    };
     openai-codex-desktop-nix.url = "github:kadencartwright/openai-codex-desktop-nix/latest";
 
     disko = {
