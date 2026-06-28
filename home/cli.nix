@@ -3,6 +3,7 @@
   lib,
   pkgs,
   pkgsUnstable,
+  isDesktop ? false,
   ...
 }:
 
@@ -36,6 +37,7 @@ in
     codex
     opencode
   ])
+  ++ lib.optional isDesktop pkgsUnstable.opencode-desktop
   ++ lib.optional (t3Packages ? t3) t3Packages.t3
   ++ lib.optional (pkgs.stdenv.hostPlatform.isx86_64 && t3Packages ? t3code) t3Packages.t3code
   ++ lib.optional pkgs.stdenv.hostPlatform.isx86_64 openaiCodexDesktop

@@ -25,6 +25,7 @@
   home-manager.backupFileExtension = "hm-backup";
   home-manager.extraSpecialArgs = {
     inherit inputs pkgsUnstable;
+    isDesktop = true;
   };
   home-manager.users.k = import ./home.nix;
 

@@ -18,6 +18,7 @@
   home-manager.useUserPackages = true;
   home-manager.extraSpecialArgs = {
     inherit inputs pkgsUnstable;
+    isDesktop = false;
   };
   home-manager.users.k = import ../common/home.nix;
 
