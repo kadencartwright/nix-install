@@ -35,6 +35,7 @@ in
     zoxide
   ] ++ (with pkgsUnstable; [
     codex
+    herdr
     opencode
   ])
   ++ lib.optional isDesktop pkgsUnstable.opencode-desktop
