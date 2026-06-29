@@ -1,12 +1,13 @@
 # NixOS Config
 
-This repository defines NixOS systems named `Z16`, `X1C`, `MINI`, and `pi5` using flakes, Home Manager, `disko`, and `sops-nix`.
+This repository defines NixOS systems named `Z16`, `T16`, `X1C`, `MINI`, and `pi5` using flakes, Home Manager, `disko`, and `sops-nix`.
 
 ## Build
 
 ```bash
 nix flake check
 nixos-rebuild build --flake .#Z16
+nixos-rebuild build --flake .#T16
 nixos-rebuild build --flake .#pi5
 ```
 
@@ -15,6 +16,7 @@ From the repository root, common checks are wrapped in `just`:
 ```bash
 just check
 just mini
+just t16
 just switch Z16
 ```
 
@@ -28,7 +30,7 @@ Nix garbage collection runs weekly and deletes generations older than 14 days.
 Store optimization is enabled automatically.
 
 Avahi/mDNS is enabled, so hosts should be discoverable on the LAN as names like
-`Z16.local`, `MINI.local`, and `pi5.local` when the local network supports it.
+`Z16.local`, `T16.local`, `MINI.local`, and `pi5.local` when the local network supports it.
 
 `pi5` is an `aarch64-linux` Raspberry Pi 5 configuration. Build it from an
 aarch64 machine or a builder that can handle that target.

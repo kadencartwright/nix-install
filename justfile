@@ -30,6 +30,9 @@ mini:
 z16:
     ./scripts/vm-test.sh --local-store --host Z16 dry-build
 
+t16:
+    ./scripts/vm-test.sh --local-store --host T16 dry-build
+
 x1c:
     ./scripts/vm-test.sh --local-store --host X1C dry-build
 

@@ -82,6 +82,7 @@
     in
     {
       nixosConfigurations.Z16 = mkHost { hostModule = ./hosts/Z16/default.nix; };
+      nixosConfigurations.T16 = mkHost { hostModule = ./hosts/T16/default.nix; };
       nixosConfigurations.X1C = mkHost { hostModule = ./hosts/X1C/default.nix; };
       nixosConfigurations.MINI = mkHost { hostModule = ./hosts/MINI/default.nix; };
       nixosConfigurations.pi5 = mkHost {

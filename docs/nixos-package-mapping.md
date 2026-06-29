@@ -4,7 +4,7 @@ This maps the current Arch package lists to the first NixOS config. Package name
 
 ## Host Split Notes
 
-- `Z16` and `X1C` are desktop-oriented and import the Hyprland/audio/font/bluetooth/fingerprint stack.
+- `Z16`, `T16`, and `X1C` are desktop-oriented and import the Hyprland/audio/font/bluetooth/fingerprint stack.
 - `MINI` is headless and imports only the base/headless stack, AMD CPU hardware, Tailscale, OpenSSH, and CLI/Home Manager config. It intentionally omits the desktop AMD GPU graphics stack.
 - `pi5` is a Raspberry Pi 5 microSD target and does not import the shared x86 encrypted `disko` layout.
 - Desktop dotfiles are intentionally excluded from `MINI`; it only links shell/editor/CLI dotfiles.
