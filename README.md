@@ -79,27 +79,55 @@ That uses a chroot Nix store under
 
 ## Install From The NixOS ISO
 
-Find the target disk with:
+Boot the NixOS ISO, connect to the network, then find the target disk:
 
 ```bash
 ls -l /dev/disk/by-id/
 ```
 
-Then run:
+Then run the installer wrapper:
 
 ```bash
-sudo nix --extra-experimental-features 'nix-command flakes' \
-  run github:nix-community/disko/latest#disko-install -- \
-  --flake github:kadencartwright/nix-install/main#Z16 \
-  --write-efi-boot-entries \
-  --disk main /dev/disk/by-id/<explicit-disk-id>
+curl -fsSL https://raw.githubusercontent.com/kadencartwright/nix-install/main/scripts/install-nixos.sh \
+  | sudo env HOST=T16 DISK=/dev/disk/by-id/<explicit-disk-id> REF=main bash
 ```
 
-The optional wrapper is:
+The installer asks you to type `ERASE`, then uses a staged flow that works from
+the ISO:
 
-```bash
-curl -fsSL https://raw.githubusercontent.com/kadencartwright/nix-install/<pinned-commit>/scripts/install-nixos.sh \
-  | sudo HOST=Z16 DISK=/dev/disk/by-id/<explicit-disk-id> REF=<pinned-commit> bash
-```
+- clones this repo to `/tmp/nix-install`
+- patches the temporary `disko` config to use `DISK`
+- runs `disko` to wipe, format, and mount the target disk at `/mnt`
+- runs `nixos-install` so the full system builds into `/mnt/nix/store` on the
+  target disk instead of the ISO's RAM-backed `/nix/store`
 
 Pin both the raw script URL and `REF` to a commit when installing real hardware.
+
+Manual fallback:
+
+```bash
+git clone https://github.com/kadencartwright/nix-install /tmp/nix-install
+cd /tmp/nix-install
+HOST=T16
+DISK=/dev/disk/by-id/<explicit-disk-id>
+sudo sed -i "s#/dev/disk/by-id/replace-me#${DISK}#" hosts/common/disko.nix
+
+sudo nix --extra-experimental-features 'nix-command flakes' \
+  run github:nix-community/disko/latest -- \
+  --mode destroy,format,mount \
+  --flake /tmp/nix-install#${HOST} \
+  --root-mountpoint /mnt \
+  --yes-wipe-all-disks \
+  --no-deps
+
+sudo nixos-install \
+  --flake /tmp/nix-install#${HOST} \
+  --no-root-passwd \
+  --max-jobs 1 \
+  --cores 2 \
+  --option experimental-features 'nix-command flakes'
+```
+
+The LUKS password is set during the `disko` step. User `k` is provisioned by the
+flake config; after first boot, use your SSH key or console login path for that
+host.
