@@ -49,8 +49,8 @@ printf '[install-nixos] host: %s\n' "$HOST"
 printf '[install-nixos] repo: %s\n' "$repo_url"
 printf '[install-nixos] ref: %s\n' "$REF"
 printf '[install-nixos] disk: %s\n' "$DISK"
-printf '[install-nixos] Type ERASE to continue: '
-read -r confirm
+printf '[install-nixos] Type ERASE to continue: ' >/dev/tty
+read -r confirm </dev/tty
 
 if [[ "$confirm" != "ERASE" ]]; then
     printf '[install-nixos] confirmation mismatch; refusing to continue\n' >&2
