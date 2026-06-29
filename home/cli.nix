@@ -37,6 +37,7 @@ in
     codex
     herdr
     opencode
+    pi-coding-agent
   ])
   ++ lib.optional isDesktop pkgsUnstable.opencode-desktop
   ++ lib.optional (t3Packages ? t3) t3Packages.t3
