@@ -12,7 +12,7 @@ let
   tm = pkgs.callPackage ../packages/tm.nix {
     tm-src = inputs.tm;
   };
-  openaiCodexDesktop = inputs.openai-codex-desktop-nix.packages.${platformSystem}.default;
+  openaiChatgptDesktop = inputs.openai-chatgpt-desktop-nix.packages.${platformSystem}.default;
   t3Packages = inputs.t3code-nix.packages.${platformSystem} or { };
 in
 
@@ -42,14 +42,12 @@ in
   ++ lib.optional isDesktop pkgsUnstable.opencode-desktop
   ++ lib.optional (t3Packages ? t3) t3Packages.t3
   ++ lib.optional (pkgs.stdenv.hostPlatform.isx86_64 && t3Packages ? t3code) t3Packages.t3code
-  ++ lib.optional pkgs.stdenv.hostPlatform.isx86_64 openaiCodexDesktop
+  ++ lib.optional pkgs.stdenv.hostPlatform.isx86_64 openaiChatgptDesktop
   ++ [
     tm
   ];
 
-  xdg.configFile."tm/config.toml".text = ''
-    search_path = "/home/k/code"
-  '';
+  xdg.configFile."tm/config.toml".source = "${inputs.dotfiles}/tm/config.toml";
 
   programs.direnv = {
     enable = true;

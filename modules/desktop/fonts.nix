@@ -5,5 +5,6 @@
     dejavu_fonts
     font-awesome
     nerd-fonts.meslo-lg
+    noto-fonts
   ];
 }

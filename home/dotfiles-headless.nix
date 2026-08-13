@@ -2,6 +2,11 @@
 
 let
   dotfiles = inputs.dotfiles;
+  zshInit =
+    builtins.replaceStrings
+      [ ''source "$HOME/.cargo/env"'' ]
+      [ ''[ -r "$HOME/.cargo/env" ] && source "$HOME/.cargo/env"'' ]
+      (builtins.readFile "${dotfiles}/zsh/.zshrc");
 in
 {
   xdg.configFile = {
@@ -21,6 +26,6 @@ in
   programs.zsh = {
     dotDir = "${config.xdg.configHome}/zsh";
     envExtra = builtins.readFile "${dotfiles}/zsh/.zshenv";
-    initContent = builtins.readFile "${dotfiles}/zsh/.zshrc";
+    initContent = zshInit;
   };
 }

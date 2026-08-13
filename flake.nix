@@ -8,7 +8,7 @@
       url = "github:Sawrz/t3code-nix";
       inputs.nixpkgs.follows = "nixpkgs-unstable";
     };
-    openai-codex-desktop-nix.url = "github:kadencartwright/openai-codex-desktop-nix/latest";
+    openai-chatgpt-desktop-nix.url = "github:kadencartwright/openai-chatgpt-desktop-nix";
 
     disko = {
       url = "github:nix-community/disko/latest";

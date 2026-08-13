@@ -24,11 +24,11 @@
     "dotfiles": {
       "flake": false,
       "locked": {
-        "lastModified": 1781625578,
-        "narHash": "sha256-3tRQX7X1MWuPRnZRgWhTugdbZW+EZG5vNCz18MIYLe4=",
+        "lastModified": 1785870097,
+        "narHash": "sha256-AhjnXHAImXlKi2qZjFhH2dkjEWl+k9Oi53+CnSYMM4k=",
         "owner": "kadencartwright",
         "repo": "dotfiles",
-        "rev": "8a13280c726f6dcfb6e6de08967d52f6d4a3e04b",
+        "rev": "9a072f5163cbd6a47d3f8a2d680f8a1d1a275e58",
         "type": "github"
       },
       "original": {
@@ -172,22 +172,21 @@
         "type": "github"
       }
     },
-    "openai-codex-desktop-nix": {
+    "openai-chatgpt-desktop-nix": {
       "inputs": {
         "nixpkgs": "nixpkgs_2"
       },
       "locked": {
-        "lastModified": 1782587118,
-        "narHash": "sha256-xUOTtx/uVoF23EqP89po2aZMxXF/rxYNNXvIb5w3G2M=",
+        "lastModified": 1786638052,
+        "narHash": "sha256-WyAH1PoU5vei6tdW1sCV+wd0jEcPigWFtx/nrmHcOP0=",
         "owner": "kadencartwright",
-        "repo": "openai-codex-desktop-nix",
-        "rev": "8f8586107d5644f8ff95862eae73b28dbe956d77",
+        "repo": "openai-chatgpt-desktop-nix",
+        "rev": "2f0b60bf86e7a70ae3f6a9945c4e35cfbe9386d7",
         "type": "github"
       },
       "original": {
         "owner": "kadencartwright",
-        "ref": "latest",
-        "repo": "openai-codex-desktop-nix",
+        "repo": "openai-chatgpt-desktop-nix",
         "type": "github"
       }
     },
@@ -200,7 +199,7 @@
         "nixpkgs": "nixpkgs",
         "nixpkgs-unstable": "nixpkgs-unstable",
         "onedark-wallpapers": "onedark-wallpapers",
-        "openai-codex-desktop-nix": "openai-codex-desktop-nix",
+        "openai-chatgpt-desktop-nix": "openai-chatgpt-desktop-nix",
         "sops-nix": "sops-nix",
         "t3code-nix": "t3code-nix",
         "tm": "tm"

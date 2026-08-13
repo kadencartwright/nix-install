@@ -23,7 +23,6 @@
       chromium
       fuzzel
       gnome-keyring
-      ghostty
       grim
       libnotify
       networkmanagerapplet

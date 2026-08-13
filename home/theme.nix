@@ -1,17 +1,16 @@
-{ lib, pkgs, ... }:
+{ inputs, pkgs, ... }:
 
 let
+  atomOneDark = pkgs.callPackage ../packages/atom-one-dark-theme.nix { };
   cursorName = "breeze_cursors";
   cursorSize = 24;
-  gtkThemeName = "adw-gtk3-dark";
-  iconThemeName = "breeze-dark";
-  qtStyleName = "adwaita-dark";
+  gtkThemeName = "AtomOneDarkTheme";
+  iconThemeName = "Atom One Dark";
 in
 {
   home.packages = with pkgs; [
-    adw-gtk3
-    adwaita-qt
-    adwaita-qt6
+    atomOneDark
+    gtk-engine-murrine
     kdePackages.breeze
     kdePackages.breeze-icons
   ];
@@ -29,12 +28,12 @@ in
     colorScheme = "dark";
 
     theme = {
-      package = pkgs.adw-gtk3;
+      package = atomOneDark;
       name = gtkThemeName;
     };
 
     iconTheme = {
-      package = pkgs.kdePackages.breeze-icons;
+      package = atomOneDark;
       name = iconThemeName;
     };
 
@@ -54,6 +53,10 @@ in
       gtk-cursor-theme-name = cursorName;
       gtk-cursor-theme-size = cursorSize;
     };
+
+    # AtomOneDarkTheme has GTK 2/3 assets. Keep GTK4/libadwaita on its
+    # supported dark color scheme instead of importing incompatible GTK3 CSS.
+    gtk4.theme = null;
   };
 
   dconf.settings."org/gnome/desktop/interface" = {
@@ -66,23 +69,14 @@ in
 
   qt = {
     enable = true;
-    platformTheme.name = "adwaita";
-    style.name = qtStyleName;
+    platformTheme.name = "gtk";
+    style.name = "gtk2";
   };
 
   home.sessionVariables = {
-    GTK_THEME = gtkThemeName;
     XCURSOR_THEME = cursorName;
     XCURSOR_SIZE = toString cursorSize;
   };
 
-  xdg.configFile."nwg-look/config".text = lib.generators.toINI { } {
-    Settings = {
-      gtk-theme = gtkThemeName;
-      icon-theme = iconThemeName;
-      cursor-theme = cursorName;
-      cursor-size = cursorSize;
-      color-scheme = "prefer-dark";
-    };
-  };
+  xdg.configFile."nwg-look/config".source = "${inputs.dotfiles}/nwg-look/config";
 }

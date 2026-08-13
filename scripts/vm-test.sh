@@ -190,6 +190,12 @@ case "$MODE" in
             find "$result_path" -maxdepth 3 -type f -o -type l >&2 || true
             fatal "Could not find VM runner in ${result_path}/bin"
         fi
+        if [[ -z "${QEMU_OPTS:-}" && -r /dev/dri/renderD128 && -w /dev/dri/renderD128 ]]; then
+            export QEMU_OPTS="-device virtio-vga-gl -display gtk,gl=on,show-cursor=off"
+            log "Using accelerated virtio graphics for Hyprland"
+        elif [[ -z "${QEMU_OPTS:-}" ]]; then
+            log "Warning: /dev/dri/renderD128 is unavailable; Hyprland may not start without accelerated graphics"
+        fi
         if (( LOCAL_STORE )); then
             runner_name="$(basename "$runner")"
             log "Launching ${runner_name} through local chroot store"

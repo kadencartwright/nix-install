@@ -46,6 +46,43 @@ authorized from `https://github.com/kadencartwright.keys`.
 GUI/window-manager dotfiles and desktop packages are not installed there.
 After first boot, run `sudo tailscale up` once or provision an auth key later.
 
+Desktop hosts include Slack and Bluetui, run the ydotool daemon, and enable
+Docker with BuildKit, Buildx, and Compose. Podman remains installed for
+Distrobox, while headless hosts retain the lightweight Podman-backed `docker`
+compatibility command.
+
+Desktop configuration follows the pinned `kadencartwright/dotfiles` input.
+Alacritty is the active terminal; Ghostty is not installed or managed. Wayle's
+full config, schemas, styles, themes, and scripts are linked from that input.
+Its Codex/ChatGPT usage module is backed by the packaged `codexbar` command and
+the existing Codex CLI login; left-click shows the usage notification and
+right-click opens the web usage page.
+
+SSH authentication uses Home Manager's standard OpenSSH agent and regular key
+files. Bitwarden remains installed as a password manager, but the dotfiles'
+Bitwarden `SSH_AUTH_SOCK` override is removed from the generated Hyprland config.
+
+Lemurs authenticates graphical logins through PAM and unlocks the GNOME login
+keyring with the same password. The keyring remains the desktop Secret Service;
+it does not replace the separate OpenSSH agent. If the login password changes,
+run `passwd` as the logged-in user so PAM can update the `Login` keyring too.
+Lemurs intentionally requires the account password instead of a fingerprint,
+because fingerprint authentication cannot supply a keyring decryption password.
+Use Seahorse to repair an already mismatched keyring. The `passwd` PAM control
+override uses NixOS's experimental `security.pam.services.*.rules` interface;
+recheck the generated PAM stack after major nixpkgs upgrades.
+
+Atom One Dark is installed as the GTK 2/3 and icon theme, including the Murrine
+engine it requires. Qt 5/6 uses its GTK integration so it follows the same
+theme; GTK4/libadwaita stays in supported dark mode. The current dotfiles carry
+the matching One Dark palettes for Wayle, Alacritty, Kitty, Neovim, and KDE,
+and Hyprpaper uses the pinned One Dark NixOS wallpaper.
+
+`hyprwhspr` is also installed on desktop hosts. After the first rebuild, run
+`hyprwhspr setup` once: enable its Hyprland and systemd choices, but skip
+Waybar (Wayle is the active panel) and the imperative permissions step (ydotool
+is configured by NixOS). The existing `Alt+G` binding toggles dictation.
+
 ## VM Test
 
 ```bash
@@ -54,6 +91,11 @@ scripts/vm-test.sh dry-build
 scripts/vm-test.sh build-vm
 scripts/vm-test.sh run-vm
 ```
+
+`run-vm` uses QEMU's accelerated virtio GPU when `/dev/dri/renderD128` is
+available, which current Hyprland requires for a reliable graphical session.
+Set `QEMU_OPTS` to override those graphical defaults. The headless VNC and
+screenshot/input workflow is documented in `docs/nixos-vm-test.md`.
 
 For an install-flow test against a disposable VM:
 
@@ -79,23 +121,44 @@ That uses a chroot Nix store under
 
 ## Install From The NixOS ISO
 
-Boot the NixOS ISO, connect to the network, then find the target disk:
+Boot the NixOS ISO in UEFI mode and connect to the network (`nmtui` works for
+Wi-Fi). Each x86 host has a dedicated guided entry point suitable for a short
+link. These commands run as the live user and request elevation themselves:
 
 ```bash
-ls -l /dev/disk/by-id/
+curl -fsSL https://raw.githubusercontent.com/kadencartwright/nix-install/main/scripts/install-z16.sh | bash
+curl -fsSL https://raw.githubusercontent.com/kadencartwright/nix-install/main/scripts/install-t16.sh | bash
+curl -fsSL https://raw.githubusercontent.com/kadencartwright/nix-install/main/scripts/install-x1c.sh | bash
+curl -fsSL https://raw.githubusercontent.com/kadencartwright/nix-install/main/scripts/install-mini.sh | bash
 ```
 
-Then run the installer wrapper:
+Each script fixes its host profile, requests administrator access with `sudo`,
+and then guides you through disk selection, LUKS setup, installation, and
+reboot. The general installer still supports choosing a host interactively:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/kadencartwright/nix-install/main/scripts/install-nixos.sh \
-  | sudo env HOST=T16 DISK=/dev/disk/by-id/<explicit-disk-id> REF=main bash
+  | bash
 ```
 
-The installer asks you to type `ERASE`, then uses a staged flow that works from
-the ISO:
+`pi5` remains deliberately separate. Its profile expects Raspberry Pi firmware
+on a FAT microSD partition and does not import the encrypted x86 Disko layout.
+`scripts/install-pi5.sh` therefore exits without touching a disk until this
+flake exports and tests a bootable Pi 5 SD image.
 
-- clones this repo to `/tmp/nix-install`
+It guides you through choosing the host and target disk, displays the complete
+destructive install plan, and requires you to type a host-specific erase
+confirmation. The target must have a stable `/dev/disk/by-id` name. Advanced or
+repeatable installs can still preselect values:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/kadencartwright/nix-install/main/scripts/install-nixos.sh \
+  | env HOST=T16 DISK=/dev/disk/by-id/<explicit-disk-id> REF=main bash
+```
+
+The installer then uses a staged flow that works from the ISO:
+
+- clones this repo to a temporary `/tmp/nix-install.*` directory
 - patches the temporary `disko` config to use `DISK`
 - runs `disko` to wipe, format, and mount the target disk at `/mnt`
 - runs `nixos-install` so the full system builds into `/mnt/nix/store` on the
@@ -108,7 +171,7 @@ Manual fallback:
 ```bash
 git clone https://github.com/kadencartwright/nix-install /tmp/nix-install
 cd /tmp/nix-install
-HOST=T16
+HOST=X1C
 DISK=/dev/disk/by-id/<explicit-disk-id>
 sudo sed -i "s#/dev/disk/by-id/replace-me#${DISK}#" hosts/common/disko.nix
 
