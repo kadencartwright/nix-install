@@ -5,9 +5,11 @@ REPO="${REPO:-github:kadencartwright/nix-install}"
 REF="${REF:-main}"
 ROOT="${ROOT:-/mnt}"
 RAW_REPO="${RAW_REPO:-https://raw.githubusercontent.com/kadencartwright/nix-install}"
+DISKO_FLAKE="${DISKO_FLAKE:-github:nix-community/disko/de5708739256238fb912c62f03988815db89ec9a}"
 
 TTY_DEVICE=/dev/tty
 WORKDIR=""
+LUKS_KEY_FILE=""
 
 log() {
     printf '[install-nixos] %s\n' "$*"
@@ -18,7 +20,17 @@ fatal() {
     exit 1
 }
 
+remove_luks_key() {
+    if [[ -n "$LUKS_KEY_FILE" \
+        && "$LUKS_KEY_FILE" == /run/nix-install-luks-key.* \
+        && ( -e "$LUKS_KEY_FILE" || -L "$LUKS_KEY_FILE" ) ]]; then
+        rm -f -- "$LUKS_KEY_FILE"
+    fi
+    LUKS_KEY_FILE=""
+}
+
 cleanup() {
+    remove_luks_key
     if [[ -n "$WORKDIR" && "$WORKDIR" == /tmp/nix-install.* && -d "$WORKDIR" ]]; then
         rm -rf -- "$WORKDIR"
     fi
@@ -32,6 +44,39 @@ prompt() {
     printf '%s' "$message" >"$TTY_DEVICE"
     IFS= read -r answer <"$TTY_DEVICE"
     printf '%s' "$answer"
+}
+
+prompt_secret() {
+    local message="$1"
+    printf '%s' "$message" >"$TTY_DEVICE"
+    IFS= read -r -s REPLY <"$TTY_DEVICE"
+    printf '\n' >"$TTY_DEVICE"
+}
+
+collect_luks_passphrase() {
+    local first second REPLY
+
+    while true; do
+        prompt_secret 'New LUKS passphrase: '
+        first="$REPLY"
+        if [[ -z "$first" ]]; then
+            printf 'The LUKS passphrase cannot be empty.\n' >"$TTY_DEVICE"
+            continue
+        fi
+
+        prompt_secret 'Confirm LUKS passphrase: '
+        second="$REPLY"
+        if [[ "$first" != "$second" ]]; then
+            printf 'Passphrases did not match; try again.\n' >"$TTY_DEVICE"
+            continue
+        fi
+        break
+    done
+
+    LUKS_KEY_FILE="$(mktemp /run/nix-install-luks-key.XXXXXXXX)"
+    chmod 600 "$LUKS_KEY_FILE"
+    printf '%s' "$first" >"$LUKS_KEY_FILE"
+    unset first second REPLY
 }
 
 choose_host() {
@@ -182,6 +227,7 @@ if ((EUID != 0)); then
         "REF=$REF"
         "ROOT=$ROOT"
         "RAW_REPO=$RAW_REPO"
+        "DISKO_FLAKE=$DISKO_FLAKE"
     )
     if [[ -n "${HOST:-}" ]]; then
         elevated_env+=("HOST=$HOST")
@@ -238,12 +284,14 @@ printf '\nDisk layout:\n' >"$TTY_DEVICE"
 printf '  - GPT partition table\n' >"$TTY_DEVICE"
 printf '  - 1 GiB FAT32 EFI system partition mounted at /boot\n' >"$TTY_DEVICE"
 printf '  - Remaining space: LUKS encryption -> LVM -> ext4 root\n' >"$TTY_DEVICE"
-printf '\nDisko will prompt for the new LUKS passphrase during formatting.\n' >"$TTY_DEVICE"
+printf '\nAfter confirmation, the installer will securely ask for the new LUKS passphrase.\n' >"$TTY_DEVICE"
 
 confirmation="$(prompt "\nType ERASE ${HOST} to erase ${TARGET_DEVICE} and continue: ")"
 if [[ "$confirmation" != "ERASE $HOST" ]]; then
     fatal 'Confirmation did not match; nothing was changed'
 fi
+
+collect_luks_passphrase
 
 WORKDIR="$(mktemp -d /tmp/nix-install.XXXXXXXX)"
 FLAKE="${WORKDIR}#${HOST}"
@@ -253,18 +301,23 @@ git_cmd clone --filter=blob:none "$repo_url" "$WORKDIR"
 git_cmd -C "$WORKDIR" checkout "$REF"
 
 sed -i "s#/dev/disk/by-id/replace-me#${DISK}#" "$WORKDIR/hosts/common/disko.nix"
+sed -i "s#/tmp/secret.key#${LUKS_KEY_FILE}#" "$WORKDIR/hosts/common/disko.nix"
 if grep -q '/dev/disk/by-id/replace-me' "$WORKDIR/hosts/common/disko.nix"; then
     fatal 'Failed to set the target disk in the temporary Disko configuration'
 fi
+if grep -q '/tmp/secret.key' "$WORKDIR/hosts/common/disko.nix"; then
+    fatal 'Failed to set the temporary LUKS key file in the Disko configuration'
+fi
 
-log 'formatting and mounting the target disk; enter the new LUKS passphrase when asked'
+log 'formatting and mounting the target disk'
 nix --extra-experimental-features 'nix-command flakes' \
-    run github:nix-community/disko/latest -- \
+    run "$DISKO_FLAKE" -- \
     --mode destroy,format,mount \
     --flake "$FLAKE" \
     --root-mountpoint "$ROOT" \
     --yes-wipe-all-disks \
     --no-deps
+remove_luks_key
 
 log "installing NixOS into $ROOT"
 nixos-install \

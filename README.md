@@ -159,7 +159,9 @@ curl -fsSL https://raw.githubusercontent.com/kadencartwright/nix-install/main/sc
 The installer then uses a staged flow that works from the ISO:
 
 - clones this repo to a temporary `/tmp/nix-install.*` directory
-- patches the temporary `disko` config to use `DISK`
+- collects the LUKS passphrase without echoing it and writes it to a temporary
+  mode-0600 file in `/run`; it is removed as soon as formatting finishes
+- patches the temporary `disko` config to use `DISK` and that one-time key file
 - runs `disko` to wipe, format, and mount the target disk at `/mnt`
 - runs `nixos-install` so the full system builds into `/mnt/nix/store` on the
   target disk instead of the ISO's RAM-backed `/nix/store`
@@ -173,15 +175,25 @@ git clone https://github.com/kadencartwright/nix-install /tmp/nix-install
 cd /tmp/nix-install
 HOST=X1C
 DISK=/dev/disk/by-id/<explicit-disk-id>
+LUKS_KEY_FILE="$(sudo mktemp /run/nix-install-luks-key.XXXXXXXX)"
+read -r -s -p 'New LUKS passphrase: ' LUKS_PASSPHRASE
+printf '\n'
+printf '%s' "$LUKS_PASSPHRASE" | sudo tee "$LUKS_KEY_FILE" >/dev/null
+sudo chmod 600 "$LUKS_KEY_FILE"
+unset LUKS_PASSPHRASE
 sudo sed -i "s#/dev/disk/by-id/replace-me#${DISK}#" hosts/common/disko.nix
+sudo sed -i "s#/tmp/secret.key#${LUKS_KEY_FILE}#" hosts/common/disko.nix
 
 sudo nix --extra-experimental-features 'nix-command flakes' \
-  run github:nix-community/disko/latest -- \
+  run github:nix-community/disko/de5708739256238fb912c62f03988815db89ec9a -- \
   --mode destroy,format,mount \
   --flake /tmp/nix-install#${HOST} \
   --root-mountpoint /mnt \
   --yes-wipe-all-disks \
   --no-deps
+
+sudo rm -f -- "$LUKS_KEY_FILE"
+unset LUKS_KEY_FILE LUKS_PASSPHRASE
 
 sudo nixos-install \
   --flake /tmp/nix-install#${HOST} \
@@ -191,6 +203,6 @@ sudo nixos-install \
   --option experimental-features 'nix-command flakes'
 ```
 
-The LUKS password is set during the `disko` step. User `k` is provisioned by the
-flake config; after first boot, use your SSH key or console login path for that
-host.
+The LUKS password is supplied to `disko` through the temporary key file. User
+`k` is provisioned by the flake config; after first boot, use your SSH key or
+console login path for that host.
