@@ -10,6 +10,7 @@ DISKO_FLAKE="${DISKO_FLAKE:-github:nix-community/disko/de5708739256238fb912c62f0
 TTY_DEVICE=/dev/tty
 WORKDIR=""
 LUKS_KEY_FILE=""
+INSTALL_SWAP_FILE=""
 
 log() {
     printf '[install-nixos] %s\n' "$*"
@@ -29,8 +30,56 @@ remove_luks_key() {
     LUKS_KEY_FILE=""
 }
 
+remove_install_swap() {
+    local expected_swap_file="${ROOT%/}/.nixos-install.swap"
+
+    if [[ -z "$INSTALL_SWAP_FILE" || "$INSTALL_SWAP_FILE" != "$expected_swap_file" ]]; then
+        return
+    fi
+
+    if swapon --noheadings --raw --show=NAME 2>/dev/null \
+        | grep -Fxq "$INSTALL_SWAP_FILE"; then
+        if ! swapoff "$INSTALL_SWAP_FILE"; then
+            log "warning: could not disable temporary install swap at $INSTALL_SWAP_FILE"
+            return
+        fi
+    fi
+
+    rm -f -- "$INSTALL_SWAP_FILE"
+    INSTALL_SWAP_FILE=""
+}
+
+create_install_swap() {
+    local available_kib max_swap_kib swap_kib swap_mib
+
+    # nixos-install evaluates and builds from the live environment. Give those
+    # builds an encrypted, disk-backed safety margin instead of relying solely
+    # on the ISO's RAM-backed overlay. Cap it at 8 GiB or one eighth of the
+    # target's free space so smaller disks are not crowded out.
+    available_kib="$(df --output=avail -k "$ROOT" | awk 'NR == 2 { print $1 }')"
+    max_swap_kib=$((available_kib / 8))
+    swap_kib=$((8 * 1024 * 1024))
+    if ((swap_kib > max_swap_kib)); then
+        swap_kib="$max_swap_kib"
+    fi
+    swap_mib=$((swap_kib / 1024))
+
+    if ((swap_mib < 1024)); then
+        log 'warning: target has too little free space for temporary install swap'
+        return
+    fi
+
+    INSTALL_SWAP_FILE="${ROOT%/}/.nixos-install.swap"
+    log "creating ${swap_mib} MiB of temporary encrypted install swap"
+    fallocate -l "${swap_mib}M" "$INSTALL_SWAP_FILE"
+    chmod 600 "$INSTALL_SWAP_FILE"
+    mkswap "$INSTALL_SWAP_FILE" >/dev/null
+    swapon "$INSTALL_SWAP_FILE"
+}
+
 cleanup() {
     remove_luks_key
+    remove_install_swap
     if [[ -n "$WORKDIR" && "$WORKDIR" == /tmp/nix-install.* && -d "$WORKDIR" ]]; then
         rm -rf -- "$WORKDIR"
     fi
@@ -250,7 +299,7 @@ fi
 [[ -d /sys/firmware/efi ]] \
     || fatal 'The live ISO was not booted in UEFI mode; reboot it using the UEFI boot entry'
 
-for command in nix nixos-install lsblk readlink awk sed sort; do
+for command in nix nixos-install lsblk readlink awk sed sort df fallocate mkswap swapon swapoff; do
     command -v "$command" >/dev/null 2>&1 || fatal "Required command not found: $command"
 done
 
@@ -286,7 +335,8 @@ printf '  - 1 GiB FAT32 EFI system partition mounted at /boot\n' >"$TTY_DEVICE"
 printf '  - Remaining space: LUKS encryption -> LVM -> ext4 root\n' >"$TTY_DEVICE"
 printf '\nAfter confirmation, the installer will securely ask for the new LUKS passphrase.\n' >"$TTY_DEVICE"
 
-confirmation="$(prompt "\nType ERASE ${HOST} to erase ${TARGET_DEVICE} and continue: ")"
+printf '\n' >"$TTY_DEVICE"
+confirmation="$(prompt "Type ERASE ${HOST} to erase ${TARGET_DEVICE} and continue: ")"
 if [[ "$confirmation" != "ERASE $HOST" ]]; then
     fatal 'Confirmation did not match; nothing was changed'
 fi
@@ -318,6 +368,7 @@ nix --extra-experimental-features 'nix-command flakes' \
     --yes-wipe-all-disks \
     --no-deps
 remove_luks_key
+create_install_swap
 
 log "installing NixOS into $ROOT"
 nixos-install \
@@ -327,6 +378,7 @@ nixos-install \
     --max-jobs 1 \
     --cores 2 \
     --option experimental-features 'nix-command flakes'
+remove_install_swap
 
 printf '\nInstallation complete.\n' >"$TTY_DEVICE"
 printf 'Reboot, remove the ISO, and unlock the disk with your LUKS passphrase.\n' >"$TTY_DEVICE"

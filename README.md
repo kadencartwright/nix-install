@@ -121,8 +121,10 @@ That uses a chroot Nix store under
 
 ## Install From The NixOS ISO
 
-Boot the NixOS ISO in UEFI mode and connect to the network (`nmtui` works for
-Wi-Fi). Each x86 host has a dedicated guided entry point suitable for a short
+Boot the [NixOS 26.05 graphical ISO](https://channels.nixos.org/nixos-26.05/latest-nixos-graphical-x86_64-linux.iso)
+in UEFI mode and connect to the network (`nmtui` works for Wi-Fi). The installed
+system and Home Manager inputs are pinned to their matching 26.05 release
+branches. Each x86 host has a dedicated guided entry point suitable for a short
 link. These commands run as the live user and request elevation themselves:
 
 ```bash
@@ -163,6 +165,9 @@ The installer then uses a staged flow that works from the ISO:
   mode-0600 file in `/run`; it is removed as soon as formatting finishes
 - patches the temporary `disko` config to use `DISK` and that one-time key file
 - runs `disko` to wipe, format, and mount the target disk at `/mnt`
+- creates up to 8 GiB of temporary swap inside the encrypted target filesystem
+  so package builds do not depend solely on the live ISO's RAM-backed overlay;
+  the swap file is disabled and removed when installation finishes
 - runs `nixos-install` so the full system builds into `/mnt/nix/store` on the
   target disk instead of the ISO's RAM-backed `/nix/store`
 
