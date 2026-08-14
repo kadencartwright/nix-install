@@ -35,7 +35,7 @@
       slurp
       spotify
       swaynotificationcenter
-      xfce.thunar
+      thunar
       waybar
       wl-clipboard
       wl-screenrec
