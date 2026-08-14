@@ -273,7 +273,7 @@ repo_url="$(repo_url_for)"
 details="$(lsblk -dn -o SIZE,MODEL,SERIAL,TRAN "$TARGET_DEVICE" | sed 's/[[:space:]]*$//')"
 
 printf '\nInstall plan\n' >"$TTY_DEVICE"
-printf '------------\n' >"$TTY_DEVICE"
+printf '%s\n' '------------' >"$TTY_DEVICE"
 printf 'Host profile:  %s\n' "$HOST" >"$TTY_DEVICE"
 printf 'Repository:    %s\n' "$repo_url" >"$TTY_DEVICE"
 printf 'Git reference: %s\n' "$REF" >"$TTY_DEVICE"
