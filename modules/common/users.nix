@@ -5,6 +5,7 @@
     isNormalUser = true;
     description = "k";
     extraGroups = [
+      "input"
       "networkmanager"
       "podman"
       "wheel"
