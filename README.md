@@ -121,11 +121,14 @@ That uses a chroot Nix store under
 
 ## Install From The NixOS ISO
 
-Boot the [NixOS 26.05 graphical ISO](https://channels.nixos.org/nixos-26.05/latest-nixos-graphical-x86_64-linux.iso)
-in UEFI mode and connect to the network (`nmtui` works for Wi-Fi). The installed
-system and Home Manager inputs are pinned to their matching 26.05 release
-branches. Each x86 host has a dedicated guided entry point suitable for a short
-link. These commands run as the live user and request elevation themselves:
+Boot either the [NixOS 26.05 minimal ISO](https://channels.nixos.org/nixos-26.05/latest-nixos-minimal-x86_64-linux.iso)
+or [graphical ISO](https://channels.nixos.org/nixos-26.05/latest-nixos-graphical-x86_64-linux.iso)
+in UEFI mode and connect to the network (`nmtui` works for Wi-Fi). Both paths
+are tested; the minimal image has lower live-environment overhead and is the
+preferred installer. The installed system and Home Manager inputs are pinned
+to their matching 26.05 release branches. Each x86 host has a dedicated guided
+entry point suitable for a short link. These commands run as the live user and
+request elevation themselves:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/kadencartwright/nix-install/main/scripts/install-z16.sh | bash
@@ -136,7 +139,9 @@ curl -fsSL https://raw.githubusercontent.com/kadencartwright/nix-install/main/sc
 
 Each script fixes its host profile, requests administrator access with `sudo`,
 and then guides you through disk selection, LUKS setup, installation, and
-reboot. The general installer still supports choosing a host interactively:
+reboot. When the installer finishes, answer `y` first and remove the USB only
+after reboot has started; the minimal ISO still executes from that media. The
+general installer still supports choosing a host interactively:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/kadencartwright/nix-install/main/scripts/install-nixos.sh \
