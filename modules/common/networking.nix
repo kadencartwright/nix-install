@@ -26,15 +26,15 @@ in
   services.openssh = {
     enable = true;
     openFirewall = true;
+    # NixOS appends its standard per-user key locations. Put the refreshed
+    # GitHub key file first so it is part of the generated directive too.
+    authorizedKeysFiles = [ "/etc/ssh/authorized_keys.d/%u.github" ];
     settings = {
       KbdInteractiveAuthentication = false;
       PasswordAuthentication = false;
       PermitRootLogin = "no";
       X11Forwarding = false;
     };
-    extraConfig = ''
-      AuthorizedKeysFile /etc/ssh/authorized_keys.d/%u.github /etc/ssh/authorized_keys.d/%u .ssh/authorized_keys
-    '';
   };
 
   services.fail2ban.enable = true;

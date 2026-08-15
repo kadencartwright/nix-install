@@ -4,10 +4,6 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
     nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixos-unstable";
-    t3code-nix = {
-      url = "github:Sawrz/t3code-nix";
-      inputs.nixpkgs.follows = "nixpkgs-unstable";
-    };
     openai-chatgpt-desktop-nix.url = "github:kadencartwright/openai-chatgpt-desktop-nix";
 
     disko = {
