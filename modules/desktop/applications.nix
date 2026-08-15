@@ -1,4 +1,5 @@
 {
+  inputs,
   lib,
   pkgs,
   pkgsUnstable,
@@ -8,15 +9,20 @@
 let
   codexbar = pkgs.callPackage ../../packages/codexbar.nix { };
   hyprwhspr = pkgsUnstable.callPackage ../../packages/hyprwhspr.nix { };
+  obsbotCli = inputs.obsbot-cli.packages.${pkgs.stdenv.hostPlatform.system}.default;
 in
 {
-  environment.systemPackages = with pkgs; [
-    bluetui
-    buildkit
-    codexbar
-    hyprwhspr
-    slack
-  ];
+  environment.systemPackages =
+    (with pkgs; [
+      bluetui
+      buildkit
+      codexbar
+      hyprwhspr
+      slack
+    ])
+    ++ [ obsbotCli ];
+
+  services.udev.packages = [ obsbotCli ];
 
   programs.ydotool.enable = true;
 

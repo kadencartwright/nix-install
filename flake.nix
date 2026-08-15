@@ -6,6 +6,11 @@
     nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixos-unstable";
     openai-chatgpt-desktop-nix.url = "github:kadencartwright/openai-chatgpt-desktop-nix";
 
+    obsbot-cli = {
+      url = "github:kadencartwright/obsbot-cli";
+      inputs.nixpkgs.follows = "nixpkgs-unstable";
+    };
+
     disko = {
       url = "github:nix-community/disko/latest";
       inputs.nixpkgs.follows = "nixpkgs";

@@ -138,6 +138,26 @@
         "type": "github"
       }
     },
+    "obsbot-cli": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs-unstable"
+        ]
+      },
+      "locked": {
+        "lastModified": 1786832225,
+        "narHash": "sha256-E58I9hXMyWGX5PiJElS9KVWKkkVtH8OczkfJTk9RfBM=",
+        "owner": "kadencartwright",
+        "repo": "obsbot-cli",
+        "rev": "075c90c10d20eb7ddc8110a195d0bfa10fe9600f",
+        "type": "github"
+      },
+      "original": {
+        "owner": "kadencartwright",
+        "repo": "obsbot-cli",
+        "type": "github"
+      }
+    },
     "onedark-wallpapers": {
       "flake": false,
       "locked": {
@@ -180,6 +200,7 @@
         "nixos-hardware": "nixos-hardware",
         "nixpkgs": "nixpkgs",
         "nixpkgs-unstable": "nixpkgs-unstable",
+        "obsbot-cli": "obsbot-cli",
         "onedark-wallpapers": "onedark-wallpapers",
         "openai-chatgpt-desktop-nix": "openai-chatgpt-desktop-nix",
         "sops-nix": "sops-nix",
