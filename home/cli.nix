@@ -33,6 +33,7 @@ in
     jq
     lazygit
     nodejs
+    pass
     ripgrep
     tmux
     zoxide
