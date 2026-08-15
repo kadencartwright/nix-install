@@ -1,9 +1,14 @@
 { lib, pkgs, ... }:
 
 {
-  # Lemurs starts Wayland sessions through seatd. Without this group the PAM
-  # login succeeds, but Hyprland cannot acquire the seat afterwards.
-  users.users.k.extraGroups = [ "seat" ];
+  # Lemurs starts Wayland sessions through seatd. The NixOS module disables
+  # pam_loginuid because of an upstream Lemurs issue, so logind does not attach
+  # the session to seat0 and cannot grant its usual audio/video device ACLs.
+  users.users.k.extraGroups = [
+    "audio"
+    "seat"
+    "video"
+  ];
 
   # Lemurs authenticates the graphical session through its own PAM service.
   # pam_gnome_keyring receives the same password and unlocks (or creates) the

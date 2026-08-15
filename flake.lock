@@ -24,11 +24,11 @@
     "dotfiles": {
       "flake": false,
       "locked": {
-        "lastModified": 1785870097,
-        "narHash": "sha256-AhjnXHAImXlKi2qZjFhH2dkjEWl+k9Oi53+CnSYMM4k=",
+        "lastModified": 1786822697,
+        "narHash": "sha256-W1LAk0Vy/KnwdP/XtQBkP74REJ6+GeUmyVjKGPvszYo=",
         "owner": "kadencartwright",
         "repo": "dotfiles",
-        "rev": "9a072f5163cbd6a47d3f8a2d680f8a1d1a275e58",
+        "rev": "165628fd5e9581b90a51b83c4d04436238c99fb9",
         "type": "github"
       },
       "original": {

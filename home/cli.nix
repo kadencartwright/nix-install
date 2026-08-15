@@ -13,6 +13,8 @@ let
     tm-src = inputs.tm;
   };
   openaiChatgptDesktop = inputs.openai-chatgpt-desktop-nix.packages.${platformSystem}.default;
+  opencode = pkgsUnstable.callPackage ../packages/opencode.nix { };
+  opencodeDesktop = pkgsUnstable.callPackage ../packages/opencode-desktop.nix { };
   t3 = pkgsUnstable.callPackage ../packages/t3-cli { };
   t3code = pkgsUnstable.callPackage ../packages/t3code.nix { };
 in
@@ -37,10 +39,10 @@ in
   ] ++ (with pkgsUnstable; [
     codex
     herdr
-    opencode
     pi-coding-agent
   ])
-  ++ lib.optional isDesktop pkgsUnstable.opencode-desktop
+  ++ [ opencode ]
+  ++ lib.optional isDesktop opencodeDesktop
   ++ lib.optionals pkgs.stdenv.hostPlatform.isx86_64 [
     t3
     t3code
