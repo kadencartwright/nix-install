@@ -167,9 +167,12 @@ The installer then uses a staged flow that works from the ISO:
 
 - clones this repo to a temporary `/tmp/nix-install.*` directory
 - collects the LUKS passphrase without echoing it and writes it to a temporary
-  mode-0600 file in `/run`; it is removed as soon as formatting finishes
+  mode-0600 file in `/run`
 - patches the temporary `disko` config to use `DISK` and that one-time key file
 - runs `disko` to wipe, format, and mount the target disk at `/mnt`
+- verifies TPM 2.0 before erasing the disk, enrolls a TPM-backed LUKS2 token
+  bound to PCR 7, verifies the token, and only then removes the temporary key
+  file; the passphrase keyslot is retained as the recovery path
 - creates up to 8 GiB of temporary swap inside the encrypted target filesystem
   so package builds do not depend solely on the live ISO's RAM-backed overlay;
   the swap file is disabled and removed when installation finishes
@@ -202,6 +205,14 @@ sudo nix --extra-experimental-features 'nix-command flakes' \
   --yes-wipe-all-disks \
   --no-deps
 
+LUKS_DEVICE="$(lsblk -nrpo NAME,PARTLABEL "$(readlink -f "$DISK")" \
+  | awk '$2 == "disk-main-cryptroot" { print $1 }')"
+sudo systemd-cryptenroll \
+  --unlock-key-file="$LUKS_KEY_FILE" \
+  --tpm2-device=auto \
+  --tpm2-pcrs=7 \
+  "$LUKS_DEVICE"
+
 sudo rm -f -- "$LUKS_KEY_FILE"
 unset LUKS_KEY_FILE LUKS_PASSPHRASE
 
@@ -213,6 +224,12 @@ sudo nixos-install \
   --option experimental-features 'nix-command flakes'
 ```
 
-The LUKS password is supplied to `disko` through the temporary key file. User
-`k` is provisioned by the flake config; after first boot, use your SSH key or
-console login path for that host.
+The LUKS password is supplied to `disko` through the temporary key file and is
+kept as a recovery keyslot after TPM enrollment. Set `TPM_LUKS_UNLOCK=0` only
+when deliberately installing on a machine without TPM 2.0; that installation
+will require the passphrase at every boot. PCR 7 reflects the firmware Secure
+Boot policy. TPM unlock still removes the routine prompt when Secure Boot is
+off, but it does not provide strong boot-chain tamper resistance in that state;
+changing the firmware or Secure Boot policy can require the retained recovery
+passphrase. User `k` is provisioned by the flake config; after first boot, use
+your SSH key or console login path for that host.

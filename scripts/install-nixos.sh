@@ -6,11 +6,13 @@ REF="${REF:-main}"
 ROOT="${ROOT:-/mnt}"
 RAW_REPO="${RAW_REPO:-https://raw.githubusercontent.com/kadencartwright/nix-install}"
 DISKO_FLAKE="${DISKO_FLAKE:-github:nix-community/disko/de5708739256238fb912c62f03988815db89ec9a}"
+TPM_LUKS_UNLOCK="${TPM_LUKS_UNLOCK:-1}"
 
 TTY_DEVICE=/dev/tty
 WORKDIR=""
 LUKS_KEY_FILE=""
 INSTALL_SWAP_FILE=""
+LUKS_DEVICE=""
 
 log() {
     printf '[install-nixos] %s\n' "$*"
@@ -126,6 +128,76 @@ collect_luks_passphrase() {
     chmod 600 "$LUKS_KEY_FILE"
     printf '%s' "$first" >"$LUKS_KEY_FILE"
     unset first second REPLY
+}
+
+validate_tpm_setting() {
+    case "$TPM_LUKS_UNLOCK" in
+        0 | 1) ;;
+        *) fatal 'TPM_LUKS_UNLOCK must be 1 (enabled) or 0 (disabled)' ;;
+    esac
+}
+
+preflight_tpm2() {
+    local tpm_devices tpm_version
+
+    [[ "$TPM_LUKS_UNLOCK" == 1 ]] || return
+
+    [[ -r /sys/class/tpm/tpm0/tpm_version_major ]] \
+        || fatal 'TPM auto-unlock is enabled, but no TPM was detected'
+    tpm_version="$(</sys/class/tpm/tpm0/tpm_version_major)"
+    [[ "$tpm_version" == 2 ]] \
+        || fatal "TPM auto-unlock requires TPM 2.0 (detected version: $tpm_version)"
+    [[ -c /dev/tpmrm0 || -c /dev/tpm0 ]] \
+        || fatal 'TPM 2.0 was detected, but no TPM character device is available'
+
+    if ! tpm_devices="$(LC_ALL=C systemd-cryptenroll --tpm2-device=list 2>&1)"; then
+        printf '%s\n' "$tpm_devices" >&2
+        fatal 'systemd-cryptenroll could not enumerate the TPM before disk erasure'
+    fi
+    if ! grep -Eq '/dev/tpm(rm)?[0-9]+' <<<"$tpm_devices"; then
+        printf '%s\n' "$tpm_devices" >&2
+        fatal 'systemd-cryptenroll did not find a usable TPM before disk erasure'
+    fi
+}
+
+find_luks_device() {
+    local -a candidates=()
+
+    mapfile -t candidates < <(
+        lsblk -nrpo NAME,PARTLABEL "$TARGET_DEVICE" \
+            | awk '$2 == "disk-main-cryptroot" { print $1 }'
+    )
+    if ((${#candidates[@]} != 1)); then
+        fatal "Expected exactly one disk-main-cryptroot partition on $TARGET_DEVICE; found ${#candidates[@]}"
+    fi
+
+    LUKS_DEVICE="${candidates[0]}"
+    [[ -b "$LUKS_DEVICE" ]] \
+        || fatal "The LUKS partition is not a block device: $LUKS_DEVICE"
+    cryptsetup isLuks "$LUKS_DEVICE" \
+        || fatal "Disko did not create a valid LUKS container at $LUKS_DEVICE"
+}
+
+enroll_tpm2() {
+    local luks_metadata
+
+    [[ "$TPM_LUKS_UNLOCK" == 1 ]] || return
+
+    find_luks_device
+    log "enrolling TPM2 auto-unlock for $LUKS_DEVICE (PCR 7)"
+    LC_ALL=C systemd-cryptenroll \
+        --unlock-key-file="$LUKS_KEY_FILE" \
+        --tpm2-device=auto \
+        --tpm2-pcrs=7 \
+        "$LUKS_DEVICE"
+
+    luks_metadata="$(LC_ALL=C cryptsetup luksDump --dump-json-metadata "$LUKS_DEVICE")"
+    if ! grep -Eq '"type"[[:space:]]*:[[:space:]]*"systemd-tpm2"' \
+        <<<"$luks_metadata"; then
+        fatal "TPM2 enrollment verification failed for $LUKS_DEVICE"
+    fi
+    unset luks_metadata
+    log 'TPM2 token verified; the passphrase keyslot remains available for recovery'
 }
 
 choose_host() {
@@ -277,6 +349,7 @@ if ((EUID != 0)); then
         "ROOT=$ROOT"
         "RAW_REPO=$RAW_REPO"
         "DISKO_FLAKE=$DISKO_FLAKE"
+        "TPM_LUKS_UNLOCK=$TPM_LUKS_UNLOCK"
     )
     if [[ -n "${HOST:-}" ]]; then
         elevated_env+=("HOST=$HOST")
@@ -299,9 +372,16 @@ fi
 [[ -d /sys/firmware/efi ]] \
     || fatal 'The live ISO was not booted in UEFI mode; reboot it using the UEFI boot entry'
 
-for command in nix nixos-install lsblk readlink awk sed sort df fallocate mkswap swapon swapoff; do
+validate_tpm_setting
+
+for command in nix nixos-install lsblk readlink awk sed sort grep df fallocate mkswap swapon swapoff; do
     command -v "$command" >/dev/null 2>&1 || fatal "Required command not found: $command"
 done
+if [[ "$TPM_LUKS_UNLOCK" == 1 ]]; then
+    for command in cryptsetup systemd-cryptenroll; do
+        command -v "$command" >/dev/null 2>&1 || fatal "Required TPM enrollment command not found: $command"
+    done
+fi
 
 printf '\nNixOS guided installer\n' >"$TTY_DEVICE"
 printf '======================\n' >"$TTY_DEVICE"
@@ -318,6 +398,7 @@ if [[ -z "${DISK:-}" ]]; then
 fi
 
 validate_disk
+preflight_tpm2
 repo_url="$(repo_url_for)"
 details="$(lsblk -dn -o SIZE,MODEL,SERIAL,TRAN "$TARGET_DEVICE" | sed 's/[[:space:]]*$//')"
 
@@ -329,6 +410,11 @@ printf 'Git reference: %s\n' "$REF" >"$TTY_DEVICE"
 printf 'Target disk:   %s\n' "$DISK" >"$TTY_DEVICE"
 printf 'Disk details:  %s\n' "$details" >"$TTY_DEVICE"
 printf 'Mount target:  %s\n' "$ROOT" >"$TTY_DEVICE"
+if [[ "$TPM_LUKS_UNLOCK" == 1 ]]; then
+    printf 'TPM unlock:    TPM2 bound to PCR 7; recovery passphrase retained\n' >"$TTY_DEVICE"
+else
+    printf 'TPM unlock:    disabled; passphrase required at every boot\n' >"$TTY_DEVICE"
+fi
 printf '\nDisk layout:\n' >"$TTY_DEVICE"
 printf '  - GPT partition table\n' >"$TTY_DEVICE"
 printf '  - 1 GiB FAT32 EFI system partition mounted at /boot\n' >"$TTY_DEVICE"
@@ -367,6 +453,7 @@ nix --extra-experimental-features 'nix-command flakes' \
     --root-mountpoint "$ROOT" \
     --yes-wipe-all-disks \
     --no-deps
+enroll_tpm2
 remove_luks_key
 create_install_swap
 
@@ -381,7 +468,12 @@ nixos-install \
 remove_install_swap
 
 printf '\nInstallation complete.\n' >"$TTY_DEVICE"
-printf 'Reboot, remove the ISO, and unlock the disk with your LUKS passphrase.\n' >"$TTY_DEVICE"
+if [[ "$TPM_LUKS_UNLOCK" == 1 ]]; then
+    printf 'Reboot and remove the ISO; the TPM should unlock LUKS automatically.\n' >"$TTY_DEVICE"
+    printf 'Keep the LUKS passphrase: it is the recovery path after firmware or Secure Boot changes.\n' >"$TTY_DEVICE"
+else
+    printf 'Reboot, remove the ISO, and unlock the disk with your LUKS passphrase.\n' >"$TTY_DEVICE"
+fi
 printf 'At Lemurs, log in as k with the bootstrap password: nixos\n' >"$TTY_DEVICE"
 printf 'Immediately run passwd after login; PAM will update the login keyring too.\n' >"$TTY_DEVICE"
 printf 'Then run hyprwhspr setup and sudo tailscale up as needed.\n\n' >"$TTY_DEVICE"

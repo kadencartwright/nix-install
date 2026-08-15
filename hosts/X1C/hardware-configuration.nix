@@ -1,7 +1,7 @@
 { ... }:
 
 {
-  # Placeholder for Lenovo ThinkPad X1 Carbon Gen 13.
+  # Lenovo ThinkPad X1 Carbon Gen 12 (21KC, Meteor Lake).
   # Keep both Intel VMD and native NVMe available in stage 1: depending on the
   # firmware storage setting, the internal drive may sit behind VMD. The VM
   # does not exercise this hardware path.
@@ -13,8 +13,7 @@
     "xhci_pci"
   ];
   boot.initrd.kernelModules = [ ];
-  # The nixos-hardware Lunar Lake profile selects the Xe graphics driver.
-  # PCI devices such as the GPU and Wi-Fi can otherwise autoload normally.
+  # PCI devices such as the i915 GPU and Wi-Fi autoload normally in stage 2.
   boot.kernelModules = [ ];
   boot.extraModulePackages = [ ];
 }

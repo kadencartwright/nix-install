@@ -4,5 +4,8 @@
   boot.loader.efi.canTouchEfiVariables = true;
 
   boot.initrd.systemd.enable = true;
-  boot.initrd.luks.devices.cryptlvm.allowDiscards = true;
+  boot.initrd.luks.devices.cryptlvm = {
+    allowDiscards = true;
+    crypttabExtraOpts = [ "tpm2-device=auto" ];
+  };
 }
