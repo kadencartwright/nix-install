@@ -33,6 +33,7 @@ ShellRoot {
             property int lastBrightness: 0
             property string backlightPath: ""
             property int backlightMax: 1
+            property bool backlightMaxLoaded: false
             property int reactiveVolume: Pipewire.defaultAudioSink && Pipewire.defaultAudioSink.audio
                 ? Math.round(Pipewire.defaultAudioSink.audio.volume * 100) : 0
 
@@ -51,7 +52,11 @@ ShellRoot {
                 id:backlightMaxFile
                 path:bar.backlightPath?bar.backlightPath+"/max_brightness":""
                 blockLoading:true
-                onLoaded: { bar.backlightMax=Number(text().trim())||1; bar.readBrightness() }
+                onLoaded: {
+                    bar.backlightMax=Number(text().trim())||1
+                    bar.backlightMaxLoaded=true
+                    bar.readBrightness()
+                }
             }
             FileView {
                 id:backlightValueFile
@@ -59,16 +64,28 @@ ShellRoot {
                 blockLoading:true
                 watchChanges:true
                 onLoaded:bar.readBrightness()
-                onFileChanged:{reload();brightnessReadDelay.restart()}
+                onFileChanged:reload()
             }
-            Timer { id:brightnessReadDelay;interval:5;onTriggered:bar.readBrightness() }
             Command { command:["sh","-c","paste -d' ' /sys/class/power_supply/BAT0/capacity /sys/class/power_supply/BAT0/status 2>/dev/null"]; interval:10000; onOutputChanged: { let p=output.split(" "); bar.battery=p[0]?p[0]+"%":""; bar.batteryStatus=p[1]||"" } }
             Command { command:["sh","-c","powerprofilesctl get 2>/dev/null | sed 's/power-saver/Saver/;s/balanced/Balanced/;s/performance/Perf/'"]; interval:2000; onOutputChanged: if(output)bar.profile=output }
             Command { command:["sh","-c","codexbar --format '{session_pct}% - {session_reset}' 2>/dev/null | jq -r .text | sed 's/<[^>]*>//g'"]; interval:300000; onOutputChanged: if(output)bar.codex=output }
 
             function togglePopup(kind, x) {
-                if (popupKind === kind && dropdown.visible) { dropdown.visible = false; popupKind = ""; return }
-                popupKind = kind; popupAnchorX = x; dropdown.visible = true
+                if (popupKind === kind && dropdown.visible) { closePopup(); return }
+                dropdownCloseTimer.stop()
+                popupKind = kind
+                popupAnchorX = x
+                if (!dropdown.visible) {
+                    dropdown.expanded = false
+                    dropdown.visible = true
+                    dropdownOpenTimer.restart()
+                }
+            }
+            function closePopup() {
+                if (!dropdown.visible) return
+                dropdownOpenTimer.stop()
+                dropdown.expanded = false
+                dropdownCloseTimer.restart()
             }
             function cyclePowerProfile() {
                 let next = profile === "Balanced" ? "Perf" : profile === "Perf" ? "Saver" : "Balanced"
@@ -85,7 +102,7 @@ ShellRoot {
                 osdTimer.restart()
             }
             function readBrightness() {
-                if(!backlightValueFile.loaded)return
+                if(!backlightMaxLoaded||!backlightValueFile.loaded)return
                 let value=Math.round((Number(backlightValueFile.text().trim())||0)*100/backlightMax)
                 if(brightnessInitialized&&value!==lastBrightness)showOsd("󰃠","Brightness",value)
                 lastBrightness=value;brightnessInitialized=true
@@ -153,6 +170,7 @@ ShellRoot {
 
             PopupWindow {
                 id: dropdown
+                property bool expanded: false
                 visible: false
                 color: "transparent"
                 grabFocus: true
@@ -161,11 +179,23 @@ ShellRoot {
                 anchor.rect.y: bar.height + 3
                 implicitWidth: bar.popupKind === "audio" ? 430 : bar.popupKind === "network" || bar.popupKind === "calendar" ? 350 : bar.popupKind === "codex" ? 340 : bar.popupKind === "battery" ? 380 : 390
                 implicitHeight: bar.popupKind === "network" ? 500 : bar.popupKind === "audio" || bar.popupKind === "calendar" ? 488 : bar.popupKind === "codex" || bar.popupKind === "battery" ? 433 : 283
-                onVisibleChanged: if (!visible) bar.popupKind = ""
+                onVisibleChanged: if (!visible) {
+                    expanded = false
+                    bar.popupKind = ""
+                }
+                Timer { id:dropdownOpenTimer;interval:1;onTriggered:dropdown.expanded=true }
+                Timer { id:dropdownCloseTimer;interval:180;onTriggered:dropdown.visible=false }
                 Rectangle {
-                    anchors.fill: parent; color: Theme.surface; border.width: 1; border.color: "#363d47"
+                    anchors.top: parent.top; anchors.left: parent.left; anchors.right: parent.right
+                    height: dropdown.expanded ? parent.height : 0
+                    opacity: dropdown.expanded ? 1 : 0
+                    color: Theme.surface; border.width: 1; border.color: "#363d47"
+                    radius: 14
+                    clip: true
+                    Behavior on height { NumberAnimation { duration:180;easing.type:Easing.OutCubic } }
+                    Behavior on opacity { NumberAnimation { duration:130;easing.type:Easing.OutQuad } }
                     Column {
-                        anchors.fill: parent
+                        width: parent.width; height: dropdown.implicitHeight
                         Rectangle {
                             width: parent.width; height: bar.popupKind === "codex" ? 0 : 43; color: Theme.elevated
                             clip: true
@@ -229,7 +259,6 @@ ShellRoot {
                                 width:parent.width;height:7;radius:3;color:"#414854";clip:true
                                 Rectangle {
                                     width:parent.width*osd.value/osd.maximum;height:parent.height;radius:3;color:osd.value>100?Theme.red:Theme.primary
-                                    Behavior on width { NumberAnimation { duration:180;easing.type:Easing.OutCubic } }
                                 }
                             }
                         }
