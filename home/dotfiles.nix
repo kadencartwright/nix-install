@@ -79,10 +79,12 @@ hl.animation({ leaf = "fade", enabled = true, speed = 1, bezier = "default" })''
       ]
       [
         hyprwhsprRoot
-        ''hl.env("SSH_AUTH_SOCK", (os.getenv("XDG_RUNTIME_DIR") or "") .. "/ssh-agent")''
+        ''hl.env("SSH_AUTH_SOCK", (os.getenv("XDG_RUNTIME_DIR") or "") .. "/ssh-agent")
+hl.env("GNOME_KEYRING_CONTROL", (os.getenv("XDG_RUNTIME_DIR") or "") .. "/keyring")''
         ''hl.env("QT_QPA_PLATFORMTHEME", "gtk")''
         ''hl.env("QT_STYLE_OVERRIDE", "gtk2")''
-        ''hl.exec_cmd("quickshell")''
+        ''hl.exec_cmd("gnome-keyring-daemon --start --components=secrets")
+	hl.exec_cmd("quickshell")''
         ''	decoration = {
 		rounding = 12,
 		rounding_power = 4.0,
