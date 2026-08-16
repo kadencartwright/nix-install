@@ -118,7 +118,7 @@ ShellRoot {
                     Behavior on width { NumberAnimation { duration:180;easing.type:Easing.OutCubic } }
                 Row {
                     id:leftWorkspaces
-                    anchors.centerIn:parent;height:26
+                    anchors.left:parent.left;anchors.leftMargin:6;anchors.verticalCenter:parent.verticalCenter;height:26
                     ScriptModel {
                         id: workspaceModel
                         values: Hyprland.workspaces.values
