@@ -20,7 +20,7 @@ Item {
                     Column { width: parent.width - 58; Text { text: "OUTPUT"; color: Theme.muted; font.pixelSize: 10; font.weight: Font.Bold } Text { text: root.outputName; color: Theme.fg; font.pixelSize: 12 } }
                     Text { text: "󰝟"; color: Theme.muted; font.family: Theme.iconFont; font.pixelSize: 16 }
                 }
-                Row { spacing: 8; ShellSlider { width: parent.parent.width - 48; value: root.outputVolume; onMoved: v => Quickshell.execDetached(["wpctl","set-volume","@DEFAULT_AUDIO_SINK@",String(v)]) } Text { text: Math.round(root.outputVolume*100)+"%"; color: Theme.fg; font.pixelSize: 11 } }
+                Row { spacing: 8; ShellSlider { width: parent.parent.width - 48; value: root.outputVolume; maximumValue:1.5; onMoved: v => Quickshell.execDetached(["wpctl","set-volume","@DEFAULT_AUDIO_SINK@",String(v)]) } Text { text: Math.round(root.outputVolume*100)+"%"; color: Theme.fg; font.pixelSize: 11 } }
             }
         }
         Rectangle {
@@ -31,7 +31,7 @@ Item {
                     Column { width: parent.width - 58; Text { text: "INPUT"; color: Theme.muted; font.pixelSize: 10; font.weight: Font.Bold } Text { text: root.inputName; color: Theme.fg; font.pixelSize: 12 } }
                     Text { text: "󰍭"; color: Theme.muted; font.family: Theme.iconFont; font.pixelSize: 16 }
                 }
-                Row { spacing: 8; ShellSlider { width: parent.parent.width - 48; value: root.inputVolume; onMoved: v => Quickshell.execDetached(["wpctl","set-volume","@DEFAULT_AUDIO_SOURCE@",String(v)]) } Text { text: Math.round(root.inputVolume*100)+"%"; color: Theme.fg; font.pixelSize: 11 } }
+                Row { spacing: 8; ShellSlider { width: parent.parent.width - 48; value: root.inputVolume; maximumValue:1.5; onMoved: v => Quickshell.execDetached(["wpctl","set-volume","@DEFAULT_AUDIO_SOURCE@",String(v)]) } Text { text: Math.round(root.inputVolume*100)+"%"; color: Theme.fg; font.pixelSize: 11 } }
             }
         }
         SectionTitle { icon: "󰕾"; title: "Application Volume" }

@@ -11,6 +11,17 @@ let
   hyprwhspr = if isDesktop then pkgsUnstable.callPackage ../packages/hyprwhspr.nix { } else null;
   hyprwhsprRoot = if isDesktop then "${hyprwhspr}/lib/hyprwhspr" else "/usr/lib/hyprwhspr";
   onedarkWallpapers = inputs.onedark-wallpapers;
+  alacrittyConfig =
+    builtins.replaceStrings
+      [ ''[window]
+decorations = "full"'' ]
+      [ ''[window]
+decorations = "full"
+
+[window.padding]
+x = 4
+y = 4'' ]
+      (builtins.readFile "${dotfiles}/alacritty/alacritty.toml");
   zshInit =
     builtins.replaceStrings
       [ ''source "$HOME/.cargo/env"'' ]
@@ -48,6 +59,16 @@ let
         ''hl.env("QT_QPA_PLATFORMTHEME", "adwaita")''
         ''hl.env("QT_STYLE_OVERRIDE", "adwaita-dark")''
         ''hl.exec_cmd("wayle shell")''
+        ''	animations = {
+		enabled = false,
+	},''
+        ''		gaps_in = 0,
+		gaps_out = 0,''
+        ''		border_size = 1,''
+        ''hl.animation({ leaf = "workspaces", enabled = true, speed = 1, bezier = "myBezier" })
+hl.animation({ leaf = "windows", enabled = true, speed = 1, bezier = "myBezier", style = "popin 60%" })
+hl.animation({ leaf = "windowsOut", enabled = true, speed = 1, bezier = "default", style = "popin 90%" })
+hl.animation({ leaf = "fade", enabled = true, speed = 1, bezier = "default" })''
       ]
       [
         hyprwhsprRoot
@@ -55,6 +76,22 @@ let
         ''hl.env("QT_QPA_PLATFORMTHEME", "gtk")''
         ''hl.env("QT_STYLE_OVERRIDE", "gtk2")''
         ''hl.exec_cmd("quickshell")''
+        ''	decoration = {
+		rounding = 12,
+		rounding_power = 4.0,
+	},
+
+	animations = {
+		enabled = true,
+	},''
+        ''		gaps_in = 4,
+		gaps_out = 4,''
+        ''		border_size = 2,''
+        ''hl.animation({ leaf = "workspaces", enabled = false })
+hl.animation({ leaf = "windows", enabled = true, speed = 3, bezier = "myBezier", style = "popin 85%" })
+hl.animation({ leaf = "windowsMove", enabled = true, speed = 3, bezier = "myBezier" })
+hl.animation({ leaf = "windowsOut", enabled = true, speed = 2, bezier = "myBezier", style = "popin 90%" })
+hl.animation({ leaf = "fade", enabled = false })''
       ]
       (builtins.readFile "${dotfiles}/hyprland/hyprland.lua");
 in
@@ -62,7 +99,7 @@ in
   xdg.configFile = {
     "aerospace".source = "${dotfiles}/aerospace";
     "aerospace-swipe".source = "${dotfiles}/aerospace-swipe";
-    "alacritty".source = "${dotfiles}/alacritty";
+    "alacritty/alacritty.toml".text = alacrittyConfig;
     "electron-flags.conf".source = "${dotfiles}/electron/electron-flags.conf";
     "fontconfig/fonts.conf".source = "${dotfiles}/fontconfig/fonts.conf";
     "fuzzel".source = "${dotfiles}/fuzzel";

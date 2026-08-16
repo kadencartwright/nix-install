@@ -3,6 +3,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 import Quickshell.Hyprland
+import Quickshell.Services.Pipewire
 
 ShellRoot {
     id: shell
@@ -13,10 +14,10 @@ ShellRoot {
             id: bar
             required property var modelData
             screen: modelData
-            color: Theme.bg
-            implicitHeight: 36
+            color: Qt.rgba(0, 0, 0, 0)
+            implicitHeight: 40
             anchors { top: true; left: true; right: true }
-            exclusiveZone: 36
+            exclusiveZone: 40
 
             property string popupKind: ""
             property real popupAnchorX: 0
@@ -30,28 +31,37 @@ ShellRoot {
             property bool brightnessInitialized: false
             property int lastVolume: 0
             property int lastBrightness: 0
+            property string backlightPath: ""
+            property int backlightMax: 1
+            property int reactiveVolume: Pipewire.defaultAudioSink && Pipewire.defaultAudioSink.audio
+                ? Math.round(Pipewire.defaultAudioSink.audio.volume * 100) : 0
 
             Command { command:["sh","-c","nmcli -t -f active,ssid dev wifi | sed -n 's/^yes://p' | head -1"]; interval:5000; onOutputChanged: bar.networkName=output||"Offline" }
             Command {
-                command:["sh","-c","wpctl get-volume @DEFAULT_AUDIO_SINK@ | awk '{printf \"%.0f\",$2*100}'"]
-                interval:250
-                onOutputChanged: {
-                    if (!output) return
-                    let value=Number(output); bar.volume=value+"%"
-                    if (bar.volumeInitialized && value!==bar.lastVolume) bar.showOsd("󰕾","Volume",value)
-                    bar.lastVolume=value; bar.volumeInitialized=true
-                }
+                command:["sh","-c","find /sys/class/backlight -mindepth 1 -maxdepth 1 -type l | head -1"]
+                onOutputChanged: if(output) bar.backlightPath=output
             }
-            Command {
-                command:["sh","-c","d=$(find /sys/class/backlight -mindepth 1 -maxdepth 1 -type l | head -1); [ -n \"$d\" ] && awk -v m=\"$(cat \"$d/max_brightness\")\" '{printf \"%.0f\",$1*100/m}' \"$d/brightness\""]
-                interval:250
-                onOutputChanged: {
-                    if (!output) return
-                    let value=Number(output)
-                    if (bar.brightnessInitialized && value!==bar.lastBrightness) bar.showOsd("󰃠","Brightness",value)
-                    bar.lastBrightness=value; bar.brightnessInitialized=true
-                }
+            PwObjectTracker { objects:Pipewire.defaultAudioSink?[Pipewire.defaultAudioSink]:[] }
+            onReactiveVolumeChanged: {
+                let value=reactiveVolume; volume=value+"%"
+                if(volumeInitialized&&value!==lastVolume)showOsd("󰕾","Volume",value,150)
+                lastVolume=value;volumeInitialized=true
             }
+            FileView {
+                id:backlightMaxFile
+                path:bar.backlightPath?bar.backlightPath+"/max_brightness":""
+                blockLoading:true
+                onLoaded: { bar.backlightMax=Number(text().trim())||1; bar.readBrightness() }
+            }
+            FileView {
+                id:backlightValueFile
+                path:bar.backlightPath?bar.backlightPath+"/brightness":""
+                blockLoading:true
+                watchChanges:true
+                onLoaded:bar.readBrightness()
+                onFileChanged:{reload();brightnessReadDelay.restart()}
+            }
+            Timer { id:brightnessReadDelay;interval:5;onTriggered:bar.readBrightness() }
             Command { command:["sh","-c","paste -d' ' /sys/class/power_supply/BAT0/capacity /sys/class/power_supply/BAT0/status 2>/dev/null"]; interval:10000; onOutputChanged: { let p=output.split(" "); bar.battery=p[0]?p[0]+"%":""; bar.batteryStatus=p[1]||"" } }
             Command { command:["sh","-c","powerprofilesctl get 2>/dev/null | sed 's/power-saver/Saver/;s/balanced/Balanced/;s/performance/Perf/'"]; interval:2000; onOutputChanged: if(output)bar.profile=output }
             Command { command:["sh","-c","codexbar --format '{session_pct}% - {session_reset}' 2>/dev/null | jq -r .text | sed 's/<[^>]*>//g'"]; interval:300000; onOutputChanged: if(output)bar.codex=output }
@@ -65,14 +75,33 @@ ShellRoot {
                 profile = next
                 Quickshell.execDetached(["powerprofilesctl", "set", next === "Perf" ? "performance" : next === "Saver" ? "power-saver" : "balanced"])
             }
-            function showOsd(icon, label, value) {
-                osd.icon=icon; osd.label=label; osd.value=Math.max(0,Math.min(100,value));osd.visible=true;osdTimer.restart()
+            function showOsd(icon, label, value, maximum) {
+                osd.icon=icon
+                osd.label=label
+                osd.maximum=maximum||100
+                osd.value=Math.max(0,Math.min(osd.maximum,value))
+                osd.visible=true
+                osd.expanded=true
+                osdTimer.restart()
+            }
+            function readBrightness() {
+                if(!backlightValueFile.loaded)return
+                let value=Math.round((Number(backlightValueFile.text().trim())||0)*100/backlightMax)
+                if(brightnessInitialized&&value!==lastBrightness)showOsd("󰃠","Brightness",value)
+                lastBrightness=value;brightnessInitialized=true
             }
 
-            Rectangle {
-                anchors.fill: parent; anchors.margins: 4; color: Theme.surface
+            Item {
+                anchors.fill: parent
+                Rectangle {
+                    id:leftBubble
+                    anchors.left:parent.left;anchors.leftMargin:8;anchors.verticalCenter:parent.verticalCenter
+                    width:leftWorkspaces.implicitWidth+12;height:32
+                    color:Theme.elevated;radius:16;clip:true
+                    Behavior on width { NumberAnimation { duration:180;easing.type:Easing.OutCubic } }
                 Row {
-                    anchors.left: parent.left; anchors.verticalCenter: parent.verticalCenter; height: 28
+                    id:leftWorkspaces
+                    anchors.centerIn:parent;height:26
                     ScriptModel {
                         id: workspaceModel
                         values: Hyprland.workspaces.values
@@ -83,29 +112,42 @@ ShellRoot {
                         model: workspaceModel
                         Rectangle {
                             required property var modelData
-                            width: 27; height: 28
+                            width: 26; height: 26
                             color: modelData.active ? Theme.blue : "transparent"
+                            radius:13
                             Text { anchors.centerIn: parent; text: modelData.name; color:modelData.active?Theme.bg:Theme.muted; font.family:Theme.font; font.pixelSize:13; font.weight:Font.DemiBold }
                             MouseArea { anchors.fill:parent; cursorShape:Qt.PointingHandCursor; onClicked: modelData.activate() }
                         }
                     }
                 }
+                }
                 Rectangle {
+                    id:centerBubble
                     anchors.centerIn: parent
-                    width: clockText.implicitWidth + 12; height: 28; color: bar.popupKind==="calendar"&&dropdown.visible?Theme.elevated:"transparent"
+                    width: clockText.implicitWidth + 24; height:32
+                    radius:16
+                    color: bar.popupKind==="calendar"&&dropdown.visible?"#343c47":Theme.elevated
+                    Behavior on width { NumberAnimation { duration:180;easing.type:Easing.OutCubic } }
                     Text { id:clockText; anchors.centerIn:parent; text:Qt.formatDateTime(clock.date,"ddd MMM dd hh:mm AP"); color:Theme.fg; font.family:Theme.font; font.pixelSize:12; font.weight:Font.DemiBold }
                     SystemClock { id: clock; precision: SystemClock.Minutes }
                     MouseArea { anchors.fill:parent; cursorShape:Qt.PointingHandCursor; onClicked:bar.togglePopup("calendar",bar.width/2) }
                 }
+                Rectangle {
+                    id:rightBubble
+                    anchors.right:parent.right;anchors.rightMargin:8;anchors.verticalCenter:parent.verticalCenter
+                    width:rightModules.implicitWidth+12;height:32
+                    color:Theme.elevated;radius:16;clip:true
+                    Behavior on width { NumberAnimation { duration:180;easing.type:Easing.OutCubic } }
                 Row {
                     id: rightModules
-                    anchors.right: parent.right; anchors.verticalCenter: parent.verticalCenter; height: 28; spacing: 4
+                    anchors.centerIn:parent;height:28;spacing:4
                     BarButton { height:28; icon:"󰅩"; label:bar.codex; accent:Theme.green; selected:bar.popupKind==="codex"&&dropdown.visible; onClicked:x=>bar.togglePopup("codex",x) }
                     BarButton { height:28; icon:"󰎆"; accent:Theme.blue; onClicked:x=>bar.togglePopup("media",x) }
                     BarButton { height:28; icon:"󰖩"; label:bar.networkName; accent:Theme.blue; selected:bar.popupKind==="network"&&dropdown.visible; onClicked:x=>bar.togglePopup("network",x) }
                     BarButton { height:28; icon:"󰐥"; label:bar.profile; accent:Theme.muted; mouseArea.onClicked:bar.cyclePowerProfile() }
                     BarButton { visible:bar.battery!==""; height:28; icon:bar.batteryStatus==="Charging"?"":(Number(bar.battery.replace("%",""))<20?"":Number(bar.battery.replace("%",""))<40?"":Number(bar.battery.replace("%",""))<60?"":Number(bar.battery.replace("%",""))<80?"":""); label:bar.battery; accent:Theme.green; selected:bar.popupKind==="battery"&&dropdown.visible; onClicked:x=>bar.togglePopup("battery",x) }
                     BarButton { height:28; icon:"󰕾"; label:bar.volume; accent:Theme.muted; selected:bar.popupKind==="audio"&&dropdown.visible; onClicked:x=>bar.togglePopup("audio",x); mouseArea.onWheel: w=>Quickshell.execDetached(["wpctl","set-volume","@DEFAULT_AUDIO_SINK@",w.angleDelta.y>0?"4%+":"4%-"]) }
+                }
                 }
             }
 
@@ -154,6 +196,8 @@ ShellRoot {
                 property string icon: "󰕾"
                 property string label: "Volume"
                 property int value: 0
+                property int maximum: 100
+                property bool expanded: false
                 visible: false
                 color: "transparent"
                 implicitWidth: 290
@@ -163,20 +207,36 @@ ShellRoot {
                 exclusionMode: ExclusionMode.Ignore
                 aboveWindows: true
                 Rectangle {
-                    anchors.fill:parent
+                    anchors.top:parent.top
+                    anchors.horizontalCenter:parent.horizontalCenter
+                    width:osd.expanded?parent.width:centerBubble.width
+                    height:osd.expanded?64:0
+                    opacity:osd.expanded?1:0
                     color:Theme.surface
                     border.width:1;border.color:"#3b434e"
+                    radius:height>0?Math.min(16,height/2):0
+                    clip:true
+                    Behavior on height { NumberAnimation { duration:180;easing.type:Easing.OutCubic } }
+                    Behavior on width { NumberAnimation { duration:180;easing.type:Easing.OutCubic } }
+                    Behavior on opacity { NumberAnimation { duration:130;easing.type:Easing.OutQuad } }
                     Row {
                         anchors.fill:parent;anchors.margins:12;spacing:12
                         Text { anchors.verticalCenter:parent.verticalCenter;text:osd.icon;color:Theme.primary;font.family:Theme.iconFont;font.pixelSize:23;width:25 }
                         Column {
                             anchors.verticalCenter:parent.verticalCenter;spacing:5;width:parent.width-78
                             Row { width:parent.width;Text{text:osd.label;color:Theme.fg;font.pixelSize:11;font.weight:Font.DemiBold;width:parent.width-42}Text{text:osd.value+"%";color:Theme.muted;font.pixelSize:11} }
-                            Rectangle { width:parent.width;height:7;radius:3;color:"#414854";Rectangle{width:parent.width*osd.value/100;height:parent.height;radius:3;color:Theme.primary} }
+                            Rectangle {
+                                width:parent.width;height:7;radius:3;color:"#414854";clip:true
+                                Rectangle {
+                                    width:parent.width*osd.value/osd.maximum;height:parent.height;radius:3;color:osd.value>100?Theme.red:Theme.primary
+                                    Behavior on width { NumberAnimation { duration:180;easing.type:Easing.OutCubic } }
+                                }
+                            }
                         }
                     }
                 }
-                Timer { id:osdTimer;interval:1400;onTriggered:osd.visible=false }
+                Timer { id:osdTimer;interval:1400;onTriggered:{osd.expanded=false;osdHideTimer.restart()} }
+                Timer { id:osdHideTimer;interval:190;onTriggered:osd.visible=false }
             }
         }
     }

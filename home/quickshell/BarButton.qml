@@ -11,6 +11,9 @@ Rectangle {
     implicitHeight: 32
     implicitWidth: row.implicitWidth
     color: selected ? Theme.elevated : Theme.surface
+    radius: 6
+    clip: true
+    Behavior on implicitWidth { NumberAnimation { duration:180; easing.type:Easing.OutCubic } }
 
     Row {
         id: row
