@@ -2,6 +2,7 @@
   config,
   inputs,
   isDesktop ? false,
+  pkgs,
   pkgsUnstable,
   ...
 }:
@@ -22,6 +23,12 @@ decorations = "full"
 x = 4
 y = 4'' ]
       (builtins.readFile "${dotfiles}/alacritty/alacritty.toml");
+  alacrittyDir = pkgs.linkFarm "alacritty-config" [
+    {
+      name = "alacritty.toml";
+      path = pkgs.writeText "alacritty.toml" alacrittyConfig;
+    }
+  ];
   zshInit =
     builtins.replaceStrings
       [ ''source "$HOME/.cargo/env"'' ]
@@ -99,7 +106,7 @@ in
   xdg.configFile = {
     "aerospace".source = "${dotfiles}/aerospace";
     "aerospace-swipe".source = "${dotfiles}/aerospace-swipe";
-    "alacritty/alacritty.toml".text = alacrittyConfig;
+    "alacritty".source = alacrittyDir;
     "electron-flags.conf".source = "${dotfiles}/electron/electron-flags.conf";
     "fontconfig/fonts.conf".source = "${dotfiles}/fontconfig/fonts.conf";
     "fuzzel".source = "${dotfiles}/fuzzel";
