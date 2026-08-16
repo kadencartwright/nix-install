@@ -24,9 +24,9 @@ Item {
         Rectangle { width:parent.width; height:1; color:"#555d68" }
         Row { width:parent.width; height:40
             Text { width:190; anchors.verticalCenter:parent.verticalCenter; text:root.monthNames[root.shownMonth.getMonth()]+" "+root.shownMonth.getFullYear(); color:Theme.fg; font.pixelSize:12; font.weight:Font.DemiBold }
-            Text { width:75; anchors.verticalCenter:parent.verticalCenter; text:"Today"; color:Theme.muted; font.pixelSize:12; MouseArea{anchors.fill:parent;onClicked:root.shownMonth=new Date(clock.date.getFullYear(),clock.date.getMonth(),1)} }
-            Text { width:28; anchors.verticalCenter:parent.verticalCenter; text:"‹"; color:Theme.muted; font.pixelSize:20; MouseArea{anchors.fill:parent;onClicked:root.moveMonth(-1)} }
-            Text { width:28; anchors.verticalCenter:parent.verticalCenter; text:"›"; color:Theme.muted; font.pixelSize:20; MouseArea{anchors.fill:parent;onClicked:root.moveMonth(1)} }
+            Text { width:75; anchors.verticalCenter:parent.verticalCenter; text:"Today"; color:Theme.muted; font.pixelSize:12; MouseArea{anchors.fill:parent;cursorShape:Qt.PointingHandCursor;onClicked:root.shownMonth=new Date(clock.date.getFullYear(),clock.date.getMonth(),1)} }
+            Text { width:28; anchors.verticalCenter:parent.verticalCenter; text:"‹"; color:Theme.muted; font.pixelSize:20; MouseArea{anchors.fill:parent;cursorShape:Qt.PointingHandCursor;onClicked:root.moveMonth(-1)} }
+            Text { width:28; anchors.verticalCenter:parent.verticalCenter; text:"›"; color:Theme.muted; font.pixelSize:20; MouseArea{anchors.fill:parent;cursorShape:Qt.PointingHandCursor;onClicked:root.moveMonth(1)} }
         }
         Rectangle {
             width:parent.width; height:270; color:Theme.elevated

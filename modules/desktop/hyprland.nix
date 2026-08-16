@@ -52,6 +52,7 @@
     ]);
 
   services.gnome.gnome-keyring.enable = true;
+  services.udev.packages = [ pkgs.brightnessctl ];
   services.gvfs.enable = true;
   services.tumbler.enable = true;
 }

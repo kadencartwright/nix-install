@@ -8,6 +8,7 @@ Scope {
     property bool autoRun: true
     property int interval: 0
     property var command: []
+    function run() { process.running = true }
     Process {
         id: process
         command: root.command
