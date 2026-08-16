@@ -37,6 +37,7 @@
       swaynotificationcenter
       thunar
       waybar
+      quickshell
       wl-clipboard
       wl-screenrec
       xdg-utils
@@ -48,7 +49,6 @@
       hyprpolkitagent
       hyprpicker
       hyprshot
-      wayle
     ]);
 
   services.gnome.gnome-keyring.enable = true;

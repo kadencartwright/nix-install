@@ -1,0 +1,12 @@
+singleton Theme 1.0 Theme.qml
+Command 1.0 Command.qml
+BarButton 1.0 BarButton.qml
+SectionTitle 1.0 SectionTitle.qml
+ShellSlider 1.0 ShellSlider.qml
+CircleGauge 1.0 CircleGauge.qml
+NetworkPanel 1.0 NetworkPanel.qml
+AudioPanel 1.0 AudioPanel.qml
+MediaPanel 1.0 MediaPanel.qml
+CodexPanel 1.0 CodexPanel.qml
+CalendarPanel 1.0 CalendarPanel.qml
+BatteryPanel 1.0 BatteryPanel.qml

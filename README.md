@@ -52,11 +52,10 @@ Distrobox, while headless hosts retain the lightweight Podman-backed `docker`
 compatibility command.
 
 Desktop configuration follows the pinned `kadencartwright/dotfiles` input.
-Alacritty is the active terminal; Ghostty is not installed or managed. Wayle's
-full config, schemas, styles, themes, and scripts are linked from that input.
-Its Codex/ChatGPT usage module is backed by the packaged `codexbar` command and
-the existing Codex CLI login; left-click shows the usage notification and
-right-click opens the web usage page.
+Alacritty is the active terminal; Ghostty is not installed or managed.
+Quickshell is the active desktop panel, with its configuration managed directly
+by Home Manager. Its Codex usage dropdown is backed by the packaged `codexbar`
+command and the existing Codex CLI login.
 
 SSH authentication uses Home Manager's standard OpenSSH agent and regular key
 files. Bitwarden remains installed as a password manager, but the dotfiles'
@@ -75,12 +74,12 @@ recheck the generated PAM stack after major nixpkgs upgrades.
 Atom One Dark is installed as the GTK 2/3 and icon theme, including the Murrine
 engine it requires. Qt 5/6 uses its GTK integration so it follows the same
 theme; GTK4/libadwaita stays in supported dark mode. The current dotfiles carry
-the matching One Dark palettes for Wayle, Alacritty, Kitty, Neovim, and KDE,
+the matching One Dark palettes for Quickshell, Alacritty, Kitty, Neovim, and KDE,
 and Hyprpaper uses the pinned One Dark NixOS wallpaper.
 
 `hyprwhspr` is also installed on desktop hosts. After the first rebuild, run
 `hyprwhspr setup` once: enable its Hyprland and systemd choices, but skip
-Waybar (Wayle is the active panel) and the imperative permissions step (ydotool
+Waybar (Quickshell is the active panel) and the imperative permissions step (ydotool
 is configured by NixOS). The existing `Alt+G` binding toggles dictation.
 
 ## VM Test

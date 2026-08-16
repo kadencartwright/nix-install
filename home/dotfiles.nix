@@ -47,19 +47,16 @@ let
         ''hl.env("SSH_AUTH_SOCK", home .. "/.bitwarden-ssh-agent.sock")''
         ''hl.env("QT_QPA_PLATFORMTHEME", "adwaita")''
         ''hl.env("QT_STYLE_OVERRIDE", "adwaita-dark")''
+        ''hl.exec_cmd("wayle shell")''
       ]
       [
         hyprwhsprRoot
         ''hl.env("SSH_AUTH_SOCK", (os.getenv("XDG_RUNTIME_DIR") or "") .. "/ssh-agent")''
         ''hl.env("QT_QPA_PLATFORMTHEME", "gtk")''
         ''hl.env("QT_STYLE_OVERRIDE", "gtk2")''
+        ''hl.exec_cmd("quickshell")''
       ]
       (builtins.readFile "${dotfiles}/hyprland/hyprland.lua");
-  wayleConfig =
-    builtins.replaceStrings
-      [ "/home/k/code/dotfiles/wayle/scripts/codexbar-panel" ]
-      [ "${config.xdg.configHome}/wayle/scripts/codexbar-panel" ]
-      (builtins.readFile "${dotfiles}/wayle/config.toml");
 in
 {
   xdg.configFile = {
@@ -100,12 +97,7 @@ in
       text = waybarModule;
     };
     "waybar/style.css".text = waybarStyle;
-    "wayle/config.toml".text = wayleConfig;
-    "wayle/schema.json".source = "${dotfiles}/wayle/schema.json";
-    "wayle/scripts".source = "${dotfiles}/wayle/scripts";
-    "wayle/styles".source = "${dotfiles}/wayle/styles";
-    "wayle/themes".source = "${dotfiles}/wayle/themes";
-    "wayle/tombi.toml".source = "${dotfiles}/wayle/tombi.toml";
+    "quickshell".source = ./quickshell;
     "hypr/hyprpaper.conf".text = ''
       wallpaper {
           monitor =
