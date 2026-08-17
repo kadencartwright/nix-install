@@ -72,7 +72,7 @@ ShellRoot {
             Command { command:["sh","-c","paste -d' ' /sys/class/power_supply/BAT0/capacity /sys/class/power_supply/BAT0/status 2>/dev/null"]; interval:10000; onOutputChanged: { let p=output.split(" "); bar.battery=p[0]?p[0]+"%":""; bar.batteryStatus=p[1]||"" } }
             Command { command:["sh","-c","powerprofilesctl get 2>/dev/null | sed 's/power-saver/Saver/;s/balanced/Balanced/;s/performance/Perf/'"]; interval:2000; onOutputChanged: if(output)bar.profile=output }
             Command { command:["sh","-c","codexbar --format '{session_pct}% - {session_reset}' 2>/dev/null | jq -r .text | sed 's/<[^>]*>//g'"]; interval:300000; onOutputChanged: if(output)bar.codex=output }
-            Command { command:["display-control","brightness-value",bar.screen.name]; interval:15000; onOutputChanged:bar.displayBrightness=output?output+"%":"" }
+            Command { command:["display-control","main-brightness"]; interval:15000; onOutputChanged:bar.displayBrightness=output?output+"%":"" }
 
             function togglePopup(kind, x) {
                 if (popupKind === kind && dropdown.visible) { closePopup(); return }
@@ -167,7 +167,7 @@ ShellRoot {
                     BarButton { height:28; icon:"󰖩"; label:bar.networkName; accent:Theme.blue; selected:bar.popupKind==="network"&&dropdown.visible; onClicked:x=>bar.togglePopup("network",x) }
                     BarButton { height:28; icon:"󰐥"; label:bar.profile; accent:Theme.muted; mouseArea.onClicked:bar.cyclePowerProfile() }
                     BarButton { visible:bar.battery!==""; height:28; icon:bar.batteryStatus==="Charging"?"":(Number(bar.battery.replace("%",""))<20?"":Number(bar.battery.replace("%",""))<40?"":Number(bar.battery.replace("%",""))<60?"":Number(bar.battery.replace("%",""))<80?"":""); label:bar.battery; accent:Theme.green; selected:bar.popupKind==="battery"&&dropdown.visible; onClicked:x=>bar.togglePopup("battery",x) }
-                    BarButton { height:28; icon:"󰍹"; label:bar.displayBrightness; accent:Theme.blue; selected:bar.popupKind==="display"&&dropdown.visible; onClicked:x=>bar.togglePopup("display",x); mouseArea.onWheel:w=>Quickshell.execDetached(["display-control","brightness",bar.screen.name,w.angleDelta.y>0?"+5":"-5"]) }
+                    BarButton { height:28; icon:"󰃠"; label:bar.displayBrightness; accent:Theme.blue; selected:bar.popupKind==="display"&&dropdown.visible; onClicked:x=>bar.togglePopup("display",x); mouseArea.onWheel:w=>Quickshell.execDetached(["display-control","brightness","main",w.angleDelta.y>0?"+5":"-5"]) }
                     BarButton { height:28; icon:"󰕾"; label:bar.volume; accent:Theme.muted; selected:bar.popupKind==="audio"&&dropdown.visible; onClicked:x=>bar.togglePopup("audio",x); mouseArea.onWheel: w=>Quickshell.execDetached(["wpctl","set-volume","@DEFAULT_AUDIO_SINK@",w.angleDelta.y>0?"4%+":"4%-"]) }
                 }
                 }
@@ -183,7 +183,7 @@ ShellRoot {
                 anchor.rect.x: Math.max(4, Math.min(bar.width - width - 8, bar.popupAnchorX - width/2))
                 anchor.rect.y: bar.height + 3
                 implicitWidth: bar.popupKind === "audio" || bar.popupKind === "display" ? 430 : bar.popupKind === "network" || bar.popupKind === "calendar" ? 350 : bar.popupKind === "codex" ? 340 : bar.popupKind === "battery" ? 380 : 390
-                implicitHeight: bar.popupKind === "display" ? 520 : bar.popupKind === "network" ? 500 : bar.popupKind === "audio" || bar.popupKind === "calendar" ? 488 : bar.popupKind === "codex" || bar.popupKind === "battery" ? 433 : 283
+                implicitHeight: bar.popupKind === "display" ? (panelLoader.item ? panelLoader.item.implicitHeight+43 : 420) : bar.popupKind === "network" ? 500 : bar.popupKind === "audio" || bar.popupKind === "calendar" ? 488 : bar.popupKind === "codex" || bar.popupKind === "battery" ? 433 : 283
                 onVisibleChanged: if (!visible) {
                     expanded = false
                     bar.popupKind = ""

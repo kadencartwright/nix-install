@@ -73,10 +73,34 @@ focused_monitor() {
   monitors_json | jq -r '[.[] | select(.focused == true)][0].name // [.[] | select(.disabled != true)][0].name // empty'
 }
 
+main_brightness_monitor() {
+  local json preferred monitor value
+  json=$(monitors_json)
+  preferred=$(jq -r '[.[] | select(.disabled != true)] | sort_by(.y, .x) | .[0].name // empty' <<< "$json")
+  if [[ -n "$preferred" ]]; then
+    value=$(read_brightness "$preferred" 2>/dev/null || true)
+    if [[ "$value" =~ ^[0-9]+$ ]]; then
+      printf '%s\n' "$preferred"
+      return 0
+    fi
+  fi
+  while IFS= read -r monitor; do
+    [[ "$monitor" == "$preferred" ]] && continue
+    value=$(read_brightness "$monitor" 2>/dev/null || true)
+    if [[ "$value" =~ ^[0-9]+$ ]]; then
+      printf '%s\n' "$monitor"
+      return 0
+    fi
+  done < <(jq -r '.[] | select(.disabled != true) | .name' <<< "$json")
+  return 1
+}
+
 set_brightness() {
   local monitor=$1 requested=$2 current target device bus response maximum raw
   if [[ "$monitor" == "focused" ]]; then
     monitor=$(focused_monitor)
+  elif [[ "$monitor" == "main" ]]; then
+    monitor=$(main_brightness_monitor)
   fi
   [[ -n "$monitor" ]] || { echo "No active monitor" >&2; return 1; }
 
@@ -223,6 +247,30 @@ move_monitor() {
   } | save_and_apply
 }
 
+position_monitor() {
+  local monitor=$1 new_x=$2 new_y=$3 json name mode scale x y
+  [[ "$new_x" =~ ^-?[0-9]+$ && "$new_y" =~ ^-?[0-9]+$ ]] \
+    || { echo "Display coordinates must be integers" >&2; return 2; }
+  json=$(monitors_json)
+  jq -e --arg name "$monitor" '.[] | select(.name == $name and .disabled != true)' <<< "$json" >/dev/null \
+    || { echo "Unknown active monitor: $monitor" >&2; return 1; }
+
+  {
+    while IFS= read -r name; do
+      mode=$(mode_for "$json" "$name")
+      scale=$(scale_for "$json" "$name")
+      if [[ "$name" == "$monitor" ]]; then
+        x=$new_x
+        y=$new_y
+      else
+        read -r x y < <(jq -r --arg name "$name" '.[] | select(.name == $name) | [(.x // 0), (.y // 0)] | @tsv' <<< "$json")
+      fi
+      printf '%s,%s,%sx%s,%s\n' "$name" "$mode" "$x" "$y" "$scale"
+    done < <(enabled_names "$json" horizontal)
+    disabled_specs "$json"
+  } | save_and_apply
+}
+
 mirror_all() {
   local target=$1 json name target_mode target_scale
   json=$(monitors_json)
@@ -283,6 +331,10 @@ case "$command" in
     monitor=$(focused_monitor)
     [[ -n "$monitor" ]] && read_brightness "$monitor"
     ;;
+  main-brightness)
+    monitor=$(main_brightness_monitor)
+    [[ -n "$monitor" ]] && read_brightness "$monitor"
+    ;;
   brightness-value)
     [[ $# -eq 2 ]] || { echo "Usage: display-control brightness-value MONITOR" >&2; exit 2; }
     read_brightness "$2"
@@ -299,6 +351,10 @@ case "$command" in
   move)
     [[ $# -eq 3 ]] || { echo "Usage: display-control move MONITOR left|right|up|down" >&2; exit 2; }
     move_monitor "$2" "$3"
+    ;;
+  position)
+    [[ $# -eq 4 ]] || { echo "Usage: display-control position MONITOR X Y" >&2; exit 2; }
+    position_monitor "$2" "$3" "$4"
     ;;
   mirror)
     [[ $# -eq 2 ]] || { echo "Usage: display-control mirror TARGET" >&2; exit 2; }

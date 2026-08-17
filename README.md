@@ -92,12 +92,12 @@ uses its native parallel fprintd integration with password fallback. Enroll a
 finger once with `sudo fprintd-enroll k`; the enrolled print is then available
 to sudo and the lock screen.
 
-The monitor/brightness pill in the Quickshell bar opens a display panel. It can
-reorder connected screens, build horizontal or vertical extended layouts, and
-mirror every screen to the selected display. Layout changes are restored at the
-next Hyprland login. Brightness uses the kernel backlight for laptop panels and
-DDC/CI for external monitors; if an external slider is absent, enable DDC/CI in
-that monitor's on-screen settings if it supports the feature.
+The monitor/brightness pill in the Quickshell bar opens a display panel. Drag
+the proportional screen tiles to arrange an extended desktop, or mirror every
+screen to the selected display. Layout changes are restored at the next
+Hyprland login. The separate brightness section uses the kernel backlight for
+laptop panels and DDC/CI for external monitors; if an external slider is absent,
+enable DDC/CI in that monitor's on-screen settings if it supports the feature.
 
 ## VM Test
 

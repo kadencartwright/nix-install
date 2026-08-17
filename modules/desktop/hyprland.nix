@@ -106,6 +106,9 @@ in
 
   services.gnome.gnome-keyring.enable = true;
   hardware.i2c.enable = true;
+  # Lemurs sessions do not receive logind's seat-based uaccess ACLs, so grant
+  # the interactive user explicit access for external-monitor DDC/CI control.
+  users.users.k.extraGroups = [ "i2c" ];
   services.udev.packages = [ pkgs.brightnessctl ];
   services.gvfs.enable = true;
   services.tumbler.enable = true;
