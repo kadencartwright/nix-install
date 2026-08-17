@@ -67,6 +67,7 @@ y = 4'' ]
         ''hl.env("QT_STYLE_OVERRIDE", "adwaita-dark")''
         ''hl.exec_cmd("wayle shell")''
         ''hl.exec_cmd("hypridle")''
+        ''hl.exec_cmd("dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP")''
         ''	animations = {
 		enabled = false,
 	},''
@@ -93,6 +94,8 @@ hl.env("GNOME_KEYRING_CONTROL", (os.getenv("XDG_RUNTIME_DIR") or "") .. "/keyrin
         ''hl.exec_cmd("gnome-keyring-daemon --start --components=secrets")''
         ''hl.exec_cmd("hypridle")
 	hl.exec_cmd("display-control restore")''
+        ''hl.exec_cmd("dbus-update-activation-environment --systemd DISPLAY HYPRLAND_INSTANCE_SIGNATURE WAYLAND_DISPLAY XDG_CURRENT_DESKTOP XDG_SESSION_TYPE")
+	hl.exec_cmd("systemctl --user start hyprland-session.target")''
         ''	decoration = {
 		rounding = 12,
 		rounding_power = 4.0,
@@ -115,9 +118,27 @@ hl.bind("ALT + G", hl.dsp.exec_cmd("voxtype record toggle"), {
 	description = "Toggle Voxtype dictation",
 })''
       ]
-      (builtins.readFile "${dotfiles}/hyprland/hyprland.lua");
+      (builtins.readFile "${dotfiles}/hyprland/hyprland.lua")
+    + pkgs.lib.optionalString isDesktop ''
+
+      hl.on("hyprland.shutdown", function()
+        os.execute("systemctl --user stop hyprland-session.target && sleep 0.1")
+      end)
+    '';
 in
 {
+  # Activate desktop-scoped user services without routing application launches
+  # through UWSM. Hyprland starts and stops this target from its Lua lifecycle.
+  systemd.user.targets.hyprland-session = pkgs.lib.mkIf isDesktop {
+    Unit = {
+      Description = "Hyprland compositor session";
+      BindsTo = [ "graphical-session.target" ];
+      Wants = [ "graphical-session-pre.target" ];
+      After = [ "graphical-session-pre.target" ];
+      PropagatesStopTo = [ "graphical-session.target" ];
+    };
+  };
+
   systemd.user.services.quickshell = pkgs.lib.mkIf isDesktop {
     Unit = {
       Description = "Quickshell desktop shell";

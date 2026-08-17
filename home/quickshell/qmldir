@@ -5,9 +5,11 @@ SectionTitle 1.0 SectionTitle.qml
 ShellSlider 1.0 ShellSlider.qml
 CircleGauge 1.0 CircleGauge.qml
 NetworkPanel 1.0 NetworkPanel.qml
+NetworkSpeedTest 1.0 NetworkSpeedTest.qml
 AudioPanel 1.0 AudioPanel.qml
 DisplayPanel 1.0 DisplayPanel.qml
 MediaPanel 1.0 MediaPanel.qml
 CodexPanel 1.0 CodexPanel.qml
 CalendarPanel 1.0 CalendarPanel.qml
 BatteryPanel 1.0 BatteryPanel.qml
+VoxtypePanel 1.0 VoxtypePanel.qml

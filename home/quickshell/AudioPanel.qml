@@ -39,6 +39,7 @@ Item {
         property string title: ""
         property string glyph: "󰓃"
         property bool selected: false
+        property bool metered: false
         width: parent ? parent.width : root.width
         height: 66
         radius: 8
@@ -61,7 +62,7 @@ Item {
             Column {
                 width: parent.width - 75
                 anchors.verticalCenter: parent.verticalCenter
-                spacing: 5
+                spacing: 3
                 Text {
                     width: parent.width
                     text: volumeRow.title
@@ -70,6 +71,26 @@ Item {
                     font.family: Theme.font
                     font.pixelSize: 12
                     font.weight: volumeRow.selected ? Font.DemiBold : Font.Normal
+                }
+                Rectangle {
+                    visible: volumeRow.metered
+                    width: parent.width
+                    height: visible ? 4 : 0
+                    radius: 2
+                    color: "#414854"
+
+                    Rectangle {
+                        width: parent.width * Math.max(0, Math.min(1, peakMonitor.peak))
+                        height: parent.height
+                        radius: parent.radius
+                        color: peakMonitor.peak > 0.9
+                            ? Theme.red
+                            : peakMonitor.peak > 0.72 ? Theme.yellow : Theme.green
+
+                        Behavior on width {
+                            NumberAnimation { duration: 45 }
+                        }
+                    }
                 }
                 Row {
                     spacing: 8
@@ -104,6 +125,14 @@ Item {
                     onClicked: if (volumeRow.node && volumeRow.node.audio) volumeRow.node.audio.muted = !volumeRow.node.audio.muted
                 }
             }
+        }
+
+        // The monitor taps this PipeWire node only while its source row is
+        // alive, then exposes a visual 0..1 peak independent of its volume.
+        PwNodePeakMonitor {
+            id: peakMonitor
+            node: volumeRow.metered ? volumeRow.node : null
+            enabled: volumeRow.metered && volumeRow.visible
         }
     }
 
@@ -151,6 +180,7 @@ Item {
                 title: root.labelFor(root.input, "No microphone")
                 glyph: root.glyphFor(root.input, true)
                 selected: true
+                metered: true
             }
             Repeater {
                 model: root.sources.filter(node => node !== root.input)
@@ -159,6 +189,7 @@ Item {
                     node: modelData
                     title: root.labelFor(modelData, "Microphone")
                     glyph: root.glyphFor(modelData, true)
+                    metered: true
                     MouseArea {
                         x: 0
                         y: 0
