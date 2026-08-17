@@ -24,10 +24,12 @@
   # Lemurs deliberately runs Wayland sessions without pam_loginuid (upstream
   # issue #166). Polkit consequently classifies the session incorrectly and
   # fprintd's default active-user-only verification rule rejects Hyprlock.
-  # Limit the workaround to fingerprint verification by this workstation user.
+  # Limit the workaround to fingerprint verification and enrollment by this
+  # workstation user.
   security.polkit.extraConfig = ''
     polkit.addRule(function(action, subject) {
-      if (action.id == "net.reactivated.fprint.device.verify" &&
+      if ((action.id == "net.reactivated.fprint.device.verify" ||
+           action.id == "net.reactivated.fprint.device.enroll") &&
           subject.user == "k") {
         return polkit.Result.YES;
       }
