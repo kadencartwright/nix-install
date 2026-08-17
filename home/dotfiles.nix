@@ -147,7 +147,6 @@ in
     "hypr/hyprland.lua".text = hyprlandConfig;
     "hypr/hyprlock.conf".source = "${dotfiles}/hyprland/hyprlock.conf";
     "hypr/macchiato.conf".source = "${dotfiles}/hyprland/macchiato.conf";
-    "hypr/monitors.conf".source = "${dotfiles}/hyprland/monitors.conf";
     "hypr/monitors.lua".source = "${dotfiles}/hyprland/monitors.lua";
     "hypr/workspaces.conf".source = "${dotfiles}/hyprland/workspaces.conf";
     "hypr/xdph.conf".source = "${dotfiles}/hyprland/xdph.conf";
