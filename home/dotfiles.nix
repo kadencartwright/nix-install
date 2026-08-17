@@ -83,8 +83,7 @@ hl.animation({ leaf = "fade", enabled = true, speed = 1, bezier = "default" })''
 hl.env("GNOME_KEYRING_CONTROL", (os.getenv("XDG_RUNTIME_DIR") or "") .. "/keyring")''
         ''hl.env("QT_QPA_PLATFORMTHEME", "gtk")''
         ''hl.env("QT_STYLE_OVERRIDE", "gtk2")''
-        ''hl.exec_cmd("gnome-keyring-daemon --start --components=secrets")
-	hl.exec_cmd("quickshell")''
+        ''hl.exec_cmd("gnome-keyring-daemon --start --components=secrets")''
         ''	decoration = {
 		rounding = 12,
 		rounding_power = 4.0,
@@ -105,6 +104,24 @@ hl.animation({ leaf = "fade", enabled = false })''
       (builtins.readFile "${dotfiles}/hyprland/hyprland.lua");
 in
 {
+  systemd.user.services.quickshell = pkgs.lib.mkIf isDesktop {
+    Unit = {
+      Description = "Quickshell desktop shell";
+      After = [ "graphical-session.target" ];
+      PartOf = [ "graphical-session.target" ];
+      X-Restart-Triggers = [ "${./quickshell}" ];
+    };
+
+    Service = {
+      ExecStartPre = "-${pkgs.quickshell}/bin/quickshell kill";
+      ExecStart = "${pkgs.quickshell}/bin/quickshell";
+      Restart = "on-failure";
+      RestartSec = 1;
+    };
+
+    Install.WantedBy = [ "graphical-session.target" ];
+  };
+
   xdg.configFile = {
     "aerospace".source = "${dotfiles}/aerospace";
     "aerospace-swipe".source = "${dotfiles}/aerospace-swipe";
