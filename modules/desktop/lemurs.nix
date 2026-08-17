@@ -1,5 +1,19 @@
-{ lib, pkgs, ... }:
+{ config, lib, pkgs, ... }:
 
+let
+  # Expose one stable session name to Lemurs so its remembered "Hyprland"
+  # selection always uses UWSM. UWSM owns the graphical-session target that
+  # starts desktop user services such as Quickshell and Voxtype.
+  hyprlandSession = pkgs.writeTextDir "share/wayland-sessions/hyprland.desktop" ''
+    [Desktop Entry]
+    Name=Hyprland
+    Comment=Hyprland compositor managed by UWSM
+    Exec=${lib.getExe config.programs.uwsm.package} start -e -D Hyprland hyprland.desktop
+    TryExec=${lib.getExe config.programs.uwsm.package}
+    DesktopNames=Hyprland
+    Type=Application
+  '';
+in
 {
   # Lemurs starts Wayland sessions through seatd. The NixOS module disables
   # pam_loginuid because of an upstream Lemurs issue, so logind does not attach
@@ -59,6 +73,8 @@
         selected_color = "#abb2bf";
         selected_color_focused = "#98c379";
       };
+
+      wayland.wayland_sessions_path = "${hyprlandSession}/share/wayland-sessions";
 
       username_field = {
         remember = true;
