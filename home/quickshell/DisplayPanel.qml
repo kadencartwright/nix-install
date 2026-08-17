@@ -5,7 +5,9 @@ import Quickshell.Io
 Item {
     id: root
     implicitWidth: 430
-    implicitHeight: 385 + Math.max(1,brightnessMonitors.length)*34 + Math.max(0,brightnessMonitors.length-1)*6
+    implicitHeight: 418
+        + Math.max(1,activeMonitors.length)*34 + Math.max(0,activeMonitors.length-1)*6
+        + Math.max(1,brightnessMonitors.length)*34 + Math.max(0,brightnessMonitors.length-1)*6
 
     property string initialMonitor: ""
     property var displayState: ({ "mode": "extend", "monitors": [] })
@@ -23,6 +25,10 @@ Item {
     property var draftPositions: ({})
     property bool hasPendingLayout: false
     property bool applyingLayout: false
+    readonly property string helperBinary: {
+        const configured = Quickshell.env("DISPLAY_CONTROL_BINARY")
+        return configured && configured.length > 0 ? configured : "display-control"
+    }
     readonly property var activeMonitors: monitors.filter(monitor => monitor.enabled)
     readonly property var brightnessMonitors: {
         let result = []
@@ -66,7 +72,7 @@ Item {
         errorText = ""
         busy = true
         applyingLayout = isLayoutApply === true
-        actionProcess.command = ["display-control"].concat(arguments)
+        actionProcess.command = [helperBinary].concat(arguments)
         actionProcess.running = true
     }
 
@@ -140,6 +146,21 @@ Item {
         brightnessTimer.restart()
     }
 
+    function changeScale(name, current, step) {
+        if (busy) return
+        let value = Math.max(0.5, Math.min(3, Math.round((Number(current) + step) * 4) / 4))
+        runAction(["scale", name, value.toFixed(2)])
+    }
+
+    function scaleLabel(value) {
+        return Math.round(Number(value || 1) * 100) + "%"
+    }
+
+    function logicalSizeLabel(monitor) {
+        let scale = Math.max(0.1, Number(monitor.scale || 1))
+        return Math.round(monitor.width / scale) + "×" + Math.round(monitor.height / scale)
+    }
+
     function snapPosition(name, rawX, rawY) {
         let current = activeMonitors.find(monitor => monitor.name === name)
         if (!current) return { "x": Math.round(rawX), "y": Math.round(rawY), "snappedX": false, "snappedY": false }
@@ -188,7 +209,7 @@ Item {
 
     Command {
         id: layoutCommand
-        command: ["display-control", "layout-status"]
+        command: [root.helperBinary, "layout-status"]
         interval: 3000
         onOutputChanged: {
             if (!output) return
@@ -209,7 +230,7 @@ Item {
 
     Command {
         id: brightnessCommand
-        command: ["display-control", "brightness-status"]
+        command: [root.helperBinary, "brightness-status"]
         interval: 15000
         onOutputChanged: {
             if (!output) return
@@ -261,6 +282,35 @@ Item {
             Text { text:button.label; color:button.active?Theme.bg:Theme.fg; font.family:Theme.font; font.pixelSize:11; font.weight:Font.DemiBold }
         }
         MouseArea { anchors.fill:parent; enabled:!root.busy&&button.enabled; cursorShape:Qt.PointingHandCursor; onClicked:button.clicked() }
+    }
+
+    component ScaleButton: Rectangle {
+        id: scaleButton
+        property string label: ""
+        signal clicked()
+        width: 30
+        height: 26
+        radius: 6
+        color: scaleMouse.containsMouse ? "#3a4551" : "#303842"
+        border.width: 1
+        border.color: "#46515e"
+        opacity: root.busy || !scaleButton.enabled ? 0.5 : 1
+        Text {
+            anchors.centerIn: parent
+            text: scaleButton.label
+            color: Theme.fg
+            font.family: Theme.font
+            font.pixelSize: 14
+            font.weight: Font.DemiBold
+        }
+        MouseArea {
+            id: scaleMouse
+            anchors.fill: parent
+            enabled: !root.busy && scaleButton.enabled
+            hoverEnabled: true
+            cursorShape: Qt.PointingHandCursor
+            onClicked: scaleButton.clicked()
+        }
     }
 
     Column {
@@ -442,6 +492,79 @@ Item {
                 label: "Discard"
                 enabled: root.hasPendingLayout
                 onClicked: root.discardDraftLayout()
+            }
+        }
+
+        SectionTitle { icon:"󰇄"; title:"Scale per Display" }
+        Column {
+            width: parent.width
+            spacing: 6
+            Repeater {
+                model: root.activeMonitors
+                Rectangle {
+                    id: scaleRow
+                    required property var modelData
+                    width: parent.width
+                    height: 34
+                    radius: 7
+                    color: Theme.elevated
+                    Row {
+                        anchors.fill: parent
+                        anchors.leftMargin: 9
+                        anchors.rightMargin: 9
+                        spacing: 8
+                        Text {
+                            width: 70
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: scaleRow.modelData.name
+                            elide: Text.ElideRight
+                            color: root.selectedName === scaleRow.modelData.name ? Theme.primary : Theme.fg
+                            font.family: Theme.font
+                            font.pixelSize: 10
+                            font.weight: Font.DemiBold
+                        }
+                        Text {
+                            width: parent.width - 215
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: root.logicalSizeLabel(scaleRow.modelData) + " logical"
+                            elide: Text.ElideRight
+                            color: Theme.muted
+                            font.family: Theme.font
+                            font.pixelSize: 9
+                        }
+                        ScaleButton {
+                            anchors.verticalCenter: parent.verticalCenter
+                            label: "−"
+                            enabled: Number(scaleRow.modelData.scale) > 0.5
+                            onClicked: root.changeScale(scaleRow.modelData.name, scaleRow.modelData.scale, -0.25)
+                        }
+                        Text {
+                            width: 45
+                            anchors.verticalCenter: parent.verticalCenter
+                            horizontalAlignment: Text.AlignHCenter
+                            text: root.scaleLabel(scaleRow.modelData.scale)
+                            color: Theme.blue
+                            font.family: Theme.font
+                            font.pixelSize: 10
+                            font.weight: Font.DemiBold
+                        }
+                        ScaleButton {
+                            anchors.verticalCenter: parent.verticalCenter
+                            label: "+"
+                            enabled: Number(scaleRow.modelData.scale) < 3
+                            onClicked: root.changeScale(scaleRow.modelData.name, scaleRow.modelData.scale, 0.25)
+                        }
+                    }
+                    MouseArea {
+                        anchors.left: parent.left
+                        anchors.right: parent.right
+                        anchors.top: parent.top
+                        anchors.bottom: parent.bottom
+                        anchors.rightMargin: 128
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: root.selectedName = scaleRow.modelData.name
+                    }
+                }
             }
         }
 

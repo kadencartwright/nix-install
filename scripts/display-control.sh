@@ -361,6 +361,40 @@ position_monitors() {
   } | save_and_apply
 }
 
+set_monitor_scale() {
+  local monitor=$1 requested=$2 json name mode scale x y mirror
+  [[ "$requested" =~ ^[0-9]+([.][0-9]+)?$ ]] \
+    || { echo "Display scale must be a number" >&2; return 2; }
+  awk -v value="$requested" 'BEGIN { exit !(value >= 0.5 && value <= 3) }' \
+    || { echo "Display scale must be between 0.5 and 3" >&2; return 2; }
+  requested=$(awk -v value="$requested" 'BEGIN {
+    value = int(value * 100 + 0.5) / 100
+    printf "%.2f", value
+  }' | sed 's/0$//; s/[.]0$//')
+
+  json=$(monitors_json)
+  jq -e --arg name "$monitor" '.[] | select(.name == $name and .disabled != true)' <<< "$json" >/dev/null \
+    || { echo "Unknown active monitor: $monitor" >&2; return 1; }
+
+  {
+    while IFS= read -r name; do
+      mode=$(mode_for "$json" "$name")
+      scale=$(scale_for "$json" "$name")
+      read -r x y mirror < <(jq -r --arg name "$name" '
+        .[] | select(.name == $name) |
+        [(.x // 0), (.y // 0), ((.mirror // .mirrorOf // "") | if . == "none" then "" else . end)] | @tsv
+      ' <<< "$json")
+      [[ "$name" == "$monitor" ]] && scale=$requested
+      if [[ -n "$mirror" ]]; then
+        printf '%s,%s,%sx%s,%s,mirror,%s\n' "$name" "$mode" "$x" "$y" "$scale" "$mirror"
+      else
+        printf '%s,%s,%sx%s,%s\n' "$name" "$mode" "$x" "$y" "$scale"
+      fi
+    done < <(enabled_names "$json" horizontal)
+    disabled_specs "$json"
+  } | save_and_apply
+}
+
 mirror_all() {
   local target=$1 json name target_mode target_scale
   json=$(monitors_json)
@@ -474,6 +508,10 @@ case "$command" in
     ;;
   positions)
     position_monitors "${@:2}"
+    ;;
+  scale)
+    [[ $# -eq 3 ]] || { echo "Usage: display-control scale MONITOR SCALE" >&2; exit 2; }
+    set_monitor_scale "$2" "$3"
     ;;
   mirror)
     [[ $# -eq 2 ]] || { echo "Usage: display-control mirror TARGET" >&2; exit 2; }

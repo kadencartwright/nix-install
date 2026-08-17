@@ -1,18 +1,7 @@
 { pkgs, pkgsUnstable, ... }:
 
 let
-  displayControl = pkgs.writeShellApplication {
-    name = "display-control";
-    runtimeInputs = [
-      pkgs.brightnessctl
-      pkgs.coreutils
-      pkgs.ddcutil
-      pkgs.gawk
-      pkgs.jq
-      pkgsUnstable.hyprland
-    ];
-    text = builtins.readFile ../../scripts/display-control.sh;
-  };
+  displayControl = import ../../packages/display-control.nix { inherit pkgs pkgsUnstable; };
   ocrScreenshot = pkgs.writeShellApplication {
     name = "ocr-screenshot";
     runtimeInputs = [

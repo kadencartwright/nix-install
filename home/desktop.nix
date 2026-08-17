@@ -7,6 +7,7 @@
 }:
 
 let
+  displayControl = import ../packages/display-control.nix { inherit pkgs pkgsUnstable; };
   voxtype = pkgsUnstable.voxtype.override { vulkanSupport = true; };
   voxtypeHistory = pkgs.writeShellApplication {
     name = "voxtype-history";
@@ -176,6 +177,270 @@ let
       done
     '';
   };
+  networkPanelHelper = pkgs.writeShellApplication {
+    name = "network-panel-helper";
+    runtimeInputs = [
+      pkgs.coreutils
+      pkgs.gawk
+      pkgs.gnused
+      pkgs.iproute2
+      pkgs.iputils
+      pkgs.iw
+      pkgs.jq
+      pkgs.networkmanager
+      pkgs.qrencode
+    ];
+    text = ''
+      export LC_ALL=C
+      probe=1.1.1.1
+
+      band_for_freq() {
+        local mhz="''${1%%[!0-9]*}"
+        if [[ -z "$mhz" ]]; then
+          return
+        elif (( mhz >= 2400 && mhz < 2500 )); then
+          printf '2.4'
+        elif (( mhz >= 4900 && mhz < 5925 )); then
+          printf '5'
+        elif (( mhz >= 5925 && mhz < 7125 )); then
+          printf '6'
+        fi
+      }
+
+      active_connection() {
+        route_json="$(ip -j route get "$probe" 2>/dev/null || true)"
+        iface="$(jq -r '.[0].dev // ""' <<< "$route_json")"
+        gateway="$(jq -r '.[0].gateway // ""' <<< "$route_json")"
+        ip_address="$(jq -r '.[0].prefsrc // ""' <<< "$route_json")"
+        if [[ -z "$iface" ]]; then
+          return 1
+        fi
+        connection_uuid="$(nmcli -g GENERAL.CON-UUID device show "$iface" 2>/dev/null || true)"
+        connection_name="$(nmcli -g GENERAL.CONNECTION device show "$iface" 2>/dev/null || true)"
+      }
+
+      provider_for_dns() {
+        local ignored="$1"
+        local servers="$2"
+        if [[ "$ignored" != "yes" || -z "''${servers//[[:space:]]/}" ]]; then
+          printf 'DHCP'
+        elif [[ "$servers" == *"1.1.1.1"* ]]; then
+          printf 'Cloudflare'
+        elif [[ "$servers" == *"8.8.8.8"* ]]; then
+          printf 'Google'
+        else
+          printf 'Custom'
+        fi
+      }
+
+      available_bands() {
+        local device="$1"
+        local wanted_ssid="$2"
+        local current="$3"
+        {
+          [[ -n "$current" ]] && printf '%s\n' "$current"
+          nmcli -e no -g FREQ,SSID device wifi list ifname "$device" --rescan no 2>/dev/null \
+            | want="$wanted_ssid" awk -F: '
+                BEGIN { want = ENVIRON["want"] }
+                {
+                  name = $2
+                  for (i = 3; i <= NF; i++) name = name ":" $i
+                  if (name == want) print $1
+                }' \
+            | while read -r frequency; do band_for_freq "$frequency"; printf '\n'; done
+        } | sed '/^$/d' | sort -u -g | tr '\n' ' ' | sed 's/ $//'
+      }
+
+      status() {
+        if ! active_connection; then
+          jq -cn '{ connected: false }'
+          return
+        fi
+
+        prefix="$(ip -j addr show "$iface" 2>/dev/null | jq -r '.[0].addr_info[]? | select(.family == "inet") | .prefixlen // ""' | head -n 1)"
+        rx_bytes="$(<"/sys/class/net/$iface/statistics/rx_bytes")"
+        tx_bytes="$(<"/sys/class/net/$iface/statistics/tx_bytes")"
+        ping_ms="$(ping -n -c 1 -W 1 "$probe" 2>/dev/null | awk -F'time[=<]' '/time[=<]/ { split($2, p, " "); print p[1]; exit }' || true)"
+        dns_servers="$(nmcli -g IP4.DNS device show "$iface" 2>/dev/null | tr '|' ' ' | xargs)"
+        ignored_dns="$(nmcli -g ipv4.ignore-auto-dns connection show "$connection_uuid" 2>/dev/null || true)"
+        configured_dns="$(nmcli -g ipv4.dns connection show "$connection_uuid" 2>/dev/null | paste -sd' ' -)"
+        dns_provider="$(provider_for_dns "$ignored_dns" "$configured_dns")"
+
+        kind=ethernet
+        ssid=""
+        frequency=""
+        signal_dbm=""
+        bitrate=""
+        current_band=""
+        selected_band=auto
+        bands=""
+        link_speed=""
+
+        if [[ -d "/sys/class/net/$iface/wireless" ]]; then
+          kind=wifi
+          link="$(iw dev "$iface" link 2>/dev/null || true)"
+          ssid="$(awk '/SSID:/ { sub(/.*SSID: /, ""); print; exit }' <<< "$link")"
+          frequency="$(awk '/freq:/ { print $2; exit }' <<< "$link")"
+          signal_dbm="$(awk '/signal:/ { print $2; exit }' <<< "$link")"
+          bitrate="$(awk '/tx bitrate:/ { print $3 " " $4; exit }' <<< "$link")"
+          current_band="$(band_for_freq "$frequency")"
+          nm_band="$(nmcli -g 802-11-wireless.band connection show "$connection_uuid" 2>/dev/null || true)"
+          case "$nm_band" in
+            bg) selected_band=2.4 ;;
+            a) selected_band=5 ;;
+            6GHz) selected_band=6 ;;
+          esac
+          bands="$(available_bands "$iface" "$ssid" "$current_band")"
+        elif [[ -r "/sys/class/net/$iface/speed" ]]; then
+          link_speed="$(<"/sys/class/net/$iface/speed")"
+        fi
+
+        jq -cn \
+          --arg iface "$iface" \
+          --arg kind "$kind" \
+          --arg connection "$connection_name" \
+          --arg uuid "$connection_uuid" \
+          --arg ip "$ip_address" \
+          --arg prefix "$prefix" \
+          --arg gateway "$gateway" \
+          --arg ssid "$ssid" \
+          --arg frequency "$frequency" \
+          --arg signalDbm "$signal_dbm" \
+          --arg bitrate "$bitrate" \
+          --arg linkSpeed "$link_speed" \
+          --arg dnsProvider "$dns_provider" \
+          --arg dnsServers "$dns_servers" \
+          --arg currentBand "$current_band" \
+          --arg selectedBand "$selected_band" \
+          --arg availableBands "$bands" \
+          --argjson rxBytes "$rx_bytes" \
+          --argjson txBytes "$tx_bytes" \
+          --argjson pingMs "''${ping_ms:--1}" \
+          '{
+            connected: true,
+            iface: $iface,
+            kind: $kind,
+            connection: $connection,
+            uuid: $uuid,
+            ip: $ip,
+            prefix: $prefix,
+            gateway: $gateway,
+            ssid: $ssid,
+            frequency: $frequency,
+            signalDbm: $signalDbm,
+            bitrate: $bitrate,
+            linkSpeed: $linkSpeed,
+            dnsProvider: $dnsProvider,
+            dnsServers: $dnsServers,
+            currentBand: $currentBand,
+            selectedBand: $selectedBand,
+            availableBands: ($availableBands | split(" ") | map(select(length > 0))),
+            rxBytes: $rxBytes,
+            txBytes: $txBytes,
+            pingMs: $pingMs
+          }'
+      }
+
+      set_dns() {
+        local provider="''${1:-}"
+        local custom="''${2:-}"
+        active_connection || { echo "No active connection" >&2; exit 1; }
+
+        case "$provider" in
+          DHCP)
+            ipv4_dns=""
+            ipv6_dns=""
+            ignore=no
+            ;;
+          Cloudflare)
+            ipv4_dns="1.1.1.1 1.0.0.1"
+            ipv6_dns="2606:4700:4700::1111 2606:4700:4700::1001"
+            ignore=yes
+            ;;
+          Google)
+            ipv4_dns="8.8.8.8 8.8.4.4"
+            ipv6_dns="2001:4860:4860::8888 2001:4860:4860::8844"
+            ignore=yes
+            ;;
+          Custom)
+            custom="$(printf '%s' "$custom" | tr ',\t\n' ' ' | xargs)"
+            [[ -n "$custom" ]] || { echo "Enter at least one DNS server" >&2; exit 1; }
+            ipv4_dns=""
+            ipv6_dns=""
+            for server in $custom; do
+              if [[ "$server" == *:* ]]; then
+                ipv6_dns+="''${ipv6_dns:+ }$server"
+              else
+                ipv4_dns+="''${ipv4_dns:+ }$server"
+              fi
+            done
+            ignore=yes
+            ;;
+          *)
+            echo "Unknown DNS provider" >&2
+            exit 2
+            ;;
+        esac
+
+        nmcli connection modify "$connection_uuid" \
+          ipv4.ignore-auto-dns "$ignore" ipv4.dns "$ipv4_dns" \
+          ipv6.ignore-auto-dns "$ignore" ipv6.dns "$ipv6_dns"
+        nmcli device reapply "$iface" >/dev/null 2>&1 \
+          || nmcli connection up "$connection_uuid" >/dev/null
+      }
+
+      set_band() {
+        local target="''${1:-auto}"
+        active_connection || { echo "No active connection" >&2; exit 1; }
+        [[ -d "/sys/class/net/$iface/wireless" ]] || { echo "Wi-Fi is not active" >&2; exit 1; }
+
+        case "$target" in
+          auto) desired="" ;;
+          2.4) desired="bg" ;;
+          5) desired="a" ;;
+          6) desired="6GHz" ;;
+          *) echo "Unknown Wi-Fi band" >&2; exit 2 ;;
+        esac
+
+        previous="$(nmcli -g 802-11-wireless.band connection show "$connection_uuid" 2>/dev/null || true)"
+        [[ "$previous" == "$desired" ]] && return
+        nmcli connection modify "$connection_uuid" 802-11-wireless.band "$desired"
+        if ! nmcli connection up "$connection_uuid" >/dev/null 2>&1; then
+          nmcli connection modify "$connection_uuid" 802-11-wireless.band "$previous"
+          nmcli connection up "$connection_uuid" >/dev/null 2>&1 || true
+          echo "Could not reconnect on that band; restored the previous setting" >&2
+          exit 1
+        fi
+      }
+
+      wifi_qr() {
+        active_connection || { echo "No active connection" >&2; exit 1; }
+        [[ -d "/sys/class/net/$iface/wireless" ]] || { echo "Wi-Fi is not active" >&2; exit 1; }
+        ssid="$(nmcli -g 802-11-wireless.ssid connection show "$connection_uuid" 2>/dev/null || true)"
+        key_mgmt="$(nmcli -g 802-11-wireless-security.key-mgmt connection show "$connection_uuid" 2>/dev/null || true)"
+        password="$(nmcli --show-secrets -g 802-11-wireless-security.psk connection show "$connection_uuid" 2>/dev/null || true)"
+        [[ -n "$ssid" ]] || { echo "Could not read the Wi-Fi name" >&2; exit 1; }
+
+        escape_wifi() { printf '%s' "$1" | sed 's/[\\;,:]/\\&/g'; }
+        escaped_ssid="$(escape_wifi "$ssid")"
+        escaped_password="$(escape_wifi "$password")"
+        security=WPA
+        if [[ -z "$key_mgmt" || "$key_mgmt" == "none" ]]; then security=nopass; fi
+        printf 'WIFI:T:%s;S:%s;P:%s;;' "$security" "$escaped_ssid" "$escaped_password" \
+          | qrencode -t SVG -m 2 -o -
+      }
+
+      action="''${1:-status}"
+      shift || true
+      case "$action" in
+        status) status ;;
+        dns) set_dns "$@" ;;
+        band) set_band "$@" ;;
+        qr) wifi_qr ;;
+        *) echo "Usage: network-panel-helper [status|dns|band|qr]" >&2; exit 2 ;;
+      esac
+    '';
+  };
   voxtypeModel = pkgs.fetchurl {
     url = "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-base.en.bin";
     hash = "sha256-oDd5yG3zMjB19eeWyyzlAp8A7Ihp7uP9+4l6/jbG0AI=";
@@ -184,6 +449,8 @@ in
 {
   home.packages = lib.mkIf isDesktop [
     batteryHistory
+    displayControl
+    networkPanelHelper
     networkSpeedtest
     voxtype
     voxtypeHistory
@@ -277,6 +544,8 @@ in
   };
 
   systemd.user.services.quickshell.Service.Environment = lib.mkIf isDesktop [
+    "DISPLAY_CONTROL_BINARY=${displayControl}/bin/display-control"
+    "NETWORK_PANEL_HELPER_BINARY=${networkPanelHelper}/bin/network-panel-helper"
     "NETWORK_SPEEDTEST_BINARY=${networkSpeedtest}/bin/network-speedtest"
   ];
 
