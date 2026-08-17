@@ -8,6 +8,77 @@
 
 let
   displayControl = import ../packages/display-control.nix { inherit pkgs pkgsUnstable; };
+  trayWindowToggle = pkgs.writeShellApplication {
+    name = "tray-window-toggle";
+    runtimeInputs = [
+      pkgs.jq
+      pkgs.systemd
+      pkgsUnstable.hyprland
+    ];
+    text = ''
+      query="''${1:-}"
+      query="''${query,,}"
+      query="''${query//-/_}"
+      [[ -n "$query" ]] || { echo "A tray application id is required" >&2; exit 2; }
+
+      item="$(
+        busctl --user --json=short get-property \
+          org.kde.StatusNotifierWatcher \
+          /StatusNotifierWatcher \
+          org.kde.StatusNotifierWatcher \
+          RegisteredStatusNotifierItems \
+          | jq -r --arg query "$query" '
+              [ .data[] | select(ascii_downcase | contains($query)) ]
+              | first // empty
+            '
+      )"
+      [[ -n "$item" ]] || { echo "No tray item found for $query" >&2; exit 1; }
+
+      service="''${item%%/*}"
+      object="/''${item#*/}"
+      menu="$(
+        busctl --user --json=short get-property \
+          "$service" "$object" org.kde.StatusNotifierItem Menu \
+          | jq -r .data
+      )"
+
+      # Spotify intentionally omits StatusNotifierItem.Activate. Its DBus menu
+      # exposes mutually exclusive native actions instead, so left click uses
+      # whichever of Show Spotify / Minimize to Tray is currently visible.
+      busctl --user call -- "$service" "$menu" \
+        com.canonical.dbusmenu AboutToShow i 0 >/dev/null || true
+
+      window_query="''${query%_client}"
+      window_query="''${window_query//_/ }"
+      if hyprctl clients -j | jq -e --arg query "$window_query" '
+        any(.[];
+          [(.class // ""), (.initialClass // ""), (.title // "")]
+          | map(ascii_downcase)
+          | any(contains($query))
+        )
+      ' >/dev/null; then
+        target_label="Minimize to Tray"
+      else
+        target_label="Show Spotify"
+      fi
+
+      for action in {1..32}; do
+        label="$(
+          busctl --user --json=short call -- "$service" "$menu" \
+            com.canonical.dbusmenu GetProperty is "$action" label 2>/dev/null \
+            | jq -r '.data[0].data // empty'
+        )"
+        [[ "$label" == "$target_label" ]] || continue
+
+        busctl --user call -- "$service" "$menu" \
+          com.canonical.dbusmenu Event isvu "$action" clicked i 0 0
+        exit 0
+      done
+
+      echo "No $target_label action found for $query" >&2
+      exit 1
+    '';
+  };
   voxtype = pkgsUnstable.voxtype.override { vulkanSupport = true; };
   voxtypeHistory = pkgs.writeShellApplication {
     name = "voxtype-history";
@@ -452,6 +523,7 @@ in
     displayControl
     networkPanelHelper
     networkSpeedtest
+    trayWindowToggle
     voxtype
     voxtypeHistory
   ];
@@ -547,6 +619,7 @@ in
     "DISPLAY_CONTROL_BINARY=${displayControl}/bin/display-control"
     "NETWORK_PANEL_HELPER_BINARY=${networkPanelHelper}/bin/network-panel-helper"
     "NETWORK_SPEEDTEST_BINARY=${networkSpeedtest}/bin/network-speedtest"
+    "TRAY_WINDOW_TOGGLE_BINARY=${trayWindowToggle}/bin/tray-window-toggle"
   ];
 
   systemd.user.services.battery-history = lib.mkIf isDesktop {

@@ -121,6 +121,10 @@ hl.bind("ALT + G", hl.dsp.exec_cmd("voxtype record toggle"), {
       (builtins.readFile "${dotfiles}/hyprland/hyprland.lua")
     + pkgs.lib.optionalString isDesktop ''
 
+      hl.bind("ALT + semicolon", hl.dsp.exec_cmd("qs ipc call barMenu toggle"), {
+        description = "Open bar command center",
+      })
+
       hl.on("hyprland.shutdown", function()
         os.execute("systemctl --user stop hyprland-session.target && sleep 0.1")
       end)

@@ -4,10 +4,16 @@ import Quickshell
 import Quickshell.Io
 import Quickshell.Hyprland
 import Quickshell.Services.Pipewire
+import Quickshell.Services.SystemTray
+import Quickshell.Widgets
 
 ShellRoot {
     id: shell
     property string mainDisplayBrightness: ""
+    readonly property string trayWindowToggleBinary: {
+        const configured=Quickshell.env("TRAY_WINDOW_TOGGLE_BINARY")
+        return configured&&configured.length>0?configured:"tray-window-toggle"
+    }
 
     Command {
         command:["display-control","main-brightness"]
@@ -46,6 +52,14 @@ ShellRoot {
             property bool backlightMaxLoaded: false
             property int reactiveVolume: Pipewire.defaultAudioSink && Pipewire.defaultAudioSink.audio
                 ? Math.round(Pipewire.defaultAudioSink.audio.volume * 100) : 0
+
+            Connections {
+                target: keyboardMenu
+                function onPanelRequested(kind, screenName) {
+                    if (screenName !== bar.screen.name) return
+                    bar.togglePopup(kind, bar.width / 2)
+                }
+            }
 
             Command { command:["sh","-c","nmcli -t -f active,ssid dev wifi | sed -n 's/^yes://p' | head -1"]; interval:5000; onOutputChanged: bar.networkName=output||"Offline" }
             Command { command:["nmcli","radio","wifi"]; interval:3000; onOutputChanged: bar.wifiEnabled=output==="enabled" }
@@ -130,6 +144,14 @@ ShellRoot {
                 if(brightnessInitialized&&value!==lastBrightness)showOsd("󰃠","Brightness",value)
                 lastBrightness=value;brightnessInitialized=true
             }
+            function activateTrayItem(item) {
+                const identity=(item.id||item.title||"").toLowerCase()
+                if(identity.indexOf("spotify")>=0)Quickshell.execDetached([shell.trayWindowToggleBinary,item.id||item.title])
+                else item.activate()
+            }
+            function isSpotifyTrayItem(item) {
+                return (item.id||item.title||"").toLowerCase().indexOf("spotify")>=0
+            }
 
             Item {
                 anchors.fill: parent
@@ -171,6 +193,66 @@ ShellRoot {
                     Text { id:clockText; anchors.centerIn:parent; text:Qt.formatDateTime(clock.date,"ddd MMM dd hh:mm AP"); color:Theme.fg; font.family:Theme.font; font.pixelSize:12; font.weight:Font.DemiBold }
                     SystemClock { id: clock; precision: SystemClock.Minutes }
                     MouseArea { anchors.fill:parent; cursorShape:Qt.PointingHandCursor; onClicked:bar.togglePopup("calendar",bar.width/2) }
+                }
+                Rectangle {
+                    id:trayBubble
+                    anchors.right:rightBubble.left;anchors.rightMargin:6;anchors.verticalCenter:parent.verticalCenter
+                    visible:trayModel.values.length>0
+                    width:visible?trayItems.implicitWidth+8:0;height:32
+                    color:Theme.elevated;radius:16;clip:true
+                    Behavior on width { NumberAnimation { duration:180;easing.type:Easing.OutCubic } }
+                    ScriptModel {
+                        id:trayModel
+                        values:SystemTray.items.values.slice().sort((left,right)=>(left.title||left.id).localeCompare(right.title||right.id))
+                    }
+                    Row {
+                        id:trayItems
+                        anchors.centerIn:parent;height:28;spacing:2
+                        Repeater {
+                            model:trayModel
+                            Rectangle {
+                                id:trayItem
+                                required property var modelData
+                                width:28;height:28;radius:14
+                                color:trayMouse.containsMouse?"#3a444f":"transparent"
+                                border.width:modelData.status===Status.NeedsAttention?1:0
+                                border.color:Theme.red
+                                opacity:modelData.status===Status.Passive?0.62:1
+
+                                IconImage {
+                                    id:trayIcon
+                                    anchors.centerIn:parent
+                                    width:18;height:18
+                                    source:trayItem.modelData.icon
+                                    asynchronous:true
+                                }
+                                QsMenuAnchor {
+                                    id:trayMenu
+                                    menu:trayItem.modelData.hasMenu?trayItem.modelData.menu:null
+                                    anchor.window:bar
+                                    anchor.item:trayItem
+                                    anchor.edges:Edges.Bottom
+                                    anchor.gravity:Edges.Bottom
+                                    anchor.adjustment:PopupAdjustment.All
+                                }
+                                MouseArea {
+                                    id:trayMouse
+                                    anchors.fill:parent
+                                    acceptedButtons:Qt.LeftButton|Qt.RightButton|Qt.MiddleButton
+                                    hoverEnabled:true
+                                    cursorShape:Qt.PointingHandCursor
+                                    onClicked:mouse=>{
+                                        if(mouse.button===Qt.MiddleButton)trayItem.modelData.secondaryActivate()
+                                        else if(mouse.button===Qt.RightButton)trayMenu.open()
+                                        else if(bar.isSpotifyTrayItem(trayItem.modelData))bar.activateTrayItem(trayItem.modelData)
+                                        else if(trayItem.modelData.onlyMenu&&trayItem.modelData.hasMenu)trayMenu.open()
+                                        else bar.activateTrayItem(trayItem.modelData)
+                                    }
+                                    onWheel:wheel=>trayItem.modelData.scroll(wheel.angleDelta.y,wheel.angleDelta.x!==0)
+                                }
+                            }
+                        }
+                    }
                 }
                 Rectangle {
                     id:rightBubble
@@ -333,4 +415,5 @@ ShellRoot {
     Component { id: calendarComponent; CalendarPanel {} }
     Component { id: batteryComponent; BatteryPanel {} }
     Component { id: voxtypeComponent; VoxtypePanel {} }
+    KeyboardMenu { id: keyboardMenu }
 }

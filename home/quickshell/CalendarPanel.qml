@@ -11,6 +11,11 @@ Item {
         return new Date(shownMonth.getFullYear(), shownMonth.getMonth(), index - shownMonth.getDay() + 1)
     }
     function moveMonth(delta) { shownMonth = new Date(shownMonth.getFullYear(), shownMonth.getMonth()+delta, 1) }
+    function openGoogleCalendar(value) {
+        let url = "https://calendar.google.com/calendar/u/0/r/week/"
+            + value.getFullYear() + "/" + (value.getMonth() + 1) + "/" + value.getDate() + "?pli=1"
+        Quickshell.execDetached(["xdg-open", url])
+    }
     SystemClock { id: clock; precision: SystemClock.Seconds }
     Column {
         anchors.fill: parent; anchors.margins: 10; spacing: 0
@@ -34,11 +39,19 @@ Item {
                 anchors.fill:parent; anchors.margins:8; columns:7
                 Repeater { model:7; Text { required property int index; width:44;height:34;text:root.dayNames[index];horizontalAlignment:Text.AlignHCenter;verticalAlignment:Text.AlignVCenter;color:index===0||index===6?Theme.primary:Theme.muted;font.pixelSize:12 } }
                 Repeater { model:42; Rectangle {
+                    id: dayCell
                     required property int index
                     property date value: root.cellDate(index)
                     property bool today: value.toDateString()===clock.date.toDateString()
-                    width:44;height:36;color:today?Theme.primary:"transparent"
+                    width:44;height:36;radius:5;color:today?Theme.primary:(dayMouse.containsMouse?"#37414c":"transparent")
                     Text { anchors.centerIn:parent;text:parent.value.getDate();color:parent.today?Theme.bg:(parent.value.getMonth()===root.shownMonth.getMonth()?((parent.value.getDay()===0||parent.value.getDay()===6)?Theme.primary:Theme.fg):"#48505b");font.pixelSize:12;font.weight:parent.today?Font.DemiBold:Font.Normal }
+                    MouseArea {
+                        id: dayMouse
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: root.openGoogleCalendar(dayCell.value)
+                    }
                 } }
             }
         }
