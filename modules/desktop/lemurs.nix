@@ -10,6 +10,30 @@
     "video"
   ];
 
+  # UDisks normally grants these operations to the active local seat. Lemurs
+  # cannot set pam_loginuid (upstream issue #166), so Polkit sees this session
+  # without seat0 and falls back to an administrator prompt. Recreate only the
+  # normal removable-storage permission for the workstation user; deliberately
+  # exclude system disks and filesystems mounted by another user.
+  security.polkit.extraConfig = ''
+    polkit.addRule(function(action, subject) {
+      var userStorageActions = {
+        "org.freedesktop.udisks2.filesystem-mount": true,
+        "org.freedesktop.udisks2.filesystem-mount-other-seat": true,
+        "org.freedesktop.udisks2.encrypted-unlock": true,
+        "org.freedesktop.udisks2.encrypted-unlock-other-seat": true,
+        "org.freedesktop.udisks2.eject-media": true,
+        "org.freedesktop.udisks2.eject-media-other-seat": true,
+        "org.freedesktop.udisks2.power-off-drive": true,
+        "org.freedesktop.udisks2.power-off-drive-other-seat": true
+      };
+
+      if (subject.user == "k" && userStorageActions[action.id]) {
+        return polkit.Result.YES;
+      }
+    });
+  '';
+
   # Lemurs authenticates the graphical session through its own PAM service.
   # pam_gnome_keyring receives the same password and unlocks (or creates) the
   # login keyring before Hyprland and Electron applications start.

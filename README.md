@@ -77,10 +77,27 @@ theme; GTK4/libadwaita stays in supported dark mode. The current dotfiles carry
 the matching One Dark palettes for Quickshell, Alacritty, Kitty, Neovim, and KDE,
 and Hyprpaper uses the pinned One Dark NixOS wallpaper.
 
-`hyprwhspr` is also installed on desktop hosts. After the first rebuild, run
-`hyprwhspr setup` once: enable its Hyprland and systemd choices, but skip
-Waybar (Quickshell is the active panel) and the imperative permissions step (ydotool
-is configured by NixOS). The existing `Alt+G` binding toggles dictation.
+Desktop hosts use the same local dictation shape as Omarchy: Voxtype with the
+English `base.en` Whisper model, Vulkan acceleration, and compositor-managed
+keys. `Alt+G` toggles recording, replacing the previous hyprwhspr action. The
+model is fetched by Nix, so no separate `voxtype setup` step is required.
+
+`Alt+Shift+T` freezes the desktop, selects a region, runs Omarchy's Tesseract
+OCR settings, and copies the extracted text to the clipboard. Set
+`OCR_SCREENSHOT_LANGS` (for example `eng+spa`) to override the default language;
+the matching Tesseract language data must also be installed.
+
+Fingerprint authentication is enabled for sudo and Polkit prompts. Hyprlock
+uses its native parallel fprintd integration with password fallback. Enroll a
+finger once with `sudo fprintd-enroll k`; the enrolled print is then available
+to sudo and the lock screen.
+
+The monitor/brightness pill in the Quickshell bar opens a display panel. It can
+reorder connected screens, build horizontal or vertical extended layouts, and
+mirror every screen to the selected display. Layout changes are restored at the
+next Hyprland login. Brightness uses the kernel backlight for laptop panels and
+DDC/CI for external monitors; if an external slider is absent, enable DDC/CI in
+that monitor's on-screen settings if it supports the feature.
 
 ## VM Test
 

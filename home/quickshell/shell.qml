@@ -22,7 +22,9 @@ ShellRoot {
             property string popupKind: ""
             property real popupAnchorX: 0
             property string networkName: "Offline"
+            property bool wifiEnabled: false
             property string volume: "0%"
+            property string displayBrightness: ""
             property string battery: ""
             property string batteryStatus: ""
             property string profile: "Balanced"
@@ -38,6 +40,7 @@ ShellRoot {
                 ? Math.round(Pipewire.defaultAudioSink.audio.volume * 100) : 0
 
             Command { command:["sh","-c","nmcli -t -f active,ssid dev wifi | sed -n 's/^yes://p' | head -1"]; interval:5000; onOutputChanged: bar.networkName=output||"Offline" }
+            Command { command:["nmcli","radio","wifi"]; interval:3000; onOutputChanged: bar.wifiEnabled=output==="enabled" }
             Command {
                 command:["sh","-c","find /sys/class/backlight -mindepth 1 -maxdepth 1 -type l | head -1"]
                 onOutputChanged: if(output) bar.backlightPath=output
@@ -69,6 +72,7 @@ ShellRoot {
             Command { command:["sh","-c","paste -d' ' /sys/class/power_supply/BAT0/capacity /sys/class/power_supply/BAT0/status 2>/dev/null"]; interval:10000; onOutputChanged: { let p=output.split(" "); bar.battery=p[0]?p[0]+"%":""; bar.batteryStatus=p[1]||"" } }
             Command { command:["sh","-c","powerprofilesctl get 2>/dev/null | sed 's/power-saver/Saver/;s/balanced/Balanced/;s/performance/Perf/'"]; interval:2000; onOutputChanged: if(output)bar.profile=output }
             Command { command:["sh","-c","codexbar --format '{session_pct}% - {session_reset}' 2>/dev/null | jq -r .text | sed 's/<[^>]*>//g'"]; interval:300000; onOutputChanged: if(output)bar.codex=output }
+            Command { command:["display-control","brightness-value",bar.screen.name]; interval:15000; onOutputChanged:bar.displayBrightness=output?output+"%":"" }
 
             function togglePopup(kind, x) {
                 if (popupKind === kind && dropdown.visible) { closePopup(); return }
@@ -163,6 +167,7 @@ ShellRoot {
                     BarButton { height:28; icon:"󰖩"; label:bar.networkName; accent:Theme.blue; selected:bar.popupKind==="network"&&dropdown.visible; onClicked:x=>bar.togglePopup("network",x) }
                     BarButton { height:28; icon:"󰐥"; label:bar.profile; accent:Theme.muted; mouseArea.onClicked:bar.cyclePowerProfile() }
                     BarButton { visible:bar.battery!==""; height:28; icon:bar.batteryStatus==="Charging"?"":(Number(bar.battery.replace("%",""))<20?"":Number(bar.battery.replace("%",""))<40?"":Number(bar.battery.replace("%",""))<60?"":Number(bar.battery.replace("%",""))<80?"":""); label:bar.battery; accent:Theme.green; selected:bar.popupKind==="battery"&&dropdown.visible; onClicked:x=>bar.togglePopup("battery",x) }
+                    BarButton { height:28; icon:"󰍹"; label:bar.displayBrightness; accent:Theme.blue; selected:bar.popupKind==="display"&&dropdown.visible; onClicked:x=>bar.togglePopup("display",x); mouseArea.onWheel:w=>Quickshell.execDetached(["display-control","brightness",bar.screen.name,w.angleDelta.y>0?"+5":"-5"]) }
                     BarButton { height:28; icon:"󰕾"; label:bar.volume; accent:Theme.muted; selected:bar.popupKind==="audio"&&dropdown.visible; onClicked:x=>bar.togglePopup("audio",x); mouseArea.onWheel: w=>Quickshell.execDetached(["wpctl","set-volume","@DEFAULT_AUDIO_SINK@",w.angleDelta.y>0?"4%+":"4%-"]) }
                 }
                 }
@@ -177,8 +182,8 @@ ShellRoot {
                 anchor.window: bar
                 anchor.rect.x: Math.max(4, Math.min(bar.width - width - 8, bar.popupAnchorX - width/2))
                 anchor.rect.y: bar.height + 3
-                implicitWidth: bar.popupKind === "audio" ? 430 : bar.popupKind === "network" || bar.popupKind === "calendar" ? 350 : bar.popupKind === "codex" ? 340 : bar.popupKind === "battery" ? 380 : 390
-                implicitHeight: bar.popupKind === "network" ? 500 : bar.popupKind === "audio" || bar.popupKind === "calendar" ? 488 : bar.popupKind === "codex" || bar.popupKind === "battery" ? 433 : 283
+                implicitWidth: bar.popupKind === "audio" || bar.popupKind === "display" ? 430 : bar.popupKind === "network" || bar.popupKind === "calendar" ? 350 : bar.popupKind === "codex" ? 340 : bar.popupKind === "battery" ? 380 : 390
+                implicitHeight: bar.popupKind === "display" ? 520 : bar.popupKind === "network" ? 500 : bar.popupKind === "audio" || bar.popupKind === "calendar" ? 488 : bar.popupKind === "codex" || bar.popupKind === "battery" ? 433 : 283
                 onVisibleChanged: if (!visible) {
                     expanded = false
                     bar.popupKind = ""
@@ -207,22 +212,24 @@ ShellRoot {
                                 color: Theme.elevated
                             }
                             Row { anchors.fill:parent; anchors.leftMargin:13; anchors.rightMargin:13; spacing:9
-                                Text { anchors.verticalCenter:parent.verticalCenter; text:bar.popupKind==="network"?"󰖩":bar.popupKind==="audio"?"󰕾":bar.popupKind==="media"?"󰎆":bar.popupKind==="calendar"?"󰃭":bar.popupKind==="battery"?"":"󰅩"; color:Theme.primary; font.family:Theme.iconFont; font.pixelSize:18 }
-                                Text { anchors.verticalCenter:parent.verticalCenter; text:bar.popupKind==="codex"?"Codex Usage":bar.popupKind.charAt(0).toUpperCase()+bar.popupKind.slice(1); color:Theme.fg; font.family:Theme.font; font.pixelSize:14; font.weight:Font.DemiBold }
+                                Text { anchors.verticalCenter:parent.verticalCenter; text:bar.popupKind==="network"?"󰖩":bar.popupKind==="audio"?"󰕾":bar.popupKind==="display"?"󰍹":bar.popupKind==="media"?"󰎆":bar.popupKind==="calendar"?"󰃭":bar.popupKind==="battery"?"":"󰅩"; color:Theme.primary; font.family:Theme.iconFont; font.pixelSize:18 }
+                                Text { anchors.verticalCenter:parent.verticalCenter; text:bar.popupKind==="codex"?"Codex Usage":bar.popupKind==="display"?"Displays":bar.popupKind.charAt(0).toUpperCase()+bar.popupKind.slice(1); color:Theme.fg; font.family:Theme.font; font.pixelSize:14; font.weight:Font.DemiBold }
                                 Item { width: parent.width-(bar.popupKind==="network"?135:80); height:1 }
                                 Rectangle {
                                     visible: bar.popupKind === "network"
                                     anchors.verticalCenter: parent.verticalCenter
-                                    width: 38; height: 20; radius: 10; color: bar.networkName === "Offline" ? "#424954" : Theme.primary
-                                    Rectangle { anchors.verticalCenter:parent.verticalCenter; x:bar.networkName==="Offline"?3:21; width:14;height:14;radius:7;color:Theme.fg }
-                                    MouseArea { anchors.fill:parent; cursorShape:Qt.PointingHandCursor; onClicked:Quickshell.execDetached(["nmcli","radio","wifi",bar.networkName==="Offline"?"on":"off"]) }
+                                    width: 38; height: 20; radius: 10; color: bar.wifiEnabled ? Theme.primary : "#424954"
+                                    Rectangle { anchors.verticalCenter:parent.verticalCenter; x:bar.wifiEnabled?21:3; width:14;height:14;radius:7;color:Theme.fg }
+                                    MouseArea { anchors.fill:parent; cursorShape:Qt.PointingHandCursor; onClicked:Quickshell.execDetached(["nmcli","radio","wifi",bar.wifiEnabled?"off":"on"]) }
                                 }
                             }
                         }
                         Loader {
+                            id: panelLoader
                             width: parent.width; height: parent.height - (bar.popupKind === "codex" ? 0 : 43)
                             clip: true
-                            sourceComponent: bar.popupKind==="network"?networkComponent:bar.popupKind==="audio"?audioComponent:bar.popupKind==="calendar"?calendarComponent:bar.popupKind==="codex"?codexComponent:bar.popupKind==="battery"?batteryComponent:mediaComponent
+                            sourceComponent: bar.popupKind==="network"?networkComponent:bar.popupKind==="audio"?audioComponent:bar.popupKind==="display"?displayComponent:bar.popupKind==="calendar"?calendarComponent:bar.popupKind==="codex"?codexComponent:bar.popupKind==="battery"?batteryComponent:mediaComponent
+                            onLoaded: if (bar.popupKind === "display" && item) item.initialMonitor = bar.screen.name
                         }
                     }
                 }
@@ -278,6 +285,7 @@ ShellRoot {
     }
     Component { id: networkComponent; NetworkPanel {} }
     Component { id: audioComponent; AudioPanel {} }
+    Component { id: displayComponent; DisplayPanel {} }
     Component { id: mediaComponent; MediaPanel {} }
     Component { id: codexComponent; CodexPanel {} }
     Component { id: calendarComponent; CalendarPanel {} }

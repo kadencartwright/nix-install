@@ -66,6 +66,7 @@ y = 4'' ]
         ''hl.env("QT_QPA_PLATFORMTHEME", "adwaita")''
         ''hl.env("QT_STYLE_OVERRIDE", "adwaita-dark")''
         ''hl.exec_cmd("wayle shell")''
+        ''hl.exec_cmd("hypridle")''
         ''	animations = {
 		enabled = false,
 	},''
@@ -76,6 +77,12 @@ y = 4'' ]
 hl.animation({ leaf = "windows", enabled = true, speed = 1, bezier = "myBezier", style = "popin 60%" })
 hl.animation({ leaf = "windowsOut", enabled = true, speed = 1, bezier = "default", style = "popin 90%" })
 hl.animation({ leaf = "fade", enabled = true, speed = 1, bezier = "default" })''
+        ''hl.bind(mainMod .. " + SHIFT + T", hl.dsp.exec_cmd('wl-screenrec -g "$(slurp)"'))''
+        ''-- hyprwhspr - Toggle mode (added by hyprwhspr setup)
+-- Press once to start, press again to stop
+hl.bind("ALT + G", hl.dsp.exec_cmd("/usr/lib/hyprwhspr/config/hyprland/hyprwhspr-tray.sh record"), {
+	description = "Speech-to-text",
+})''
       ]
       [
         hyprwhsprRoot
@@ -84,6 +91,8 @@ hl.env("GNOME_KEYRING_CONTROL", (os.getenv("XDG_RUNTIME_DIR") or "") .. "/keyrin
         ''hl.env("QT_QPA_PLATFORMTHEME", "gtk")''
         ''hl.env("QT_STYLE_OVERRIDE", "gtk2")''
         ''hl.exec_cmd("gnome-keyring-daemon --start --components=secrets")''
+        ''hl.exec_cmd("hypridle")
+	hl.exec_cmd("display-control restore")''
         ''	decoration = {
 		rounding = 12,
 		rounding_power = 4.0,
@@ -100,6 +109,11 @@ hl.animation({ leaf = "windows", enabled = true, speed = 3, bezier = "myBezier",
 hl.animation({ leaf = "windowsMove", enabled = true, speed = 3, bezier = "myBezier" })
 hl.animation({ leaf = "windowsOut", enabled = true, speed = 2, bezier = "myBezier", style = "popin 90%" })
 hl.animation({ leaf = "fade", enabled = false })''
+        ''hl.bind(mainMod .. " + SHIFT + T", hl.dsp.exec_cmd("ocr-screenshot"))''
+        ''-- Voxtype replaces the existing Alt+G hyprwhspr action.
+hl.bind("ALT + G", hl.dsp.exec_cmd("voxtype record toggle"), {
+	description = "Toggle Voxtype dictation",
+})''
       ]
       (builtins.readFile "${dotfiles}/hyprland/hyprland.lua");
 in
