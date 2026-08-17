@@ -7,6 +7,13 @@ import Quickshell.Services.Pipewire
 
 ShellRoot {
     id: shell
+    property string mainDisplayBrightness: ""
+
+    Command {
+        command:["display-control","main-brightness"]
+        interval:15000
+        onOutputChanged:shell.mainDisplayBrightness=output?output+"%":""
+    }
 
     Variants {
         model: Quickshell.screens
@@ -24,7 +31,7 @@ ShellRoot {
             property string networkName: "Offline"
             property bool wifiEnabled: false
             property string volume: "0%"
-            property string displayBrightness: ""
+            property string displayBrightness: shell.mainDisplayBrightness
             property string battery: ""
             property string batteryStatus: ""
             property string profile: "Balanced"
@@ -72,8 +79,6 @@ ShellRoot {
             Command { command:["sh","-c","paste -d' ' /sys/class/power_supply/BAT0/capacity /sys/class/power_supply/BAT0/status 2>/dev/null"]; interval:10000; onOutputChanged: { let p=output.split(" "); bar.battery=p[0]?p[0]+"%":""; bar.batteryStatus=p[1]||"" } }
             Command { command:["sh","-c","powerprofilesctl get 2>/dev/null | sed 's/power-saver/Saver/;s/balanced/Balanced/;s/performance/Perf/'"]; interval:2000; onOutputChanged: if(output)bar.profile=output }
             Command { command:["sh","-c","codexbar --format '{session_pct}% - {session_reset}' 2>/dev/null | jq -r .text | sed 's/<[^>]*>//g'"]; interval:300000; onOutputChanged: if(output)bar.codex=output }
-            Command { command:["display-control","main-brightness"]; interval:15000; onOutputChanged:bar.displayBrightness=output?output+"%":"" }
-
             function togglePopup(kind, x) {
                 if (popupKind === kind && dropdown.visible) { closePopup(); return }
                 dropdownCloseTimer.stop()

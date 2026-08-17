@@ -2,6 +2,8 @@ set -euo pipefail
 
 state_dir="${XDG_STATE_HOME:-$HOME/.local/state}/display-control"
 state_file="$state_dir/layout"
+runtime_dir="${XDG_RUNTIME_DIR:-/tmp}/display-control"
+ddc_cache="$runtime_dir/ddc-detect"
 
 monitors_json() {
   hyprctl monitors all -j
@@ -25,9 +27,22 @@ backlight_device() {
 }
 
 ddc_snapshot=""
+ddc_snapshot_loaded=false
 load_ddc_snapshot() {
-  if [[ -z "$ddc_snapshot" ]]; then
-    ddc_snapshot=$(ddcutil --skip-ddc-checks detect --brief 2>/dev/null || true)
+  local now modified tmp
+  if [[ "$ddc_snapshot_loaded" == false ]]; then
+    mkdir -p "$runtime_dir"
+    now=$(date +%s)
+    modified=$(stat --format=%Y "$ddc_cache" 2>/dev/null || printf '0')
+    if (( now - modified < 300 )); then
+      ddc_snapshot=$(<"$ddc_cache")
+    else
+      tmp=$(mktemp "$runtime_dir/ddc-detect.XXXXXX")
+      ddcutil --skip-ddc-checks detect --brief > "$tmp" 2>/dev/null || true
+      mv "$tmp" "$ddc_cache"
+      ddc_snapshot=$(<"$ddc_cache")
+    fi
+    ddc_snapshot_loaded=true
   fi
 }
 
@@ -168,15 +183,54 @@ disabled_specs() {
 }
 
 save_and_apply() {
-  local tmp spec
+  local tmp
   mkdir -p "$state_dir"
   tmp=$(mktemp "$state_dir/layout.XXXXXX")
   cat > "$tmp"
   mv "$tmp" "$state_file"
+  apply_layout "$state_file"
+}
+
+lua_string() {
+  jq -Rrn --arg value "$1" '$value | @json'
+}
+
+apply_layout() {
+  local source=$1 spec output mode position scale option target extra code="" scale_value
   while IFS= read -r spec; do
     [[ -n "$spec" ]] || continue
-    hyprctl keyword monitor "$spec" >/dev/null
-  done < "$state_file"
+    IFS=',' read -r output mode position scale option target extra <<< "$spec"
+    [[ -n "$output" && -n "$mode" && -z "$extra" ]] \
+      || { echo "Invalid saved monitor configuration: $spec" >&2; return 1; }
+
+    if [[ "$mode" == "disable" ]]; then
+      code+="hl.monitor({ output = $(lua_string "$output"), disabled = true });"
+      continue
+    fi
+
+    [[ -n "$position" && -n "$scale" ]] \
+      || { echo "Incomplete saved monitor configuration: $spec" >&2; return 1; }
+    if [[ "$scale" == "auto" ]]; then
+      scale_value='"auto"'
+    elif [[ "$scale" =~ ^[0-9]+([.][0-9]+)?$ ]]; then
+      scale_value=$scale
+    else
+      echo "Invalid monitor scale in saved configuration: $spec" >&2
+      return 1
+    fi
+
+    code+="hl.monitor({ output = $(lua_string "$output"), mode = $(lua_string "$mode"), position = $(lua_string "$position"), scale = $scale_value"
+    if [[ "$option" == "mirror" && -n "$target" ]]; then
+      code+=", mirror = $(lua_string "$target")"
+    elif [[ -n "$option" || -n "$target" ]]; then
+      echo "Invalid monitor option in saved configuration: $spec" >&2
+      return 1
+    fi
+    code+=" });"
+  done < "$source"
+
+  [[ -n "$code" ]] || return 0
+  hyprctl eval "$code" >/dev/null
 }
 
 arrange() {
@@ -271,6 +325,42 @@ position_monitor() {
   } | save_and_apply
 }
 
+position_monitors() {
+  (( $# > 0 && $# % 3 == 0 )) \
+    || { echo "Usage: display-control positions MONITOR X Y [MONITOR X Y ...]" >&2; return 2; }
+  local json name mode scale x y
+  declare -A requested_x=() requested_y=()
+  json=$(monitors_json)
+
+  while (( $# > 0 )); do
+    name=$1
+    x=$2
+    y=$3
+    [[ "$x" =~ ^-?[0-9]+$ && "$y" =~ ^-?[0-9]+$ ]] \
+      || { echo "Display coordinates must be integers" >&2; return 2; }
+    jq -e --arg name "$name" '.[] | select(.name == $name and .disabled != true)' <<< "$json" >/dev/null \
+      || { echo "Unknown active monitor: $name" >&2; return 1; }
+    requested_x["$name"]=$x
+    requested_y["$name"]=$y
+    shift 3
+  done
+
+  {
+    while IFS= read -r name; do
+      mode=$(mode_for "$json" "$name")
+      scale=$(scale_for "$json" "$name")
+      if [[ -v 'requested_x[$name]' ]]; then
+        x=${requested_x[$name]}
+        y=${requested_y[$name]}
+      else
+        read -r x y < <(jq -r --arg name "$name" '.[] | select(.name == $name) | [(.x // 0), (.y // 0)] | @tsv' <<< "$json")
+      fi
+      printf '%s,%s,%sx%s,%s\n' "$name" "$mode" "$x" "$y" "$scale"
+    done < <(enabled_names "$json" horizontal)
+    disabled_specs "$json"
+  } | save_and_apply
+}
+
 mirror_all() {
   local target=$1 json name target_mode target_scale
   json=$(monitors_json)
@@ -315,18 +405,44 @@ status_json() {
   jq -cn --arg mode "$mode" --argjson monitors "$monitors" '{mode: $mode, monitors: $monitors}'
 }
 
+layout_status_json() {
+  local monitors mode
+  monitors=$(monitors_json | jq '[.[] | {
+    name,
+    description: (.description // .name),
+    width: (.width // 0), height: (.height // 0),
+    x: (.x // 0), y: (.y // 0), scale: (.scale // 1),
+    refreshRate: (.refreshRate // 0),
+    enabled: (.disabled != true), focused: (.focused == true),
+    mirror: ((.mirror // .mirrorOf // "") | if . == "none" then "" else . end)
+  }]')
+  mode=$(jq -r 'if any(.[]; .mirror != "") then "mirror" else "extend" end' <<< "$monitors")
+  jq -cn --arg mode "$mode" --argjson monitors "$monitors" '{mode: $mode, monitors: $monitors}'
+}
+
+brightness_status_json() {
+  local json readings='{}' name brightness kind
+  json=$(monitors_json)
+  while IFS= read -r name; do
+    brightness=$(read_brightness "$name" 2>/dev/null || true)
+    [[ "$brightness" =~ ^[0-9]+$ ]] || continue
+    if is_internal "$name"; then kind=Backlight; else kind=DDC/CI; fi
+    readings=$(jq --arg name "$name" --arg kind "$kind" --argjson value "$brightness" \
+      '. + {($name): {brightness: $value, brightnessKind: $kind}}' <<< "$readings")
+  done < <(jq -r '.[] | select(.disabled != true) | .name' <<< "$json")
+  jq -cn --argjson readings "$readings" '{readings: $readings}'
+}
+
 restore_layout() {
   [[ -s "$state_file" ]] || return 0
-  local spec
-  while IFS= read -r spec; do
-    [[ -n "$spec" ]] || continue
-    hyprctl keyword monitor "$spec" >/dev/null || true
-  done < "$state_file"
+  apply_layout "$state_file"
 }
 
 command=${1:-status}
 case "$command" in
   status) status_json ;;
+  layout-status) layout_status_json ;;
+  brightness-status) brightness_status_json ;;
   focused-brightness)
     monitor=$(focused_monitor)
     [[ -n "$monitor" ]] && read_brightness "$monitor"
@@ -355,6 +471,9 @@ case "$command" in
   position)
     [[ $# -eq 4 ]] || { echo "Usage: display-control position MONITOR X Y" >&2; exit 2; }
     position_monitor "$2" "$3" "$4"
+    ;;
+  positions)
+    position_monitors "${@:2}"
     ;;
   mirror)
     [[ $# -eq 2 ]] || { echo "Usage: display-control mirror TARGET" >&2; exit 2; }

@@ -5,18 +5,39 @@ import Quickshell.Io
 Item {
     id: root
     implicitWidth: 430
-    implicitHeight: 343 + Math.max(1,brightnessMonitors.length)*34 + Math.max(0,brightnessMonitors.length-1)*6
+    implicitHeight: 385 + Math.max(1,brightnessMonitors.length)*34 + Math.max(0,brightnessMonitors.length-1)*6
 
     property string initialMonitor: ""
     property var displayState: ({ "mode": "extend", "monitors": [] })
+    property var brightnessState: ({})
     property var monitors: displayState.monitors || []
     property string selectedName: ""
     property string errorText: ""
     property bool busy: false
     property string pendingBrightnessName: ""
     property int pendingBrightness: 0
+    property real snapGuideX: -1
+    property real snapGuideY: -1
+    property real canvasPanX: 0
+    property real canvasPanY: 0
+    property var draftPositions: ({})
+    property bool hasPendingLayout: false
+    property bool applyingLayout: false
     readonly property var activeMonitors: monitors.filter(monitor => monitor.enabled)
-    readonly property var brightnessMonitors: activeMonitors.filter(monitor => monitor.brightnessAvailable)
+    readonly property var brightnessMonitors: {
+        let result = []
+        for (let index = 0; index < activeMonitors.length; index++) {
+            let monitor = activeMonitors[index]
+            let reading = brightnessState[monitor.name]
+            if (!reading) continue
+            let combined = {}
+            for (let key in monitor) combined[key] = monitor[key]
+            combined.brightness = reading.brightness
+            combined.brightnessKind = reading.brightnessKind
+            result.push(combined)
+        }
+        return result
+    }
     readonly property var layoutBounds: {
         if (activeMonitors.length === 0) return { "minX": 0, "minY": 0, "width": 1, "height": 1 }
         let minX = activeMonitors[0].x
@@ -36,18 +57,84 @@ Item {
     }
 
     function refresh() {
-        statusCommand.run()
+        layoutCommand.run()
+        brightnessCommand.run()
     }
 
-    function runAction(arguments) {
+    function runAction(arguments, isLayoutApply) {
         if (busy) return
         errorText = ""
         busy = true
+        applyingLayout = isLayoutApply === true
         actionProcess.command = ["display-control"].concat(arguments)
         actionProcess.running = true
     }
 
+    function positionFor(monitor) {
+        return draftPositions[monitor.name] || { "x": monitor.x, "y": monitor.y }
+    }
+
+    function stageMonitor(tile) {
+        let rawX = (tile.x - layoutCanvas.originX) / layoutCanvas.scaleFactor
+        let rawY = (tile.y - layoutCanvas.originY) / layoutCanvas.scaleFactor
+        let position = snapPosition(tile.modelData.name, rawX, rawY)
+        let next = {}
+        for (let key in draftPositions) next[key] = draftPositions[key]
+        next[tile.modelData.name] = { "x": position.x, "y": position.y }
+        draftPositions = next
+        hasPendingLayout = true
+    }
+
+    function applyDraftLayout() {
+        if (!hasPendingLayout) return
+        let arguments = ["positions"]
+        for (let index = 0; index < activeMonitors.length; index++) {
+            let monitor = activeMonitors[index]
+            let position = positionFor(monitor)
+            arguments.push(monitor.name, String(Math.round(position.x)), String(Math.round(position.y)))
+        }
+        runAction(arguments, true)
+    }
+
+    function discardDraftLayout() {
+        draftPositions = ({})
+        hasPendingLayout = false
+        snapGuideX = -1
+        snapGuideY = -1
+    }
+
+    function acceptDraftLayout() {
+        let updated = []
+        for (let index = 0; index < monitors.length; index++) {
+            let monitor = monitors[index]
+            let copy = {}
+            for (let key in monitor) copy[key] = monitor[key]
+            let position = draftPositions[monitor.name]
+            if (position) {
+                copy.x = position.x
+                copy.y = position.y
+            }
+            updated.push(copy)
+        }
+        displayState = { "mode": displayState.mode, "monitors": updated }
+        draftPositions = ({})
+        hasPendingLayout = false
+    }
+
+    function panCanvas(wheel) {
+        let amount = wheel.angleDelta.y !== 0 ? wheel.angleDelta.y : wheel.angleDelta.x
+        if ((wheel.modifiers & Qt.ShiftModifier) !== 0)
+            canvasPanX += amount * 0.3
+        else
+            canvasPanY += amount * 0.3
+        wheel.accepted = true
+    }
+
     function queueBrightness(name, value) {
+        let next = {}
+        for (let key in brightnessState) next[key] = brightnessState[key]
+        next[name] = { "brightness": Math.round(value), "brightnessKind": brightnessState[name].brightnessKind }
+        brightnessState = next
         pendingBrightnessName = name
         pendingBrightness = Math.round(value)
         brightnessTimer.restart()
@@ -55,7 +142,7 @@ Item {
 
     function snapPosition(name, rawX, rawY) {
         let current = activeMonitors.find(monitor => monitor.name === name)
-        if (!current) return { "x": Math.round(rawX), "y": Math.round(rawY) }
+        if (!current) return { "x": Math.round(rawX), "y": Math.round(rawY), "snappedX": false, "snappedY": false }
         let currentWidth = current.width / Math.max(0.1, current.scale)
         let currentHeight = current.height / Math.max(0.1, current.scale)
         let threshold = 14 / Math.max(0.01, layoutCanvas.scaleFactor)
@@ -67,10 +154,11 @@ Item {
         for (let index = 0; index < activeMonitors.length; index++) {
             let other = activeMonitors[index]
             if (other.name === name) continue
+            let otherPosition = positionFor(other)
             let otherWidth = other.width / Math.max(0.1, other.scale)
             let otherHeight = other.height / Math.max(0.1, other.scale)
-            let xCandidates = [other.x, other.x + otherWidth, other.x - currentWidth, other.x + otherWidth - currentWidth]
-            let yCandidates = [other.y, other.y + otherHeight, other.y - currentHeight, other.y + otherHeight - currentHeight]
+            let xCandidates = [otherPosition.x, otherPosition.x + otherWidth, otherPosition.x - currentWidth, otherPosition.x + otherWidth - currentWidth]
+            let yCandidates = [otherPosition.y, otherPosition.y + otherHeight, otherPosition.y - currentHeight, otherPosition.y + otherHeight - currentHeight]
             for (let xIndex = 0; xIndex < xCandidates.length; xIndex++) {
                 let distance = Math.abs(rawX - xCandidates[xIndex])
                 if (distance < closestX) { closestX = distance; snappedX = xCandidates[xIndex] }
@@ -80,25 +168,33 @@ Item {
                 if (distance < closestY) { closestY = distance; snappedY = yCandidates[yIndex] }
             }
         }
-        return { "x": Math.round(snappedX), "y": Math.round(snappedY) }
+        return {
+            "x": Math.round(snappedX),
+            "y": Math.round(snappedY),
+            "snappedX": closestX < threshold,
+            "snappedY": closestY < threshold
+        }
     }
 
-    function placeMonitor(name, canvasX, canvasY) {
-        let rawX = (canvasX - layoutCanvas.originX) / layoutCanvas.scaleFactor
-        let rawY = (canvasY - layoutCanvas.originY) / layoutCanvas.scaleFactor
-        let position = snapPosition(name, rawX, rawY)
-        runAction(["position", name, String(position.x), String(position.y)])
+    function previewMonitorSnap(tile) {
+        let rawX = (tile.x - layoutCanvas.originX) / layoutCanvas.scaleFactor
+        let rawY = (tile.y - layoutCanvas.originY) / layoutCanvas.scaleFactor
+        let position = snapPosition(tile.modelData.name, rawX, rawY)
+        if (position.snappedX) tile.x = layoutCanvas.originX + position.x * layoutCanvas.scaleFactor
+        if (position.snappedY) tile.y = layoutCanvas.originY + position.y * layoutCanvas.scaleFactor
+        snapGuideX = position.snappedX ? tile.x : -1
+        snapGuideY = position.snappedY ? tile.y : -1
     }
 
     Command {
-        id: statusCommand
-        command: ["display-control", "status"]
-        interval: 10000
+        id: layoutCommand
+        command: ["display-control", "layout-status"]
+        interval: 3000
         onOutputChanged: {
             if (!output) return
             try {
                 let next = JSON.parse(output)
-                root.displayState = next
+                if (!root.hasPendingLayout) root.displayState = next
                 if (!root.selectedName || !next.monitors.some(monitor => monitor.name === root.selectedName)) {
                     let initial = next.monitors.find(monitor => monitor.name === root.initialMonitor && monitor.enabled)
                     let focused = next.monitors.find(monitor => monitor.focused && monitor.enabled)
@@ -111,12 +207,30 @@ Item {
         }
     }
 
+    Command {
+        id: brightnessCommand
+        command: ["display-control", "brightness-status"]
+        interval: 15000
+        onOutputChanged: {
+            if (!output) return
+            try {
+                root.brightnessState = JSON.parse(output).readings || {}
+            } catch (error) {
+                root.errorText = "Could not read display brightness"
+            }
+        }
+    }
+
     Process {
         id: actionProcess
         stderr: StdioCollector { id: actionError }
-        onExited: {
+        onExited: (exitCode, exitStatus) => {
             root.busy = false
             root.errorText = actionError.text.trim()
+            if (root.applyingLayout && exitCode === 0) {
+                root.acceptDraftLayout()
+            }
+            root.applyingLayout = false
             refreshTimer.restart()
         }
     }
@@ -139,14 +253,14 @@ Item {
         color: active ? Theme.primary : Theme.elevated
         border.width: active ? 0 : 1
         border.color: "#3b434e"
-        opacity: root.busy ? 0.65 : 1
+        opacity: root.busy || !button.enabled ? 0.55 : 1
         Row {
             anchors.centerIn: parent
             spacing: 6
             Text { text:button.icon; color:button.active?Theme.bg:Theme.muted; font.family:Theme.iconFont; font.pixelSize:15 }
             Text { text:button.label; color:button.active?Theme.bg:Theme.fg; font.family:Theme.font; font.pixelSize:11; font.weight:Font.DemiBold }
         }
-        MouseArea { anchors.fill:parent; enabled:!root.busy; cursorShape:Qt.PointingHandCursor; onClicked:button.clicked() }
+        MouseArea { anchors.fill:parent; enabled:!root.busy&&button.enabled; cursorShape:Qt.PointingHandCursor; onClicked:button.clicked() }
     }
 
     Column {
@@ -173,16 +287,48 @@ Item {
             border.color: "#363f49"
             clip: true
             property real scaleFactor: Math.max(0.01, Math.min((width-30)/root.layoutBounds.width, (height-30)/root.layoutBounds.height))
-            property real originX: (width-root.layoutBounds.width*scaleFactor)/2-root.layoutBounds.minX*scaleFactor
-            property real originY: (height-root.layoutBounds.height*scaleFactor)/2-root.layoutBounds.minY*scaleFactor
+            property real originX: (width-root.layoutBounds.width*scaleFactor)/2-root.layoutBounds.minX*scaleFactor+root.canvasPanX
+            property real originY: (height-root.layoutBounds.height*scaleFactor)/2-root.layoutBounds.minY*scaleFactor+root.canvasPanY
+
+            MouseArea {
+                anchors.fill: parent
+                acceptedButtons: Qt.NoButton
+                onWheel: wheel => root.panCanvas(wheel)
+            }
+
+            Rectangle {
+                x: root.snapGuideX
+                y: 0
+                width: 2
+                height: parent.height
+                color: Theme.primary
+                opacity: 0.75
+                visible: root.snapGuideX >= 0
+                z: 20
+            }
+            Rectangle {
+                x: 0
+                y: root.snapGuideY
+                width: parent.width
+                height: 2
+                color: Theme.primary
+                opacity: 0.75
+                visible: root.snapGuideY >= 0
+                z: 20
+            }
 
             Repeater {
                 model: root.activeMonitors
                 Rectangle {
                     id: displayTile
                     required property var modelData
-                    x: layoutCanvas.originX + modelData.x * layoutCanvas.scaleFactor
-                    y: layoutCanvas.originY + modelData.y * layoutCanvas.scaleFactor
+                    function syncPosition() {
+                        if (tileMouse.drag.active) return
+                        let position = root.positionFor(modelData)
+                        x = layoutCanvas.originX + position.x * layoutCanvas.scaleFactor
+                        y = layoutCanvas.originY + position.y * layoutCanvas.scaleFactor
+                    }
+                    Component.onCompleted: syncPosition()
                     width: Math.max(62, modelData.width / Math.max(0.1, modelData.scale) * layoutCanvas.scaleFactor)
                     height: Math.max(42, modelData.height / Math.max(0.1, modelData.scale) * layoutCanvas.scaleFactor)
                     radius: 7
@@ -190,6 +336,19 @@ Item {
                     border.width: root.selectedName===modelData.name ? 2 : 1
                     border.color: root.selectedName===modelData.name ? Theme.primary : "#596471"
                     z: tileMouse.drag.active ? 10 : root.selectedName===modelData.name ? 2 : 1
+
+                    Connections {
+                        target: root
+                        function onDraftPositionsChanged() { displayTile.syncPosition() }
+                        function onCanvasPanXChanged() { displayTile.syncPosition() }
+                        function onCanvasPanYChanged() { displayTile.syncPosition() }
+                    }
+                    Connections {
+                        target: layoutCanvas
+                        function onOriginXChanged() { displayTile.syncPosition() }
+                        function onOriginYChanged() { displayTile.syncPosition() }
+                        function onScaleFactorChanged() { displayTile.syncPosition() }
+                    }
 
                     Column {
                         anchors.centerIn: parent
@@ -222,14 +381,25 @@ Item {
                         drag.minimumY: -displayTile.height+6
                         drag.maximumY: layoutCanvas.height-6
                         cursorShape: pressed ? Qt.ClosedHandCursor : Qt.OpenHandCursor
+                        onWheel: wheel => root.panCanvas(wheel)
                         onPressed: {
                             root.selectedName = displayTile.modelData.name
                             startingX = displayTile.x
                             startingY = displayTile.y
                         }
+                        onPositionChanged: {
+                            if (drag.active) root.previewMonitorSnap(displayTile)
+                        }
                         onReleased: {
+                            root.previewMonitorSnap(displayTile)
+                            root.snapGuideX = -1
+                            root.snapGuideY = -1
                             if (Math.abs(displayTile.x-startingX)>2 || Math.abs(displayTile.y-startingY)>2)
-                                root.placeMonitor(displayTile.modelData.name,displayTile.x,displayTile.y)
+                                root.stageMonitor(displayTile)
+                        }
+                        onCanceled: {
+                            root.snapGuideX = -1
+                            root.snapGuideY = -1
                         }
                     }
                 }
@@ -241,6 +411,37 @@ Item {
                 color: Theme.muted
                 font.family: Theme.font
                 font.pixelSize: 11
+            }
+            Text {
+                anchors.right: parent.right
+                anchors.bottom: parent.bottom
+                anchors.margins: 7
+                text: "Wheel pans · Shift+wheel horizontal"
+                color: Theme.muted
+                opacity: 0.7
+                font.family: Theme.font
+                font.pixelSize: 8
+                z: 21
+            }
+        }
+
+        Row {
+            width: parent.width
+            spacing: 8
+            PanelButton {
+                width: (parent.width-8)/2
+                icon: "󰄬"
+                label: "Apply layout"
+                active: root.hasPendingLayout
+                enabled: root.hasPendingLayout
+                onClicked: root.applyDraftLayout()
+            }
+            PanelButton {
+                width: (parent.width-8)/2
+                icon: "󰜺"
+                label: "Discard"
+                enabled: root.hasPendingLayout
+                onClicked: root.discardDraftLayout()
             }
         }
 
