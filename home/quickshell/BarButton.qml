@@ -19,12 +19,21 @@ Rectangle {
         id: row
         height: parent.height
         Rectangle {
+            id: iconBackground
             visible: root.icon !== ""
             width: visible ? 28 : 0
             height: parent.height
             color: root.accent
+            radius: height / 2
+            Rectangle {
+                visible: root.label !== ""
+                anchors.top: parent.top; anchors.bottom: parent.bottom; anchors.right: parent.right
+                width: parent.radius
+                color: parent.color
+            }
             Text {
                 anchors.centerIn: parent
+                z: 1
                 text: root.icon
                 color: Theme.bg
                 font.family: Theme.iconFont

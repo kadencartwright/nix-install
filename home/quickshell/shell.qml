@@ -196,9 +196,16 @@ ShellRoot {
                     Behavior on opacity { NumberAnimation { duration:130;easing.type:Easing.OutQuad } }
                     Column {
                         width: parent.width; height: dropdown.implicitHeight
-                        Rectangle {
-                            width: parent.width; height: bar.popupKind === "codex" ? 0 : 43; color: Theme.elevated
-                            clip: true
+                        Item {
+                            width: parent.width; height: bar.popupKind === "codex" ? 0 : 43
+                            Rectangle {
+                                x: 1; y: 1; width: parent.width - 2; height: parent.height - 1
+                                color: Theme.elevated; radius: 13
+                            }
+                            Rectangle {
+                                x: 1; y: 14; width: parent.width - 2; height: parent.height - 14
+                                color: Theme.elevated
+                            }
                             Row { anchors.fill:parent; anchors.leftMargin:13; anchors.rightMargin:13; spacing:9
                                 Text { anchors.verticalCenter:parent.verticalCenter; text:bar.popupKind==="network"?"󰖩":bar.popupKind==="audio"?"󰕾":bar.popupKind==="media"?"󰎆":bar.popupKind==="calendar"?"󰃭":bar.popupKind==="battery"?"":"󰅩"; color:Theme.primary; font.family:Theme.iconFont; font.pixelSize:18 }
                                 Text { anchors.verticalCenter:parent.verticalCenter; text:bar.popupKind==="codex"?"Codex Usage":bar.popupKind.charAt(0).toUpperCase()+bar.popupKind.slice(1); color:Theme.fg; font.family:Theme.font; font.pixelSize:14; font.weight:Font.DemiBold }
