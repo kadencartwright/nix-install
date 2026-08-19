@@ -8,6 +8,52 @@
 
 let
   displayControl = import ../packages/display-control.nix { inherit pkgs pkgsUnstable; };
+  lyre = pkgs.buildNpmPackage {
+    pname = "lyre-tui";
+    version = "1.3.5";
+    src = pkgs.fetchFromGitHub {
+      owner = "DeadZone-0";
+      repo = "lyre";
+      rev = "bd8f407dc4101a082ef137cf77ff9f565f099161";
+      hash = "sha256-TjhiGImVrlHxlG5FBdJS6c2Oj+KTcRXG28fUahEhYIw=";
+    };
+    npmDepsHash = "sha256-PxfF0Z7pldeNsXozpBYCPoqF7rw38EkVidEGOtzFam4=";
+
+    postPatch = ''
+      substituteInPlace src/components/App.tsx \
+        --replace-fail "albumArt: { enabled: true" "albumArt: { enabled: false"
+    '';
+
+  };
+  lyreLauncher = pkgs.writeShellApplication {
+    name = "lyre-launch";
+    runtimeInputs = [
+      pkgs.alacritty
+      pkgs.cava
+      pkgs.coreutils
+      pkgs.jq
+      pkgs.mpv
+      pkgs.playerctl
+      pkgsUnstable.hyprland
+      lyre
+    ];
+    text = ''
+      config_dir="''${XDG_CONFIG_HOME:-''${HOME}/.config}/lyre"
+      mkdir -p "$config_dir"
+      if [[ ! -e "$config_dir/lyre.json" ]]; then
+        printf '%s\n' '{ "player": "spotify" }' > "$config_dir/lyre.json"
+      fi
+
+      if ${pkgsUnstable.hyprland}/bin/hyprctl clients -j | ${pkgs.jq}/bin/jq -e '
+        any(.[]; ((.class // "") | ascii_downcase) == "lyre")
+      ' >/dev/null; then
+        exec ${pkgsUnstable.hyprland}/bin/hyprctl dispatch \
+          'hl.dsp.focus({ window = hl.get_windows({ class = "Lyre" })[1] })'
+      fi
+
+      exec ${pkgs.alacritty}/bin/alacritty --class Lyre --title "Lyre Visualizer" -e ${lyre}/bin/lyre
+    '';
+  };
   trayWindowToggle = pkgs.writeShellApplication {
     name = "tray-window-toggle";
     runtimeInputs = [
@@ -520,6 +566,7 @@ in
 {
   home.packages = lib.mkIf isDesktop [
     batteryHistory
+    lyreLauncher
     displayControl
     networkPanelHelper
     networkSpeedtest

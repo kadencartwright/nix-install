@@ -219,6 +219,11 @@ Item {
             spacing: 13
             MediaButton {
                 anchors.verticalCenter: parent.verticalCenter
+                icon: "󰺢"
+                onClicked: Quickshell.execDetached(["lyre-launch"])
+            }
+            MediaButton {
+                anchors.verticalCenter: parent.verticalCenter
                 icon: "󰒮"
                 enabled: root.player && root.player.canGoPrevious
                 onClicked: root.player.previous()

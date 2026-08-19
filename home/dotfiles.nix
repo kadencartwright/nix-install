@@ -79,6 +79,8 @@ hl.animation({ leaf = "windows", enabled = true, speed = 1, bezier = "myBezier",
 hl.animation({ leaf = "windowsOut", enabled = true, speed = 1, bezier = "default", style = "popin 90%" })
 hl.animation({ leaf = "fade", enabled = true, speed = 1, bezier = "default" })''
         ''hl.bind(mainMod .. " + SHIFT + T", hl.dsp.exec_cmd('wl-screenrec -g "$(slurp)"'))''
+        ''require("monitors")''
+        ''		enable_anr_dialog = false,''
         ''-- hyprwhspr - Toggle mode (added by hyprwhspr setup)
 -- Press once to start, press again to stop
 hl.bind("ALT + G", hl.dsp.exec_cmd("/usr/lib/hyprwhspr/config/hyprland/hyprwhspr-tray.sh record"), {
@@ -113,6 +115,9 @@ hl.animation({ leaf = "windowsMove", enabled = true, speed = 3, bezier = "myBezi
 hl.animation({ leaf = "windowsOut", enabled = true, speed = 2, bezier = "myBezier", style = "popin 90%" })
 hl.animation({ leaf = "fade", enabled = false })''
         ''hl.bind(mainMod .. " + SHIFT + T", hl.dsp.exec_cmd("ocr-screenshot"))''
+        (if isDesktop then ''-- Monitor layout is restored by display-control on session startup.'' else ''require("monitors")'')
+        (if isDesktop then ''		enable_anr_dialog = false,
+		disable_autoreload = true,'' else ''		enable_anr_dialog = false,'')
         ''-- Voxtype replaces the existing Alt+G hyprwhspr action.
 hl.bind("ALT + G", hl.dsp.exec_cmd("voxtype record toggle"), {
 	description = "Toggle Voxtype dictation",
@@ -123,6 +128,10 @@ hl.bind("ALT + G", hl.dsp.exec_cmd("voxtype record toggle"), {
 
       hl.bind("ALT + semicolon", hl.dsp.exec_cmd("qs ipc call barMenu toggle"), {
         description = "Open bar command center",
+      })
+
+      hl.bind("SUPER + SHIFT + ALT + M", hl.dsp.exec_cmd("lyre-launch"), {
+        description = "Open audio visualizer",
       })
 
       hl.on("hyprland.shutdown", function()
