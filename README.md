@@ -71,11 +71,27 @@ Use Seahorse to repair an already mismatched keyring. The `passwd` PAM control
 override uses NixOS's experimental `security.pam.services.*.rules` interface;
 recheck the generated PAM stack after major nixpkgs upgrades.
 
-Atom One Dark is installed as the GTK 2/3 and icon theme, including the Murrine
-engine it requires. Qt 5/6 uses its GTK integration so it follows the same
-theme; GTK4/libadwaita stays in supported dark mode. The current dotfiles carry
-the matching One Dark palettes for Quickshell, Alacritty, Kitty, Neovim, and KDE,
-and Hyprpaper uses the pinned One Dark NixOS wallpaper.
+Home Manager installs an Omarchy-compatible theme layer backed by a pinned copy
+of Omarchy's stock themes and template renderer. The initial theme is Tokyo
+Night. Use `omarchy-theme list`, `omarchy-theme current`, and
+`omarchy-theme set <name>` to inspect or switch themes; use
+`omarchy-theme background next` to cycle the selected theme's wallpapers.
+Locally authored themes can be added under `~/.config/omarchy/themes/<name>` and
+background overlays under `~/.config/omarchy/backgrounds/<name>`.
+
+On desktop hosts, the palette button in the Quickshell bar opens a scrollable
+theme picker with Omarchy's previews, the selected theme, and custom-theme
+badges. The same picker is available from the `Themes` section of the
+`Alt+semicolon` command center. `Current System` is a Home Manager-owned custom
+theme preserving the configuration's previous One Dark colors, terminal
+palettes, Atom One Dark GTK/icons, and NixOS wallpaper.
+
+The runtime theme reaches Alacritty, Kitty, Neovim, btop, Fuzzel, Hyprland,
+Hyprlock, Hyprpaper, Waybar, GTK light/dark mode and icons, plus Quickshell's
+central palette. Existing Alacritty windows, Neovim sessions, and the running
+Quickshell bar update in place. Home Manager continues to own the application
+structure while Omarchy only owns generated color files under
+`~/.local/state/omarchy/current`.
 
 Desktop hosts use the same local dictation shape as Omarchy: Voxtype with the
 English `base.en` Whisper model, Vulkan acceleration, and compositor-managed

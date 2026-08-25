@@ -28,6 +28,7 @@ PanelWindow {
     property string powerProfile: ""
     property string batterySummary: ""
     property string codexSummary: ""
+    property string currentTheme: ""
     property var voxtypeEntries: []
 
     readonly property string displayBinary: {
@@ -41,6 +42,10 @@ PanelWindow {
     readonly property string trayToggleBinary: {
         const configured = Quickshell.env("TRAY_WINDOW_TOGGLE_BINARY")
         return configured && configured.length > 0 ? configured : "tray-window-toggle"
+    }
+    readonly property string themeBinary: {
+        const configured = Quickshell.env("OMARCHY_THEME_BINARY")
+        return configured && configured.length > 0 ? configured : "omarchy-theme"
     }
     readonly property var nodes: Pipewire.nodes ? Pipewire.nodes.values : []
     readonly property var sinks: nodes.filter(node => node && node.ready && node.audio && node.isSink && !node.isStream)
@@ -59,6 +64,7 @@ PanelWindow {
         { kind: "voxtype", label: "Voxtype", icon: "󰍬" },
         { kind: "media", label: "Media", icon: "󰎆" },
         { kind: "network", label: "Network", icon: "󰖩" },
+        { kind: "theme", label: "Themes", icon: "󰏘" },
         { kind: "power", label: "Power Profile", icon: "󰐥" },
         { kind: "battery", label: "Battery", icon: "" },
         { kind: "display", label: "Displays", icon: "󰍹" },
@@ -100,6 +106,15 @@ PanelWindow {
         watchChanges: true
         printErrors: false
         onLoaded: root.loadVoxtype(text())
+        onFileChanged: reload()
+    }
+
+    FileView {
+        id: currentThemeFile
+        path: Quickshell.env("HOME") + "/.local/state/omarchy/current/theme.name"
+        watchChanges: true
+        printErrors: false
+        onLoaded: root.currentTheme = text().trim()
         onFileChanged: reload()
     }
 
@@ -173,6 +188,7 @@ PanelWindow {
     function refreshData() {
         displayStatus.run()
         networkStatus.run()
+        currentThemeFile.reload()
         wifiStatus.run()
         profileStatus.run()
         batteryStatus.run()
@@ -244,6 +260,11 @@ PanelWindow {
                 { label: "DNS: Custom…", detail: "Enter one or more servers", icon: "󰇖", type: "customDns" },
                 { label: "Wi-Fi band: Auto", detail: "Let NetworkManager choose", icon: "󰤨", type: "command", command: [networkBinary, "band", "auto"] },
                 { label: "Wi-Fi band: 5 GHz", detail: "Prefer 5 GHz", icon: "󰤨", type: "command", command: [networkBinary, "band", "5"] }]
+        } else if (kind === "theme") {
+            actions = [panelAction("theme"),
+                { label: "Current theme", detail: currentTheme || "Reading theme…", icon: "󰏘", type: "none" },
+                { label: "Next wallpaper", detail: "Cycle this theme's backgrounds", icon: "󰆊", type: "command", command: [themeBinary, "background", "next"] },
+                { label: "Reapply current theme", detail: "Regenerate all application adapters", icon: "󰑓", type: "command", command: [themeBinary, "refresh"] }]
         } else if (kind === "power") {
             actions = [
                 { label: "Balanced", detail: powerProfile === "balanced" ? "Current" : "General use", icon: "󰾅", type: "command", command: ["powerprofilesctl", "set", "balanced"] },

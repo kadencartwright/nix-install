@@ -1,0 +1,12 @@
+$accent = rgb({{ accent_strip }})
+$accentAlpha = {{ accent_strip }}
+$base = rgb({{ background_strip }})
+$baseAlpha = {{ background_strip }}
+$surface0 = rgb({{ lighter_background_strip }})
+$surface0Alpha = {{ lighter_background_strip }}
+$text = rgb({{ foreground_strip }})
+$textAlpha = {{ foreground_strip }}
+$red = rgb({{ red_strip }})
+$redAlpha = {{ red_strip }}
+$yellow = rgb({{ yellow_strip }})
+$yellowAlpha = {{ yellow_strip }}

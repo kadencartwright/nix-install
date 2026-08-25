@@ -158,6 +158,23 @@
         "type": "github"
       }
     },
+    "omarchy": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1787670253,
+        "narHash": "sha256-9DtfpBcRNAVCdLTzcaKOzzeCVW23VVc1ILiRq5GE2tE=",
+        "owner": "basecamp",
+        "repo": "omarchy",
+        "rev": "93010924047d09f62f702bf8b5c07d0149c11943",
+        "type": "github"
+      },
+      "original": {
+        "owner": "basecamp",
+        "ref": "quattro",
+        "repo": "omarchy",
+        "type": "github"
+      }
+    },
     "onedark-wallpapers": {
       "flake": false,
       "locked": {
@@ -201,6 +218,7 @@
         "nixpkgs": "nixpkgs",
         "nixpkgs-unstable": "nixpkgs-unstable",
         "obsbot-cli": "obsbot-cli",
+        "omarchy": "omarchy",
         "onedark-wallpapers": "onedark-wallpapers",
         "openai-chatgpt-desktop-nix": "openai-chatgpt-desktop-nix",
         "sops-nix": "sops-nix",

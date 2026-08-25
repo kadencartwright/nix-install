@@ -11,17 +11,68 @@ let
   dotfiles = inputs.dotfiles;
   hyprwhspr = if isDesktop then pkgsUnstable.callPackage ../packages/hyprwhspr.nix { } else null;
   hyprwhsprRoot = if isDesktop then "${hyprwhspr}/lib/hyprwhspr" else "/usr/lib/hyprwhspr";
-  onedarkWallpapers = inputs.onedark-wallpapers;
-  alacrittyConfig =
-    builtins.replaceStrings
-      [ ''[window]
-decorations = "full"'' ]
-      [ ''[window]
-decorations = "full"
+  omarchyThemeState = "${config.home.homeDirectory}/.local/state/omarchy/current";
+  omarchyAlacrittyPalette = "${config.home.homeDirectory}/.local/state/omarchy/alacritty.toml";
+  alacrittyPalette = ''
+    [colors.bright]
+    black = "0x5c6370"
+    blue = "0x61afef"
+    cyan = "0x56b6c2"
+    green = "0x98c379"
+    magenta = "0xc678dd"
+    red = "0xe06c75"
+    white = "0xe6efff"
+    yellow = "0xd19a66"
 
-[window.padding]
-x = 4
-y = 4'' ]
+    [colors.dim]
+    black = "0x1e2127"
+    blue = "0x61afef"
+    cyan = "0x56b6c2"
+    green = "0x98c379"
+    magenta = "0xc678dd"
+    red = "0xe06c75"
+    white = "0x828791"
+    yellow = "0xd19a66"
+
+    [colors.normal]
+    black = "0x1e2127"
+    blue = "0x61afef"
+    cyan = "0x56b6c2"
+    green = "0x98c379"
+    magenta = "0xc678dd"
+    red = "0xe06c75"
+    white = "0x828791"
+    yellow = "0xd19a66"
+
+    [colors.primary]
+    background = "0x1e2127"
+    bright_foreground = "0xe6efff"
+    foreground = "0xabb2bf"
+
+  '';
+  alacrittyConfig = ''
+    general.import = [ "${omarchyAlacrittyPalette}" ]
+    general.live_config_reload = true
+
+  ''
+  +
+    builtins.replaceStrings
+      [
+        alacrittyPalette
+        ''
+          [window]
+          decorations = "full"''
+      ]
+      [
+        ""
+        ''
+          [window]
+          decorations = "full"
+
+          [window.padding]
+          x = 4
+          y = 4''
+      ]
       (builtins.readFile "${dotfiles}/alacritty/alacritty.toml");
   alacrittyDir = pkgs.linkFarm "alacritty-config" [
     {
@@ -34,6 +85,66 @@ y = 4'' ]
       [ ''source "$HOME/.cargo/env"'' ]
       [ ''[ -r "$HOME/.cargo/env" ] && source "$HOME/.cargo/env"'' ]
       (builtins.readFile "${dotfiles}/zsh/.zshrc");
+  fuzzelConfig =
+    builtins.replaceStrings
+      [
+        ''
+          [colors]
+          background=1E2127DD
+          text=E6EFFFFF
+          selection=E6EFFFFF
+          selection-text=1E2127DD
+          selection-match=d19a66FF
+          border=1E2127DD
+        ''
+        "fuzzy=yes"
+      ]
+      [
+        ''
+          include=${omarchyThemeState}/theme/fuzzel.ini
+        ''
+        "match-mode=fuzzy"
+      ]
+      (builtins.readFile "${dotfiles}/fuzzel/fuzzel.ini");
+  kittyPalette = ''
+    # Kitty configuration - converted from alacritty.toml
+    # One Dark color scheme
+
+    # Colors - Normal (0-7)
+    color0 #1e2127
+    color1 #e06c75
+    color2 #98c379
+    color3 #d19a66
+    color4 #61afef
+    color5 #c678dd
+    color6 #56b6c2
+    color7 #828791
+
+    # Colors - Bright (8-15)
+    color8 #5c6370
+    color9 #e06c75
+    color10 #98c379
+    color11 #d19a66
+    color12 #61afef
+    color13 #c678dd
+    color14 #56b6c2
+    color15 #e6efff
+
+    # Primary colors
+    foreground #abb2bf
+    background #1e2127
+
+  '';
+  kittyConfig =
+    builtins.replaceStrings
+      [ kittyPalette ]
+      [
+        ''
+          include ${omarchyThemeState}/theme/kitty.conf
+
+        ''
+      ]
+      (builtins.readFile "${dotfiles}/kitty/kitty.conf");
   waybarConfig =
     if isDesktop then
       builtins.readFile "${dotfiles}/waybar/config.jsonc"
@@ -54,10 +165,28 @@ y = 4'' ]
       [ hyprwhsprRoot ]
       (builtins.readFile "${dotfiles}/waybar/hyprwhspr-module.jsonc");
   waybarStyle =
-    builtins.replaceStrings
-      [ "/usr/lib/hyprwhspr" ]
-      [ (if isDesktop then hyprwhsprRoot else "") ]
-      (builtins.readFile "${dotfiles}/waybar/style.css");
+    let
+      fixedImports = builtins.replaceStrings
+        [ "/usr/lib/hyprwhspr" ]
+        [ (if isDesktop then hyprwhsprRoot else "") ]
+        (builtins.readFile "${dotfiles}/waybar/style.css");
+      fixedPalette = builtins.replaceStrings
+        [
+          ''@define-color black #1e2127;
+@define-color blue #61afef;
+@define-color green #98c379;
+@define-color magenta #c678dd;
+@define-color red #e06c75;
+@define-color white #828791;
+@define-color bright-white #e6efff;
+@define-color yellow #d19a66;
+''
+        ]
+        [ "" ]
+        fixedImports;
+    in
+    ''@import url("${omarchyThemeState}/theme/waybar.css");
+'' + fixedPalette;
   hyprlandConfig =
     builtins.replaceStrings
       [
@@ -66,6 +195,7 @@ y = 4'' ]
         ''hl.env("QT_QPA_PLATFORMTHEME", "adwaita")''
         ''hl.env("QT_STYLE_OVERRIDE", "adwaita-dark")''
         ''hl.exec_cmd("wayle shell")''
+        ''hl.exec_cmd("hyprpaper")''
         ''hl.exec_cmd("hypridle")''
         ''hl.exec_cmd("dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP")''
         ''	animations = {
@@ -94,6 +224,7 @@ hl.env("GNOME_KEYRING_CONTROL", (os.getenv("XDG_RUNTIME_DIR") or "") .. "/keyrin
         ''hl.env("QT_QPA_PLATFORMTHEME", "gtk")''
         ''hl.env("QT_STYLE_OVERRIDE", "gtk2")''
         ''hl.exec_cmd("gnome-keyring-daemon --start --components=secrets")''
+        ''-- Hyprpaper is managed by hyprland-session.target.''
         ''hl.exec_cmd("hypridle")
 	hl.exec_cmd("display-control restore")''
         ''hl.exec_cmd("dbus-update-activation-environment --systemd DISPLAY HYPRLAND_INSTANCE_SIGNATURE WAYLAND_DISPLAY XDG_CURRENT_DESKTOP XDG_SESSION_TYPE")
@@ -137,7 +268,39 @@ hl.bind("ALT + G", hl.dsp.exec_cmd("voxtype record toggle"), {
       hl.on("hyprland.shutdown", function()
         os.execute("systemctl --user stop hyprland-session.target && sleep 0.1")
       end)
+
+      -- Home Manager keeps the application configuration declarative; this
+      -- small generated file supplies the currently selected Omarchy colors.
+      local omarchy_theme = home .. "/.local/state/omarchy/current/theme/hyprland.lua"
+      local theme_file = io.open(omarchy_theme, "r")
+      if theme_file then
+        theme_file:close()
+        dofile(omarchy_theme)
+      end
     '';
+  # Drop the pinned dotfiles theme source and its two legacy accent aliases;
+  # the Omarchy adapter below supplies all lock-screen colors directly.
+  hyprlockConfig =
+    ''source = $HOME/.local/state/omarchy/current/theme/hyprlock.conf
+''
+    + builtins.concatStringsSep "\n" (
+      pkgs.lib.drop 4 (pkgs.lib.splitString "\n" (builtins.readFile "${dotfiles}/hyprland/hyprlock.conf"))
+    );
+  quickshellConfig = ./quickshell;
+  nvimConfig = pkgs.runCommandLocal "nvim-themed-config" { } ''
+    cp -r ${dotfiles}/nvim "$out"
+    chmod -R u+w "$out"
+
+    substituteInPlace "$out/init.lua" \
+      --replace-fail 'vim.cmd.colorscheme("onedark")' \
+        '-- The active colorscheme is loaded from Omarchy by lazy.nvim.'
+    substituteInPlace "$out/lua/plugins/lualine.lua" \
+      --replace-fail 'theme = "onedark",' 'theme = "auto",'
+    rm "$out/lua/plugins/onedark.lua"
+    cp ${./nvim/lazy.lua} "$out/lua/config/lazy.lua"
+    cp ${./nvim/omarchy_theme.lua} "$out/lua/omarchy_theme.lua"
+    cp ${./nvim/omarchy-theme.lua} "$out/lua/plugins/omarchy-theme.lua"
+  '';
 in
 {
   # Activate desktop-scoped user services without routing application launches
@@ -170,24 +333,39 @@ in
     Install.WantedBy = [ "graphical-session.target" ];
   };
 
+  systemd.user.services.hyprpaper = pkgs.lib.mkIf isDesktop {
+    Unit = {
+      Description = "Hyprpaper wallpaper daemon";
+      After = [ "graphical-session.target" ];
+      PartOf = [ "hyprland-session.target" ];
+    };
+
+    Service = {
+      ExecStart = "${pkgs.hyprpaper}/bin/hyprpaper";
+      Restart = "on-failure";
+      RestartSec = 1;
+    };
+
+    Install.WantedBy = [ "hyprland-session.target" ];
+  };
+
   xdg.configFile = {
     "aerospace".source = "${dotfiles}/aerospace";
     "aerospace-swipe".source = "${dotfiles}/aerospace-swipe";
     "alacritty".source = alacrittyDir;
     "electron-flags.conf".source = "${dotfiles}/electron/electron-flags.conf";
     "fontconfig/fonts.conf".source = "${dotfiles}/fontconfig/fonts.conf";
-    "fuzzel".source = "${dotfiles}/fuzzel";
+    "fuzzel/fuzzel.ini".text = fuzzelConfig;
     "hypr/hypridle.conf".source = "${dotfiles}/hyprland/hypridle.conf";
     "hypr/hyprland.lua".text = hyprlandConfig;
-    "hypr/hyprlock.conf".source = "${dotfiles}/hyprland/hyprlock.conf";
-    "hypr/macchiato.conf".source = "${dotfiles}/hyprland/macchiato.conf";
+    "hypr/hyprlock.conf".text = hyprlockConfig;
     "hypr/monitors.lua".source = "${dotfiles}/hyprland/monitors.lua";
     "hypr/workspaces.conf".source = "${dotfiles}/hyprland/workspaces.conf";
     "hypr/xdph.conf".source = "${dotfiles}/hyprland/xdph.conf";
     "karabiner".source = "${dotfiles}/karabiner";
     "kdeglobals".source = "${dotfiles}/kde/kdeglobals";
-    "kitty".source = "${dotfiles}/kitty";
-    "nvim".source = "${dotfiles}/nvim";
+    "kitty/kitty.conf".text = kittyConfig;
+    "nvim".source = nvimConfig;
     "opencode/agent".source = "${dotfiles}/opencode/agent";
     "opencode/bun.lock".source = "${dotfiles}/opencode/bun.lock";
     "opencode/opencode.json".source = "${dotfiles}/opencode/opencode.jsonc";
@@ -207,16 +385,16 @@ in
       text = waybarModule;
     };
     "waybar/style.css".text = waybarStyle;
-    "quickshell".source = ./quickshell;
+    "quickshell".source = quickshellConfig;
     "hypr/hyprpaper.conf".text = ''
       wallpaper {
           monitor =
-          path = ${onedarkWallpapers}/os/od_nixos.png
+          path = ${omarchyThemeState}/background
           fit_mode = cover
       }
 
       splash = false
-      ipc = off
+      ipc = on
     '';
   };
 

@@ -1,0 +1,32 @@
+mode = "dark"
+
+# The palette used by this configuration before Omarchy integration.
+accent = "#4fa6ed"
+selection = "#343c47"
+muted = "#7a818e"
+
+background = "#1f2329"
+dark_background = "#252a31"
+darker_background = "#1e2127"
+lighter_background = "#2b313a"
+
+foreground = "#a0a8b7"
+dark_foreground = "#7a818e"
+light_foreground = "#abb2bf"
+bright_foreground = "#e6efff"
+
+red = "#e55561"
+yellow = "#cc9057"
+orange = "#d19a66"
+green = "#8ebd6b"
+cyan = "#56b6c2"
+blue = "#48b0bd"
+magenta = "#c678dd"
+brown = "#9c7351"
+
+bright_red = "#e06c75"
+bright_yellow = "#d19a66"
+bright_green = "#98c379"
+bright_cyan = "#56b6c2"
+bright_blue = "#61afef"
+bright_magenta = "#c678dd"

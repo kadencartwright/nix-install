@@ -29,6 +29,14 @@
       flake = false;
     };
 
+    # Theme definitions, templates, and the renderer used by home/theme.nix.
+    # The Arch-specific system configuration is deliberately not imported.
+    omarchy = {
+      url = "github:basecamp/omarchy/quattro";
+      flake = false;
+    };
+
+    # Retained for the declarative "Current System" custom Omarchy theme.
     onedark-wallpapers = {
       url = "github:Narmis-E/onedark-wallpapers";
       flake = false;

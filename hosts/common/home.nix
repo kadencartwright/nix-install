@@ -14,5 +14,10 @@
   home.homeDirectory = "/home/k";
   home.stateVersion = "25.11";
 
+  programs.omarchy-theme = {
+    enable = true;
+    defaultTheme = "tokyo-night";
+  };
+
   programs.home-manager.enable = true;
 }

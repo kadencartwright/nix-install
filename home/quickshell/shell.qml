@@ -15,6 +15,21 @@ ShellRoot {
         return configured&&configured.length>0?configured:"tray-window-toggle"
     }
 
+    IpcHandler {
+        target: "theme"
+
+        function apply(colorsB64: string): string {
+            let colors = ""
+            try { colors = Qt.atob(String(colorsB64 || "")) } catch (_) { return "invalid payload" }
+            Theme.loadColors(colors)
+            return "ok"
+        }
+
+        function background(): string {
+            return Theme.bg.toString()
+        }
+    }
+
     Command {
         command:["display-control","main-brightness"]
         interval:15000
@@ -264,6 +279,7 @@ ShellRoot {
                     id: rightModules
                     anchors.centerIn:parent;height:28;spacing:4
                     BarButton { height:28; icon:"󰅩"; label:bar.codex; accent:Theme.green; selected:bar.popupKind==="codex"&&dropdown.visible; onClicked:x=>bar.togglePopup("codex",x) }
+                    BarButton { height:28; icon:"󰏘"; accent:Theme.primary; selected:bar.popupKind==="theme"&&dropdown.visible; onClicked:x=>bar.togglePopup("theme",x) }
                     BarButton { height:28; icon:bar.voxtypeState==="transcribing"?"󰔟":"󰍬"; accent:bar.voxtypeState==="recording"||bar.voxtypeState==="streaming"?Theme.red:bar.voxtypeState==="transcribing"?Theme.primary:Theme.muted; selected:bar.popupKind==="voxtype"&&dropdown.visible; onClicked:x=>bar.togglePopup("voxtype",x) }
                     BarButton { height:28; icon:"󰎆"; accent:Theme.blue; onClicked:x=>bar.togglePopup("media",x) }
                     BarButton { height:28; icon:"󰖩"; label:bar.networkName; accent:Theme.blue; selected:bar.popupKind==="network"&&dropdown.visible; onClicked:x=>bar.togglePopup("network",x) }
@@ -289,8 +305,8 @@ ShellRoot {
                 anchor.window: bar
                 anchor.rect.x: Math.max(4, Math.min(bar.width - width - 8, bar.popupAnchorX - width/2))
                 anchor.rect.y: bar.height + 3
-                implicitWidth: bar.popupKind === "audio" || bar.popupKind === "display" ? 430 : bar.popupKind === "voxtype" ? 410 : bar.popupKind === "network" || bar.popupKind === "calendar" ? 350 : bar.popupKind === "codex" ? 340 : bar.popupKind === "battery" ? 380 : 390
-                implicitHeight: bar.popupKind === "display" ? (panelLoader.item ? panelLoader.item.implicitHeight+43 : 420) : bar.popupKind === "network" || bar.popupKind === "voxtype" ? 498 : bar.popupKind === "audio" || bar.popupKind === "calendar" ? 488 : bar.popupKind === "codex" || bar.popupKind === "battery" ? 433 : 283
+                implicitWidth: bar.popupKind === "theme" ? 440 : bar.popupKind === "audio" || bar.popupKind === "display" ? 430 : bar.popupKind === "voxtype" ? 410 : bar.popupKind === "network" || bar.popupKind === "calendar" ? 350 : bar.popupKind === "codex" ? 340 : bar.popupKind === "battery" ? 380 : 390
+                implicitHeight: bar.popupKind === "theme" ? 520 : bar.popupKind === "display" ? (panelLoader.item ? panelLoader.item.implicitHeight+43 : 420) : bar.popupKind === "network" || bar.popupKind === "voxtype" ? 498 : bar.popupKind === "audio" || bar.popupKind === "calendar" ? 488 : bar.popupKind === "codex" || bar.popupKind === "battery" ? 433 : 283
                 onVisibleChanged: if (!visible) {
                     expanded = false
                     bar.popupKind = ""
@@ -319,8 +335,8 @@ ShellRoot {
                                 color: Theme.elevated
                             }
                             Row { anchors.fill:parent; anchors.leftMargin:13; anchors.rightMargin:13; spacing:9
-                                Text { anchors.verticalCenter:parent.verticalCenter; text:bar.popupKind==="network"?"󰖩":bar.popupKind==="audio"?"󰕾":bar.popupKind==="display"?"󰍹":bar.popupKind==="media"?"󰎆":bar.popupKind==="calendar"?"󰃭":bar.popupKind==="battery"?"":bar.popupKind==="voxtype"?"󰍬":"󰅩"; color:Theme.primary; font.family:Theme.iconFont; font.pixelSize:18 }
-                                Text { anchors.verticalCenter:parent.verticalCenter; text:bar.popupKind==="codex"?"Codex Usage":bar.popupKind==="display"?"Displays":bar.popupKind==="voxtype"?"Voxtype History":bar.popupKind.charAt(0).toUpperCase()+bar.popupKind.slice(1); color:Theme.fg; font.family:Theme.font; font.pixelSize:14; font.weight:Font.DemiBold }
+                                Text { anchors.verticalCenter:parent.verticalCenter; text:bar.popupKind==="theme"?"󰏘":bar.popupKind==="network"?"󰖩":bar.popupKind==="audio"?"󰕾":bar.popupKind==="display"?"󰍹":bar.popupKind==="media"?"󰎆":bar.popupKind==="calendar"?"󰃭":bar.popupKind==="battery"?"":bar.popupKind==="voxtype"?"󰍬":"󰅩"; color:Theme.primary; font.family:Theme.iconFont; font.pixelSize:18 }
+                                Text { anchors.verticalCenter:parent.verticalCenter; text:bar.popupKind==="theme"?"Themes":bar.popupKind==="codex"?"Codex Usage":bar.popupKind==="display"?"Displays":bar.popupKind==="voxtype"?"Voxtype History":bar.popupKind.charAt(0).toUpperCase()+bar.popupKind.slice(1); color:Theme.fg; font.family:Theme.font; font.pixelSize:14; font.weight:Font.DemiBold }
                                 Item { width: parent.width-(bar.popupKind==="network"?168:80); height:1 }
                                 Rectangle {
                                     visible: bar.popupKind === "network"
@@ -352,7 +368,7 @@ ShellRoot {
                             id: panelLoader
                             width: parent.width; height: parent.height - (bar.popupKind === "codex" ? 0 : 43)
                             clip: true
-                            sourceComponent: bar.popupKind==="network"?networkComponent:bar.popupKind==="audio"?audioComponent:bar.popupKind==="display"?displayComponent:bar.popupKind==="calendar"?calendarComponent:bar.popupKind==="codex"?codexComponent:bar.popupKind==="battery"?batteryComponent:bar.popupKind==="voxtype"?voxtypeComponent:mediaComponent
+                            sourceComponent: bar.popupKind==="theme"?themeComponent:bar.popupKind==="network"?networkComponent:bar.popupKind==="audio"?audioComponent:bar.popupKind==="display"?displayComponent:bar.popupKind==="calendar"?calendarComponent:bar.popupKind==="codex"?codexComponent:bar.popupKind==="battery"?batteryComponent:bar.popupKind==="voxtype"?voxtypeComponent:mediaComponent
                             onLoaded: if (bar.popupKind === "display" && item) item.initialMonitor = bar.screen.name
                         }
                     }
@@ -415,5 +431,6 @@ ShellRoot {
     Component { id: calendarComponent; CalendarPanel {} }
     Component { id: batteryComponent; BatteryPanel {} }
     Component { id: voxtypeComponent; VoxtypePanel {} }
+    Component { id: themeComponent; ThemePanel {} }
     KeyboardMenu { id: keyboardMenu }
 }

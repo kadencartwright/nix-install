@@ -13,4 +13,5 @@ CodexPanel 1.0 CodexPanel.qml
 CalendarPanel 1.0 CalendarPanel.qml
 BatteryPanel 1.0 BatteryPanel.qml
 VoxtypePanel 1.0 VoxtypePanel.qml
+ThemePanel 1.0 ThemePanel.qml
 KeyboardMenu 1.0 KeyboardMenu.qml

@@ -15,7 +15,7 @@ before the real hardware install.
 
 | Arch package | NixOS destination | Nixpkgs/module candidate | Status |
 | --- | --- | --- | --- |
-| `adw-gtk-theme` | Replaced desktop theme | Custom pinned `AtomOneDarkTheme` package | Replaced by Atom One Dark for GTK 2/3; GTK4/libadwaita remains in supported dark mode |
+| `adw-gtk-theme` | Runtime desktop theme | Home Manager's Omarchy adapter plus Adwaita/Yaru | Omarchy palettes switch supported app colors, GTK light/dark mode, and icon variants; the custom Current System theme restores Atom One Dark for GTK 2/3 while GTK4/libadwaita stays on its supported color-scheme API |
 | `alacritty` | Home Manager + system package | `programs.alacritty`, `pkgs.alacritty` | Added |
 | `atuin` | Home Manager package | `pkgs.atuin` | Added |
 | `bat` | Home Manager package | `pkgs.bat` | Added |
