@@ -232,6 +232,9 @@ hl.env("GNOME_KEYRING_CONTROL", (os.getenv("XDG_RUNTIME_DIR") or "") .. "/keyrin
         ''	decoration = {
 		rounding = 12,
 		rounding_power = 4.0,
+		shadow = {
+			enabled = false,
+		},
 	},
 
 	animations = {

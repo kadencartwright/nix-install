@@ -232,6 +232,9 @@ let
               if command -v hyprctl >/dev/null 2>&1 && hyprctl monitors >/dev/null 2>&1; then
                 # Evaluate only the theme fragment. A full compositor reload also
                 # reapplies monitor rules and can destroy the restored dock layout.
+                # Reset optional theme effects first so a theme such as Lumon does
+                # not leave its glow or rounding behind after switching away.
+                hyprctl eval 'hl.config({ decoration = { rounding = 12, rounding_power = 4.0, shadow = { enabled = false } } })' >/dev/null 2>&1 || true
                 hyprctl eval "dofile(\"$current_dir/theme/hyprland.lua\")" >/dev/null 2>&1 || true
                 background="$(readlink -f "$current_dir/background" 2>/dev/null || true)"
                 if [[ -n "$background" ]]; then
