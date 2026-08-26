@@ -9,10 +9,18 @@
 
 let
   platformSystem = pkgs.stdenv.hostPlatform.system;
+  chatgptVersion = "26.820.60940";
   tm = pkgs.callPackage ../packages/tm.nix {
     tm-src = inputs.tm;
   };
-  openaiChatgptDesktop = inputs.openai-chatgpt-desktop-nix.packages.${platformSystem}.default;
+  openaiChatgptDesktop =
+    inputs.openai-chatgpt-desktop-nix.packages.${platformSystem}.default.overrideAttrs (_: {
+      version = chatgptVersion;
+      src = pkgs.fetchurl {
+        url = "https://persistent.oaistatic.com/codex-app-prod/linux/deb/pool/main/c/chatgpt/chatgpt_${chatgptVersion}_amd64.deb";
+        hash = "sha256-MdlWqMbFFfjYfgt6zZ7JGffmhbpZMxtLl6pF+FOv39c=";
+      };
+    });
   opencode = pkgsUnstable.callPackage ../packages/opencode.nix { };
   opencodeDesktop = pkgsUnstable.callPackage ../packages/opencode-desktop.nix { };
   t3 = pkgsUnstable.callPackage ../packages/t3-cli { };
