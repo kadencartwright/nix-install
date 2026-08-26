@@ -102,7 +102,7 @@ before the real hardware install.
 | `openai-chatgpt-desktop` | Desktop user app | `openai-chatgpt-desktop-nix` flake input | Added on supported x86_64 hosts |
 | `reflector-simple` | Removed | NixOS uses pinned flake inputs, not mirror ranking for system config | Excluded |
 | `slack-desktop` | Desktop user app, unfree | `pkgs.slack` | Added for desktop hosts |
-| `t3code` / `t3` | Home Manager packages | In-repo packages pinned to upstream `v0.0.33` | Both added on supported x86_64 Linux hosts |
+| `t3code` / `t3` | Home Manager packages | In-repo packages pinned to upstream `v0.0.34` | Both added on supported x86_64 Linux hosts |
 | `wayle` | Replaced desktop shell and panel | `pkgs.quickshell` | Replaced by the in-repo Quickshell configuration |
 | `tmux-sessionizer-bin` | User script/package | custom Home Manager script | Later |
 | `ttf-apple-emoji` | Font | possible unfree/custom font package | Later |
