@@ -10,7 +10,7 @@ in
     autosuggestion.enable = true;
     syntaxHighlighting.enable = true;
     initContent = lib.mkAfter ''
-      nhos() { nh os switch github:kadencartwright/nix-install#${host} -- --refresh "$@"; }
+      nhos() { nh os switch github:kadencartwright/nix-install/main#${host} -- --option tarball-ttl 0 "$@"; }
       nhr() { nhos "$@"; }
 
       if command -v fnm >/dev/null 2>&1; then
