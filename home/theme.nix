@@ -130,11 +130,17 @@ let
 
             render_adapters() {
               local colors="$current_dir/theme/colors.toml"
-              local destination key value stripped
+              local destination key value stripped sed_script
+              declare -A palette=()
               [[ -f "$colors" ]] || {
                 echo "The selected theme did not produce colors.toml" >&2
                 return 1
               }
+
+              while IFS=$'\t' read -r key value; do
+                [[ -n "$key" ]] || continue
+                palette["$key"]="$value"
+              done < <(omarchy-theme-color --file "$colors" --all)
 
               # Always overwrite these adapters from trusted Home Manager templates.
               # In particular, this prevents a cloned theme from smuggling executable
@@ -142,17 +148,18 @@ let
               while read -r template filename; do
                 destination="$current_dir/theme/$filename"
                 cp --remove-destination "$template" "$destination"
+                sed_script="$(mktemp)"
                 for key in \
                   accent background bright_foreground dark_background foreground \
                   green lighter_background magenta muted red selection yellow blue
                 do
-                  value="$(omarchy-theme-color --file "$colors" "$key")"
+                  value="''${palette[$key]:-}"
                   stripped="''${value#\#}"
-                  sed -i \
-                    -e "s|{{ $key }}|$value|g" \
-                    -e "s|{{ ''${key}_strip }}|$stripped|g" \
-                    "$destination"
+                  printf 's|{{ %s }}|%s|g\n' "$key" "$value" >> "$sed_script"
+                  printf 's|{{ %s_strip }}|%s|g\n' "$key" "$stripped" >> "$sed_script"
                 done
+                sed -i -f "$sed_script" "$destination"
+                rm -f "$sed_script"
               done <<'EOF'
       ${./omarchy-templates/Theme.qml.tpl} Theme.qml
       ${./omarchy-templates/fuzzel.ini.tpl} fuzzel.ini
@@ -207,13 +214,25 @@ let
 
             sync_neovim() {
               local marker="$HOME/.local/state/omarchy/neovim-theme"
+              local runtime_dir theme_name
 
               # Let a short-lived instance install a newly selected theme before
-              # notifying existing editors. The config keeps Lazy's lockfile in
-              # writable XDG state, so this also records the new plugin revision.
-              timeout 120 nvim --headless +qa >/dev/null 2>&1 || true
-              mkdir -p "''${marker%/*}"
-              printf '%s\n' "$(cat "$current_dir/theme.name" 2>/dev/null || true)" > "$marker"
+              # notifying existing editors. Run this outside the interactive theme
+              # path: plugin installation can wait on the network. Serialize jobs
+              # and only publish the marker if this is still the selected theme.
+              theme_name="$(cat "$current_dir/theme.name" 2>/dev/null || true)"
+              [[ -n "$theme_name" ]] || return 0
+              runtime_dir="''${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
+              (
+                exec 8>"$runtime_dir/omarchy-theme-neovim.lock"
+                flock 8
+                timeout 120 nvim --headless +qa >/dev/null 2>&1 || true
+                if [[ "$(cat "$current_dir/theme.name" 2>/dev/null || true)" == "$theme_name" ]]; then
+                  mkdir -p "''${marker%/*}"
+                  printf '%s\n' "$theme_name" > "$marker.next"
+                  mv "$marker.next" "$marker"
+                fi
+              ) >/dev/null 2>&1 &
             }
 
             refresh_desktop() {

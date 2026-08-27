@@ -1,6 +1,14 @@
 { pkgs, pkgsUnstable, ... }:
 
 let
+  chromiumDark = pkgs.symlinkJoin {
+    name = "chromium-dark";
+    paths = [ pkgs.chromium ];
+    nativeBuildInputs = [ pkgs.makeWrapper ];
+    postBuild = ''
+      wrapProgram "$out/bin/chromium" --add-flags "--force-dark-mode"
+    '';
+  };
   displayControl = import ../../packages/display-control.nix { inherit pkgs pkgsUnstable; };
   ocrScreenshot = pkgs.writeShellApplication {
     name = "ocr-screenshot";
@@ -60,7 +68,7 @@ in
       bemoji
       bitwarden-desktop
       brightnessctl
-      chromium
+      chromiumDark
       displayControl
       fuzzel
       gnome-keyring
