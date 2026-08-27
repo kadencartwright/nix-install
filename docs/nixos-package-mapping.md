@@ -84,7 +84,7 @@ before the real hardware install.
 | `ripgrep` | Home Manager/system package | `pkgs.ripgrep` | Added |
 | `systemd-ukify` | Boot hardening | NixOS UKI/systemd tooling | Later |
 | `otf-font-awesome` | Font | `pkgs.font-awesome` | Added |
-| `openai-codex` | Home Manager package | `pkgsUnstable.codex` | Added |
+| `openai-codex` | Home Manager package | In-repo package pinned to the official `v0.150.1` Linux release | Added |
 | `profile-sync-daemon` | User service | package/module if still wanted | Later |
 | `thunderbird` | Desktop user app | `pkgs.thunderbird` | Still omitted; decide per-host later |
 | `lazygit` | Home Manager package | `pkgs.lazygit` | Added |
@@ -99,7 +99,7 @@ before the real hardware install.
 | `bluetuith-bin` | User package | no direct Nixpkgs package | Omitted; `pkgs.bluetui` provides the Bluetooth TUI used on desktop hosts |
 | `codexbar` | Quickshell Codex/ChatGPT usage module | Custom package pinned to upstream `v0.6.1` | Added for desktop hosts with wrapped runtime dependencies |
 | `hyprwhspr` | System-wide speech-to-text | Custom package pinned to upstream `v1.41.0` | Added for desktop hosts; the Hyprland hotkey and fallback Waybar integration use Nix store paths |
-| `openai-chatgpt-desktop` | Desktop user app | `openai-chatgpt-desktop-nix` packaging with the official Debian package pinned to `26.820.60940` | Added on supported x86_64 hosts |
+| `openai-chatgpt-desktop` | Desktop user app | `openai-chatgpt-desktop-nix` packaging with the official Debian package pinned to `26.820.71523` | Added on supported x86_64 hosts |
 | `reflector-simple` | Removed | NixOS uses pinned flake inputs, not mirror ranking for system config | Excluded |
 | `slack-desktop` | Desktop user app, unfree | `pkgs.slack` | Added for desktop hosts |
 | `t3code` / `t3` | Home Manager packages | In-repo packages pinned to upstream `v0.0.34` | Both added on supported x86_64 Linux hosts |

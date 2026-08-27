@@ -9,7 +9,8 @@
 
 let
   platformSystem = pkgs.stdenv.hostPlatform.system;
-  chatgptVersion = "26.820.60940";
+  chatgptVersion = "26.820.71523";
+  codex = pkgsUnstable.callPackage ../packages/codex.nix { };
   tm = pkgs.callPackage ../packages/tm.nix {
     tm-src = inputs.tm;
   };
@@ -18,13 +19,13 @@ let
       version = chatgptVersion;
       src = pkgs.fetchurl {
         url = "https://persistent.oaistatic.com/codex-app-prod/linux/deb/pool/main/c/chatgpt/chatgpt_${chatgptVersion}_amd64.deb";
-        hash = "sha256-MdlWqMbFFfjYfgt6zZ7JGffmhbpZMxtLl6pF+FOv39c=";
+        hash = "sha256-Ry0D6IophX8QFbK5F12AUjoTHPG8PpAX6xqP8jTeG9o=";
       };
     });
   opencode = pkgsUnstable.callPackage ../packages/opencode.nix { };
   opencodeDesktop = pkgsUnstable.callPackage ../packages/opencode-desktop.nix { };
-  t3 = pkgsUnstable.callPackage ../packages/t3-cli { };
-  t3code = pkgsUnstable.callPackage ../packages/t3code.nix { };
+  t3 = pkgsUnstable.callPackage ../packages/t3-cli { inherit codex; };
+  t3code = pkgsUnstable.callPackage ../packages/t3code.nix { inherit codex; };
 in
 
 {
@@ -46,10 +47,10 @@ in
     tmux
     zoxide
   ] ++ (with pkgsUnstable; [
-    codex
     herdr
     pi-coding-agent
   ])
+  ++ [ codex ]
   ++ [ opencode ]
   ++ lib.optional isDesktop opencodeDesktop
   ++ lib.optionals pkgs.stdenv.hostPlatform.isx86_64 [
