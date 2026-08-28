@@ -16,6 +16,11 @@ stdenvNoCC.mkDerivation rec {
     hash = "sha256-AKunBPAp9twNlIvkB6dW4Ml8yEATL9aRNTssawpQWxc=";
   };
 
+  codeModeHost = fetchurl {
+    url = "https://github.com/openai/codex/releases/download/rust-v${version}/codex-code-mode-host-x86_64-unknown-linux-musl.tar.gz";
+    hash = "sha256-tHZnhGElzfbbxGDG/cQYr7LvOSbFT02Zm7++sI3uT8U=";
+  };
+
   sourceRoot = ".";
   nativeBuildInputs = [ makeWrapper ];
 
@@ -23,8 +28,15 @@ stdenvNoCC.mkDerivation rec {
     runHook preInstall
 
     install -Dm755 bin/codex "$out/bin/codex"
+    tar -xzf "$codeModeHost"
+    install -Dm755 codex-code-mode-host-x86_64-unknown-linux-musl "$out/bin/codex-code-mode-host"
     wrapProgram "$out/bin/codex" \
-      --prefix PATH : "${lib.makeBinPath [ bubblewrap ripgrep ]}"
+      --prefix PATH : "${
+        lib.makeBinPath [
+          bubblewrap
+          ripgrep
+        ]
+      }"
 
     runHook postInstall
   '';
