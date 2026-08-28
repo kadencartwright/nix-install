@@ -24,6 +24,7 @@ let
     });
   opencode = pkgsUnstable.callPackage ../packages/opencode.nix { };
   opencodeDesktop = pkgsUnstable.callPackage ../packages/opencode-desktop.nix { };
+  portmux = inputs.portmux.packages.${platformSystem}.default;
   t3 = pkgsUnstable.callPackage ../packages/t3-cli { inherit codex; };
   t3code = pkgsUnstable.callPackage ../packages/t3code.nix { inherit codex; };
 in
@@ -52,6 +53,7 @@ in
   ])
   ++ [ codex ]
   ++ [ opencode ]
+  ++ [ portmux ]
   ++ lib.optional isDesktop opencodeDesktop
   ++ lib.optionals pkgs.stdenv.hostPlatform.isx86_64 [
     t3

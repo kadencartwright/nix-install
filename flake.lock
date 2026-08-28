@@ -209,6 +209,26 @@
         "type": "github"
       }
     },
+    "portmux": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs-unstable"
+        ]
+      },
+      "locked": {
+        "lastModified": 1787940234,
+        "narHash": "sha256-0d2J0t5PFC+QKoXrrH1TgDUzk+P3VLqmMQkqHqSb8sk=",
+        "owner": "kadencartwright",
+        "repo": "portmux",
+        "rev": "05fc64aaef41d844b8c3f4895e60c84153776e9b",
+        "type": "github"
+      },
+      "original": {
+        "owner": "kadencartwright",
+        "repo": "portmux",
+        "type": "github"
+      }
+    },
     "root": {
       "inputs": {
         "disko": "disko",
@@ -221,6 +241,7 @@
         "omarchy": "omarchy",
         "onedark-wallpapers": "onedark-wallpapers",
         "openai-chatgpt-desktop-nix": "openai-chatgpt-desktop-nix",
+        "portmux": "portmux",
         "sops-nix": "sops-nix",
         "tm": "tm"
       }

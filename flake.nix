@@ -11,6 +11,11 @@
       inputs.nixpkgs.follows = "nixpkgs-unstable";
     };
 
+    portmux = {
+      url = "github:kadencartwright/portmux";
+      inputs.nixpkgs.follows = "nixpkgs-unstable";
+    };
+
     disko = {
       url = "github:nix-community/disko/latest";
       inputs.nixpkgs.follows = "nixpkgs";
