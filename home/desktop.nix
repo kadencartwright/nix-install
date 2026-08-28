@@ -605,9 +605,11 @@ in
       translate = false
 
       [output]
-      mode = "type"
-      fallback_to_clipboard = true
-      type_delay_ms = 1
+      # Clipboard paste avoids wtype's per-character keycode corruption in
+      # Chromium/Electron text fields such as the ChatGPT desktop composer.
+      mode = "paste"
+      restore_clipboard = true
+      restore_clipboard_delay_ms = 300
 
       [output.post_process]
       command = "${voxtypeHistory}/bin/voxtype-history"
