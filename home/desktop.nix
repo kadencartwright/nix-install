@@ -125,7 +125,12 @@ let
       exit 1
     '';
   };
-  voxtype = pkgsUnstable.voxtype.override { vulkanSupport = true; };
+  voxtype = pkgsUnstable.voxtype.override {
+    # Keep Whisper/Vulkan available as a fallback while using Parakeet through
+    # ONNX Runtime for the active transcription engine.
+    vulkanSupport = true;
+    onnxSupport = true;
+  };
   voxtypeHistory = pkgs.writeShellApplication {
     name = "voxtype-history";
     runtimeInputs = [
@@ -558,10 +563,35 @@ let
       esac
     '';
   };
-  voxtypeModel = pkgs.fetchurl {
-    url = "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-base.en.bin";
-    hash = "sha256-oDd5yG3zMjB19eeWyyzlAp8A7Ihp7uP9+4l6/jbG0AI=";
-  };
+  parakeetModelRevision = "8f23f0c03c8761650bdb5b40aaf3e40d2c15f1ce";
+  fetchParakeetModelFile =
+    name: hash:
+    pkgs.fetchurl {
+      url = "https://huggingface.co/istupakov/parakeet-tdt-0.6b-v3-onnx/resolve/${parakeetModelRevision}/${name}";
+      inherit hash;
+    };
+  parakeetModel = pkgs.linkFarm "parakeet-tdt-0.6b-v3-onnx" [
+    {
+      name = "encoder-model.onnx";
+      path = fetchParakeetModelFile "encoder-model.onnx" "sha256-mKdLIbTMABfB5wMDGaSpb0qVBuUPBwjzpRbQKnfJa7E=";
+    }
+    {
+      name = "encoder-model.onnx.data";
+      path = fetchParakeetModelFile "encoder-model.onnx.data" "sha256-miLTcsUUVcNPE0BdolILrvtxJb0WmBOXVhQj7TLSTzY=";
+    }
+    {
+      name = "decoder_joint-model.onnx";
+      path = fetchParakeetModelFile "decoder_joint-model.onnx" "sha256-6Xjd9miFJxgsEP3i60uDBoQhZImF7yP3qGvnMr6HBsE=";
+    }
+    {
+      name = "vocab.txt";
+      path = fetchParakeetModelFile "vocab.txt" "sha256-1YVEZ56kvGrFY9H1Ret9R0vWz6Rn8KbiwdwcfTfjw10=";
+    }
+    {
+      name = "config.json";
+      path = fetchParakeetModelFile "config.json" "sha256-ZmkDx2uXmMrywhCv1PbNYLCKjb+YAOyNejvA0hSKxGY=";
+    }
+  ];
 in
 {
   home.packages = lib.mkIf isDesktop [
@@ -578,8 +608,9 @@ in
   xdg.configFile."voxtype/config.toml" = lib.mkIf isDesktop {
     text = ''
       # Omarchy-style local dictation: Hyprland owns the keys and Voxtype owns
-      # recording, local Whisper transcription, and typing at the cursor.
+      # recording, local Parakeet transcription, and typing at the cursor.
       state_file = "auto"
+      engine = "parakeet"
 
       [hotkey]
       enabled = false
@@ -599,10 +630,11 @@ in
       enabled = true
       frontend = "quickshell"
 
-      [whisper]
-      model = "${voxtypeModel}"
-      language = "en"
-      translate = false
+      [parakeet]
+      model = "${parakeetModel}"
+      model_type = "tdt"
+      on_demand_loading = false
+      streaming = false
 
       [output]
       # Clipboard paste avoids wtype's per-character keycode corruption in

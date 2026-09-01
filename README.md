@@ -94,9 +94,10 @@ structure while Omarchy only owns generated color files under
 `~/.local/state/omarchy/current`.
 
 Desktop hosts use the same local dictation shape as Omarchy: Voxtype with the
-English `base.en` Whisper model, Vulkan acceleration, and compositor-managed
-keys. `Alt+G` toggles recording, replacing the previous hyprwhspr action. The
-model is fetched by Nix, so no separate `voxtype setup` step is required.
+full-precision Parakeet TDT 0.6B v3 model through ONNX Runtime and
+compositor-managed keys. `Alt+G` toggles recording, replacing the previous
+hyprwhspr action. The model is fetched by Nix, so no separate `voxtype setup`
+step is required. Whisper's Vulkan backend remains compiled in as a fallback.
 
 `Alt+Shift+T` freezes the desktop, selects a region, runs Omarchy's Tesseract
 OCR settings, and copies the extracted text to the clipboard. Set
