@@ -11,4 +11,6 @@
   hardware.enableRedistributableFirmware = true;
   hardware.cpu.amd.updateMicrocode = lib.mkDefault true;
   hardware.graphics.enable = true;
+
+  services.power-profiles-daemon.autoSwitchOnPowerSource.enable = true;
 }
