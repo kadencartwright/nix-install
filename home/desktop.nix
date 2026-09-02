@@ -605,6 +605,20 @@ in
     voxtypeHistory
   ];
 
+  xdg.configFile."obsbot-cli/config.toml" = lib.mkIf isDesktop {
+    text = ''
+      # Keep tracking disabled across both live applies and camera power cycles.
+      # Disabling gesture auto-frame prevents a hand gesture from re-enabling it.
+      wake = true
+
+      [state]
+      ai_mode = "off"
+      boot_ai_mode = "off"
+      gesture_auto_frame = false
+      fov = "wide" # 86 degrees
+    '';
+  };
+
   xdg.configFile."voxtype/config.toml" = lib.mkIf isDesktop {
     text = ''
       # Omarchy-style local dictation: Hyprland owns the keys and Voxtype owns
@@ -618,7 +632,8 @@ in
       [audio]
       device = "default"
       sample_rate = 16000
-      max_duration_secs = 60
+      # Allow extended brain dumps while retaining a safety cap.
+      max_duration_secs = 900
       pause_media = true
 
       [audio.feedback]
