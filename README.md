@@ -112,11 +112,12 @@ to sudo and the lock screen.
 ## Cloud Music
 
 The Home Manager profiles include a reusable
-`services.kaden.cloudMusic` module. It mounts a music folder from any rclone
-remote at `~/Music/Cloud`, keeps a bounded VFS playback cache under the XDG
-cache directory, and installs rclone, beets, and Strawberry. It is disabled by
-default so a new machine does not start a failing service before authentication
-has been configured.
+`services.kaden.cloudMusic` module. The profile installs rclone immediately so
+it is available for initial authentication. Once enabled, the module mounts a
+music folder from any rclone remote at `~/Music/Cloud`, keeps a bounded VFS
+playback cache under the XDG cache directory, and adds beets and Strawberry.
+The mount remains disabled by default so a new machine does not start a failing
+service before authentication has been configured.
 
 Create one mutable rclone remote per Google account with `rclone config`. Keep
 the generated `~/.config/rclone/rclone.conf` out of Nix because it contains and

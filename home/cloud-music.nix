@@ -135,57 +135,63 @@ in
     };
   };
 
-  config = lib.mkIf cfg.enable {
-    assertions = [
-      {
-        assertion = builtins.match "[^:]+:.*" cfg.remote != null;
-        message = "services.kaden.cloudMusic.remote must look like an rclone remote, for example music-drive:Music";
-      }
-      {
-        assertion = lib.hasPrefix "/" cfg.mountPoint;
-        message = "services.kaden.cloudMusic.mountPoint must be an absolute path";
-      }
-      {
-        assertion = lib.hasPrefix "/" cfg.cacheDir;
-        message = "services.kaden.cloudMusic.cacheDir must be an absolute path";
-      }
-      {
-        assertion = lib.hasPrefix "/" cfg.configFile;
-        message = "services.kaden.cloudMusic.configFile must be an absolute path";
-      }
-    ];
+  config = lib.mkMerge [
+    # Keep the client available for the initial `rclone config` bootstrap even
+    # before a remote exists and the mount service can safely be enabled.
+    { home.packages = [ cfg.package ]; }
 
-    home.packages = [ cfg.package ] ++ cfg.extraPackages;
+    (lib.mkIf cfg.enable {
+      assertions = [
+        {
+          assertion = builtins.match "[^:]+:.*" cfg.remote != null;
+          message = "services.kaden.cloudMusic.remote must look like an rclone remote, for example music-drive:Music";
+        }
+        {
+          assertion = lib.hasPrefix "/" cfg.mountPoint;
+          message = "services.kaden.cloudMusic.mountPoint must be an absolute path";
+        }
+        {
+          assertion = lib.hasPrefix "/" cfg.cacheDir;
+          message = "services.kaden.cloudMusic.cacheDir must be an absolute path";
+        }
+        {
+          assertion = lib.hasPrefix "/" cfg.configFile;
+          message = "services.kaden.cloudMusic.configFile must be an absolute path";
+        }
+      ];
 
-    systemd.user.services.rclone-music = {
-      Unit = {
-        Description = "Mount cloud music library with rclone";
-        Documentation = [ "https://rclone.org/commands/rclone_mount/" ];
-        After = [ "network-online.target" ];
-        ConditionPathExists = cfg.configFile;
+      home.packages = cfg.extraPackages;
+
+      systemd.user.services.rclone-music = {
+        Unit = {
+          Description = "Mount cloud music library with rclone";
+          Documentation = [ "https://rclone.org/commands/rclone_mount/" ];
+          After = [ "network-online.target" ];
+          ConditionPathExists = cfg.configFile;
+        };
+
+        Service = {
+          Type = "notify";
+          Environment = [ "PATH=${lib.makeBinPath [ pkgs.fuse3 ]}" ];
+          ExecStartPre = lib.escapeShellArgs [
+            "${pkgs.coreutils}/bin/mkdir"
+            "-p"
+            cfg.mountPoint
+            cfg.cacheDir
+          ];
+          ExecStart = lib.escapeShellArgs mountArguments;
+          ExecStop = lib.escapeShellArgs [
+            "${pkgs.fuse3}/bin/fusermount3"
+            "-u"
+            cfg.mountPoint
+          ];
+          Restart = "on-failure";
+          RestartSec = "5s";
+          TimeoutStopSec = "30s";
+        };
+
+        Install.WantedBy = [ "default.target" ];
       };
-
-      Service = {
-        Type = "notify";
-        Environment = [ "PATH=${lib.makeBinPath [ pkgs.fuse3 ]}" ];
-        ExecStartPre = lib.escapeShellArgs [
-          "${pkgs.coreutils}/bin/mkdir"
-          "-p"
-          cfg.mountPoint
-          cfg.cacheDir
-        ];
-        ExecStart = lib.escapeShellArgs mountArguments;
-        ExecStop = lib.escapeShellArgs [
-          "${pkgs.fuse3}/bin/fusermount3"
-          "-u"
-          cfg.mountPoint
-        ];
-        Restart = "on-failure";
-        RestartSec = "5s";
-        TimeoutStopSec = "30s";
-      };
-
-      Install.WantedBy = [ "default.target" ];
-    };
-  };
+    })
+  ];
 }
