@@ -109,6 +109,39 @@ uses its native parallel fprintd integration with password fallback. Enroll a
 finger once with `sudo fprintd-enroll k`; the enrolled print is then available
 to sudo and the lock screen.
 
+## Cloud Music
+
+The Home Manager profiles include a reusable
+`services.kaden.cloudMusic` module. It mounts a music folder from any rclone
+remote at `~/Music/Cloud`, keeps a bounded VFS playback cache under the XDG
+cache directory, and installs rclone, beets, and Strawberry. It is disabled by
+default so a new machine does not start a failing service before authentication
+has been configured.
+
+Create one mutable rclone remote per Google account with `rclone config`. Keep
+the generated `~/.config/rclone/rclone.conf` out of Nix because it contains and
+updates OAuth tokens. Supply a personal Google OAuth client ID while creating
+the remotes; [rclone's shared Google client is being retired during
+2026](https://rclone.org/drive/#making-your-own-client-id). The same client ID
+can be reused while each remote retains the token for its own Google account.
+Then opt in from the appropriate host module, for example in
+`hosts/Z16/default.nix`:
+
+```nix
+home-manager.users.k.services.kaden.cloudMusic = {
+  enable = true;
+  remote = "music-drive:Music";
+  cacheSize = "30G";
+};
+```
+
+After applying the configuration, inspect the mount with
+`systemctl --user status rclone-music`. If Home Manager was activated before
+the rclone config existed, create the remote and run
+`systemctl --user restart rclone-music` once. Additional Google accounts are
+just additional rclone remote names; the module only needs the one that owns
+the music library.
+
 The monitor/brightness pill in the Quickshell bar opens a display panel. Drag
 the proportional screen tiles to arrange an extended desktop, or mirror every
 screen to the selected display. Layout changes are restored at the next

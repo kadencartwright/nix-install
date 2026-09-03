@@ -1,5 +1,6 @@
 {
   imports = [
+    ../../home/cloud-music.nix
     ../../home/cli.nix
     ../../home/desktop.nix
     ../../home/dotfiles-headless.nix

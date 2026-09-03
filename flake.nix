@@ -95,6 +95,8 @@
         };
     in
     {
+      homeManagerModules.cloudMusic = import ./home/cloud-music.nix;
+
       nixosConfigurations.Z16 = mkHost { hostModule = ./hosts/Z16/default.nix; };
       nixosConfigurations.T16 = mkHost { hostModule = ./hosts/T16/default.nix; };
       nixosConfigurations.X1C = mkHost { hostModule = ./hosts/X1C/default.nix; };
