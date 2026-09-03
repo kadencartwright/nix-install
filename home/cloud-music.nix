@@ -162,6 +162,29 @@ in
 
       home.packages = cfg.extraPackages;
 
+      xdg.configFile."beets/config.yaml".text = ''
+        directory: ${cfg.mountPoint}
+
+        plugins: musicbrainz fetchart
+        art_filename: cover
+
+        import:
+          copy: yes
+          move: no
+          write: yes
+          resume: ask
+          duplicate_action: ask
+
+        paths:
+          default: $albumartist/$year - $album%aunique{}/$track - $title
+          comp: Compilations/$year - $album%aunique{}/$track - $title
+          singleton: Singles/$artist/$year - $title
+
+        fetchart:
+          sources: [filesystem, coverart]
+          cautious: yes
+      '';
+
       systemd.user.services.rclone-music = {
         Unit = {
           Description = "Mount cloud music library with rclone";
@@ -172,7 +195,7 @@ in
 
         Service = {
           Type = "notify";
-          Environment = [ "PATH=${lib.makeBinPath [ pkgs.fuse3 ]}" ];
+          Environment = [ "PATH=/run/wrappers/bin:${lib.makeBinPath [ pkgs.fuse3 ]}" ];
           ExecStartPre = lib.escapeShellArgs [
             "${pkgs.coreutils}/bin/mkdir"
             "-p"
@@ -181,7 +204,7 @@ in
           ];
           ExecStart = lib.escapeShellArgs mountArguments;
           ExecStop = lib.escapeShellArgs [
-            "${pkgs.fuse3}/bin/fusermount3"
+            "/run/wrappers/bin/fusermount3"
             "-u"
             cfg.mountPoint
           ];
