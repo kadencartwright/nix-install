@@ -128,9 +128,11 @@ in
       type = lib.types.listOf lib.types.package;
       default = with pkgs; [
         beets
+        cliamp
+        pulseaudio
         strawberry
       ];
-      defaultText = lib.literalExpression "with pkgs; [ beets strawberry ]";
+      defaultText = lib.literalExpression "with pkgs; [ beets cliamp pulseaudio strawberry ]";
       description = "Music library applications installed with the service.";
     };
   };
