@@ -5,5 +5,10 @@
     ./hardware-configuration.nix
   ];
 
+  home-manager.users.k.services.kaden.cloudMusic = {
+    enable = true;
+    remote = "gdrive-personal:Music";
+  };
+
   networking.hostName = "X1C";
 }
