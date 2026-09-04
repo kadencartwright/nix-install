@@ -9,7 +9,7 @@
 
 let
   displayControl = import ../packages/display-control.nix { inherit pkgs pkgsUnstable; };
-  meetingRecord = inputs.meeting-record.packages.${pkgs.system}.default;
+  meetingRecord = inputs.meeting-record.packages.${pkgs.stdenv.hostPlatform.system}.default;
   lyre = pkgs.buildNpmPackage {
     pname = "lyre-tui";
     version = "1.3.5";
