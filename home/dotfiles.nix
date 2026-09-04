@@ -330,6 +330,10 @@ in
     Service = {
       ExecStartPre = "-${pkgs.quickshell}/bin/quickshell kill";
       ExecStart = "${pkgs.quickshell}/bin/quickshell";
+      # ntn stores its Linux credential in the user kernel keyring. Let UI
+      # control commands inherit the login session's keyring instead of the
+      # private keyring systemd otherwise creates for this service.
+      KeyringMode = "shared";
       Restart = "on-failure";
       RestartSec = 1;
     };
