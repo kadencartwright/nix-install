@@ -307,7 +307,7 @@ ShellRoot {
                 anchor.rect.x: Math.max(4, Math.min(bar.width - width - 8, bar.popupAnchorX - width/2))
                 anchor.rect.y: bar.height + 3
                 implicitWidth: bar.popupKind === "theme" ? 440 : bar.popupKind === "audio" || bar.popupKind === "display" ? 430 : bar.popupKind === "voxtype" || bar.popupKind === "meeting" ? 410 : bar.popupKind === "network" || bar.popupKind === "calendar" ? 350 : bar.popupKind === "codex" ? 340 : bar.popupKind === "battery" ? 380 : 390
-                implicitHeight: bar.popupKind === "theme" ? 520 : bar.popupKind === "meeting" ? 520 : bar.popupKind === "display" ? (panelLoader.item ? panelLoader.item.implicitHeight+43 : 420) : bar.popupKind === "network" || bar.popupKind === "voxtype" ? 498 : bar.popupKind === "audio" || bar.popupKind === "calendar" ? 488 : bar.popupKind === "codex" || bar.popupKind === "battery" ? 433 : 283
+                implicitHeight: bar.popupKind === "theme" ? 520 : bar.popupKind === "meeting" ? 567 : bar.popupKind === "display" ? (panelLoader.item ? panelLoader.item.implicitHeight+43 : 420) : bar.popupKind === "network" || bar.popupKind === "voxtype" ? 498 : bar.popupKind === "audio" || bar.popupKind === "calendar" ? 488 : bar.popupKind === "codex" || bar.popupKind === "battery" ? 433 : 283
                 onVisibleChanged: if (!visible) {
                     expanded = false
                     bar.popupKind = ""

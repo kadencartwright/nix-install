@@ -6,6 +6,7 @@
     ../../home/dotfiles.nix
     ../../home/editors.nix
     ../../home/git.nix
+    ../../home/meeting-recorder.nix
     ../../home/shell.nix
     ../../home/terminals.nix
     ../../home/theme.nix

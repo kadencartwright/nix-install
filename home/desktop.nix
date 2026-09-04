@@ -1,4 +1,5 @@
 {
+  config,
   inputs,
   isDesktop ? false,
   lib,
@@ -8,8 +9,10 @@
 }:
 
 let
+  meetingRecorderCfg = config.services.kaden.meetingRecorder;
   displayControl = import ../packages/display-control.nix { inherit pkgs pkgsUnstable; };
   meetingRecord = inputs.meeting-record.packages.${pkgs.stdenv.hostPlatform.system}.default;
+  notionCli = inputs.meeting-record.packages.${pkgs.stdenv.hostPlatform.system}.notion-cli;
   lyre = pkgs.buildNpmPackage {
     pname = "lyre-tui";
     version = "1.3.5";
@@ -603,10 +606,15 @@ in
     networkPanelHelper
     networkSpeedtest
     meetingRecord
+    notionCli
     trayWindowToggle
     voxtype
     voxtypeHistory
   ];
+
+  home.sessionVariables = lib.mkIf (isDesktop && meetingRecorderCfg.notionParentPageId != null) {
+    MEETING_RECORD_NOTION_PARENT_PAGE_ID = meetingRecorderCfg.notionParentPageId;
+  };
 
   xdg.configFile."obsbot-cli/config.toml" = lib.mkIf isDesktop {
     text = ''
@@ -717,13 +725,17 @@ in
     Install.WantedBy = [ "graphical-session.target" ];
   };
 
-  systemd.user.services.quickshell.Service.Environment = lib.mkIf isDesktop [
-    "DISPLAY_CONTROL_BINARY=${displayControl}/bin/display-control"
-    "NETWORK_PANEL_HELPER_BINARY=${networkPanelHelper}/bin/network-panel-helper"
-    "NETWORK_SPEEDTEST_BINARY=${networkSpeedtest}/bin/network-speedtest"
-    "MEETING_RECORD_BINARY=${meetingRecord}/bin/meeting-record"
-    "TRAY_WINDOW_TOGGLE_BINARY=${trayWindowToggle}/bin/tray-window-toggle"
-  ];
+  systemd.user.services.quickshell.Service.Environment = lib.mkIf isDesktop (
+    [
+      "DISPLAY_CONTROL_BINARY=${displayControl}/bin/display-control"
+      "NETWORK_PANEL_HELPER_BINARY=${networkPanelHelper}/bin/network-panel-helper"
+      "NETWORK_SPEEDTEST_BINARY=${networkSpeedtest}/bin/network-speedtest"
+      "MEETING_RECORD_BINARY=${meetingRecord}/bin/meeting-record"
+      "TRAY_WINDOW_TOGGLE_BINARY=${trayWindowToggle}/bin/tray-window-toggle"
+    ]
+    ++ lib.optional (meetingRecorderCfg.notionParentPageId != null)
+      "MEETING_RECORD_NOTION_PARENT_PAGE_ID=${meetingRecorderCfg.notionParentPageId}"
+  );
 
   systemd.user.services.battery-history = lib.mkIf isDesktop {
     Unit = {

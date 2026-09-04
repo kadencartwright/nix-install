@@ -3,7 +3,7 @@ import QtQuick
 Item {
     id: root
     implicitWidth: 410
-    implicitHeight: 477
+    implicitHeight: 524
 
     property var selectedSession: null
     property bool confirmingDelete: false
@@ -71,6 +71,8 @@ Item {
             if (operation === "delete" && succeeded) {
                 root.selectedSession = null
                 root.confirmingDelete = false
+            } else if (operation === "upload" && succeeded) {
+                root.selectedSession = null
             }
         }
     }
@@ -219,10 +221,23 @@ Item {
 
         Row {
             width: parent.width; spacing: 7
-            ActionButton { width: (parent.width - 7) / 2; label: "Play microphone"; icon: "󰍬"; onClicked: MeetingRecorder.playLocal(root.selectedSession.id) }
-            ActionButton { width: (parent.width - 7) / 2; label: "Play output"; icon: "󰓃"; onClicked: MeetingRecorder.playRemote(root.selectedSession.id) }
+            ActionButton { width: (parent.width - 7) / 2; label: "Play meeting"; icon: "󰎈"; enabled: Boolean(root.selectedSession && root.selectedSession.mergedFile); onClicked: MeetingRecorder.playMeeting(root.selectedSession.id) }
+            ActionButton { width: (parent.width - 7) / 2; label: "Open folder"; icon: "󰉋"; onClicked: MeetingRecorder.openSession(root.selectedSession.id) }
         }
-        ActionButton { width: parent.width; label: "Open folder"; icon: "󰉋"; onClicked: MeetingRecorder.openSession(root.selectedSession.id) }
+        Row {
+            width: parent.width; spacing: 7
+            ActionButton { width: (parent.width - 7) / 2; label: "Microphone only"; icon: "󰍬"; onClicked: MeetingRecorder.playLocal(root.selectedSession.id) }
+            ActionButton { width: (parent.width - 7) / 2; label: "Output only"; icon: "󰓃"; onClicked: MeetingRecorder.playRemote(root.selectedSession.id) }
+        }
+
+        ActionButton {
+            width: parent.width
+            label: root.selectedSession && root.selectedSession.notion ? "Notion meeting note created" : (MeetingRecorder.busy ? "Uploading to Notion…" : "Create Notion meeting note")
+            icon: root.selectedSession && root.selectedSession.notion ? "󰄬" : "󰅧"
+            accent: root.selectedSession && root.selectedSession.notion ? Theme.green : Theme.primary
+            enabled: !MeetingRecorder.busy && Boolean(root.selectedSession && root.selectedSession.mergedFile) && !Boolean(root.selectedSession && root.selectedSession.notion)
+            onClicked: MeetingRecorder.uploadSession(root.selectedSession.id)
+        }
 
         Rectangle {
             width: parent.width

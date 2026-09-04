@@ -122,8 +122,18 @@ QtObject {
     }
 
     function openSession(id) { runAction([binary, "open", String(id)], "open") }
+    function playMeeting(id) { runAction([binary, "play", String(id), "meeting"], "play") }
     function playLocal(id) { runAction([binary, "play", String(id), "local"], "play") }
     function playRemote(id) { runAction([binary, "play", String(id), "remote"], "play") }
+
+    function uploadSession(id) {
+        if (busy || actionProcess.running) return
+        busy = true
+        error = ""
+        actionProcess.operation = "upload"
+        actionProcess.command = [binary, "upload", String(id), "--json"]
+        actionProcess.running = true
+    }
 
     function deleteSession(id) {
         if (busy || actionProcess.running) return
@@ -249,9 +259,10 @@ QtObject {
         stdout: StdioCollector { id: actionStdout }
         stderr: StdioCollector { id: actionStderr }
         onExited: (exitCode, exitStatus) => {
-            if (operation === "delete") root.busy = false
+            if (operation === "delete" || operation === "upload") root.busy = false
             if (exitCode !== 0) root.error = root.cleanError(actionStderr.text)
-            if (operation === "delete" && exitCode === 0) root.refreshSessions()
+            if ((operation === "delete" || operation === "upload") && exitCode === 0)
+                root.refreshSessions()
             root.operationFinished(operation, exitCode === 0)
         }
     }

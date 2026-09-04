@@ -65,7 +65,7 @@ expose a compact recorder control in every Quickshell bar. Idle bars show a
 quiet record glyph; an active recording shows a red glyph and locally computed
 elapsed time. The popup displays the resolved microphone and full output sink,
 starts and stops recording, lists the 20 newest sessions, and provides detail,
-play, open-folder, and confirmed-delete actions.
+play, open-folder, Notion-upload, and confirmed-delete actions.
 
 The QML singleton is deliberately only a client. It runs short-lived
 `meeting-record` commands and watches
@@ -74,8 +74,24 @@ The QML singleton is deliberately only a client. It runs short-lived
 closing the popup or restarting Quickshell does not interrupt recording. The
 supervisor accepts Stop over
 `$XDG_RUNTIME_DIR/meeting-record/control.sock`, finalizes both FLAC files, and
+creates a mixed `meeting.m4a` suitable for playback and upload. It
 stores sessions under
 `${XDG_DATA_HOME:-$HOME/.local/share}/meeting-record/`.
+
+The same flake declaratively installs Notion's official `ntn` CLI. After a
+one-time `ntn login`, configure the destination page shared by the laptops:
+
+```nix
+services.kaden.meetingRecorder.notionParentPageId =
+  "0123456789abcdef0123456789abcdef";
+```
+
+The recording-details action asks the Go CLI to stream `meeting.m4a` through
+`ntn files create` and create a native Notion AI meeting-notes block. The block
+ID is persisted so a second click cannot create a duplicate. Notion's current
+public CLI/API exposes no calendar endpoint and does not accept an event when
+creating a meeting note, so this integration intentionally does not connect to
+Google or Gmail.
 
 Compositor bindings can call the service without duplicating recorder state:
 
