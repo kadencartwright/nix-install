@@ -54,11 +54,14 @@ in
     }
 
     (lib.mkIf cfg.enable {
-      # Synchronize once during boot, then again whenever an AC/USB-C power
-      # supply appears, disappears, or changes its online state.
+      # Synchronize once after the graphical stack's power-profiles daemon is
+      # available, then again whenever an AC/USB-C power supply changes. The
+      # daemon itself is ordered after multi-user.target, so making this helper
+      # wanted by multi-user.target would create an unresolvable ordering cycle:
+      # multi-user -> helper -> daemon -> multi-user.
       systemd.services.power-profile-on-power-source-change = {
         description = "Select power profile for the current power source";
-        wantedBy = [ "multi-user.target" ];
+        wantedBy = [ "graphical.target" ];
         requires = [ "power-profiles-daemon.service" ];
         after = [ "power-profiles-daemon.service" ];
 
