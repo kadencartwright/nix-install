@@ -9,7 +9,7 @@
 
 let
   platformSystem = pkgs.stdenv.hostPlatform.system;
-  chatgptVersion = "26.901.20858";
+  chatgptVersion = "26.901.31953";
   codex = pkgsUnstable.callPackage ../packages/codex.nix { };
   tm = pkgs.callPackage ../packages/tm.nix {
     tm-src = inputs.tm;
@@ -19,7 +19,7 @@ let
       version = chatgptVersion;
       src = pkgs.fetchurl {
         url = "https://persistent.oaistatic.com/codex-app-prod/linux/deb/pool/main/c/chatgpt/chatgpt_${chatgptVersion}_amd64.deb";
-        hash = "sha256-QqZHfyL0E21iMh7ae0aXp52h62bWHcuFqwQghgoaUiM=";
+        hash = "sha256-K7RSK+h33mwX5fTAcbBuxkiCsd0JqPC9IErwI6t1bZw=";
       };
     });
   opencode = pkgsUnstable.callPackage ../packages/opencode.nix { };
