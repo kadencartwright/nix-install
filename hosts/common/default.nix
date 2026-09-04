@@ -28,6 +28,10 @@
 
   home-manager.useGlobalPkgs = true;
   home-manager.useUserPackages = true;
+  # Apply Home Manager changes through the logged-in user's systemd manager.
+  # This lets sd-switch reload changed user units during a live NixOS switch,
+  # including restarting Quickshell when its config or environment changes.
+  home-manager.startAsUserService = true;
   home-manager.backupFileExtension = "hm-backup";
   home-manager.extraSpecialArgs = {
     inherit inputs pkgsUnstable;

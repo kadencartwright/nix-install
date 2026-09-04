@@ -324,6 +324,7 @@ in
       After = [ "graphical-session.target" ];
       PartOf = [ "graphical-session.target" ];
       X-Restart-Triggers = [ "${./quickshell}" ];
+      X-SwitchMethod = "restart";
     };
 
     Service = {
