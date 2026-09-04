@@ -128,6 +128,7 @@ QtObject {
     }
 
     function openSession(id) { runAction([binary, "open", String(id)], "open") }
+    function viewNotion(id) { runAction([binary, "notion", String(id)], "open") }
     function playMeeting(id) { runAction([binary, "play", String(id), "meeting"], "play") }
     function playLocal(id) { runAction([binary, "play", String(id), "local"], "play") }
     function playRemote(id) { runAction([binary, "play", String(id), "remote"], "play") }

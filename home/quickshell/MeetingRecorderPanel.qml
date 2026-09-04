@@ -8,6 +8,7 @@ Item {
     property var selectedSession: null
     property bool confirmingDelete: false
     property string selectedDestinationId: ""
+    readonly property bool selectedSessionUploaded: Boolean(selectedSession && selectedSession.notion && selectedSession.notion.blockId)
 
     function reconcileDestination() {
         const choices = MeetingRecorder.destinations || []
@@ -301,11 +302,13 @@ Item {
 
         ActionButton {
             width: parent.width
-            label: root.selectedSession && root.selectedSession.notion ? "Notion meeting note created" : (MeetingRecorder.destinations.length === 0 ? "Configure a Notion destination" : (MeetingRecorder.busy ? "Uploading to Notion…" : "Create Notion meeting note"))
-            icon: root.selectedSession && root.selectedSession.notion ? "󰄬" : "󰅧"
-            accent: root.selectedSession && root.selectedSession.notion ? Theme.green : Theme.primary
-            enabled: !MeetingRecorder.busy && root.selectedDestinationId !== "" && Boolean(root.selectedSession && root.selectedSession.mergedFile) && !Boolean(root.selectedSession && root.selectedSession.notion)
-            onClicked: MeetingRecorder.uploadSession(root.selectedSession.id, root.selectedDestinationId)
+            label: root.selectedSessionUploaded ? "View in Notion" : (MeetingRecorder.destinations.length === 0 ? "Configure a Notion destination" : (MeetingRecorder.busy ? "Uploading to Notion…" : "Create Notion meeting note"))
+            icon: root.selectedSessionUploaded ? "󰄬" : "󰅧"
+            accent: root.selectedSessionUploaded ? Theme.green : Theme.primary
+            enabled: !MeetingRecorder.busy && (root.selectedSessionUploaded || (root.selectedDestinationId !== "" && Boolean(root.selectedSession && root.selectedSession.mergedFile)))
+            onClicked: root.selectedSessionUploaded
+                ? MeetingRecorder.viewNotion(root.selectedSession.id)
+                : MeetingRecorder.uploadSession(root.selectedSession.id, root.selectedDestinationId)
         }
 
         Rectangle {
