@@ -25,6 +25,7 @@ QtObject {
     property var microphone: ({ description: "Resolving microphone…", nodeName: "" })
     property var output: ({ description: "Resolving output…", nodeName: "" })
     property var sessions: []
+    property var destinations: []
     property double clockNow: Date.now()
     readonly property int elapsedSeconds: recording && startedAtMs > 0
         ? Math.max(0, Math.floor((clockNow - startedAtMs) / 1000)) : 0
@@ -115,10 +116,15 @@ QtObject {
         if (!listProcess.running) listProcess.running = true
     }
 
+    function refreshDestinations() {
+        if (!destinationsProcess.running) destinationsProcess.running = true
+    }
+
     function popupOpened() {
         reconcileStatus()
         refreshDevices()
         refreshSessions()
+        refreshDestinations()
     }
 
     function openSession(id) { runAction([binary, "open", String(id)], "open") }
@@ -126,12 +132,12 @@ QtObject {
     function playLocal(id) { runAction([binary, "play", String(id), "local"], "play") }
     function playRemote(id) { runAction([binary, "play", String(id), "remote"], "play") }
 
-    function uploadSession(id) {
+    function uploadSession(id, destinationId) {
         if (busy || actionProcess.running) return
         busy = true
         error = ""
         actionProcess.operation = "upload"
-        actionProcess.command = [binary, "upload", String(id), "--json"]
+        actionProcess.command = [binary, "upload", String(id), "--destination", String(destinationId), "--json"]
         actionProcess.running = true
     }
 
@@ -254,6 +260,26 @@ QtObject {
         }
     }
 
+    property Process destinationsProcess: Process {
+        command: [root.binary, "destinations", "--json"]
+        stdout: StdioCollector { id: destinationsStdout }
+        stderr: StdioCollector { id: destinationsStderr }
+        onExited: (exitCode, exitStatus) => {
+            if (exitCode !== 0) {
+                root.destinations = []
+                root.error = root.cleanError(destinationsStderr.text)
+                return
+            }
+            try {
+                const result = JSON.parse(destinationsStdout.text)
+                root.destinations = result.destinations || []
+            } catch (exception) {
+                root.destinations = []
+                root.error = "Notion destinations are malformed"
+            }
+        }
+    }
+
     property Process actionProcess: Process {
         property string operation: ""
         stdout: StdioCollector { id: actionStdout }
@@ -296,5 +322,6 @@ QtObject {
     Component.onCompleted: {
         reconcileStatus()
         refreshDevices()
+        refreshDestinations()
     }
 }

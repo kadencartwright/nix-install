@@ -79,19 +79,30 @@ stores sessions under
 `${XDG_DATA_HOME:-$HOME/.local/share}/meeting-record/`.
 
 The same flake declaratively installs Notion's official `ntn` CLI. After a
-one-time `ntn login`, configure the destination page shared by the laptops:
+one-time `ntn login`, configure as many named destination pages as needed. The
+generated XDG config is shared by the terminal CLI and Quickshell:
 
 ```nix
-services.kaden.meetingRecorder.notionParentPageId =
-  "0123456789abcdef0123456789abcdef";
+services.kaden.meetingRecorder.notionDestinations = {
+  team = {
+    label = "Team meetings";
+    parentPageId = "0123456789abcdef0123456789abcdef";
+  };
+  personal = {
+    label = "Personal notes";
+    parentPageId = "fedcba9876543210fedcba9876543210";
+  };
+};
 ```
 
-The recording-details action asks the Go CLI to stream `meeting.m4a` through
-`ntn files create` and create a native Notion AI meeting-notes block. The block
-ID is persisted so a second click cannot create a duplicate. Notion's current
-public CLI/API exposes no calendar endpoint and does not accept an event when
-creating a meeting note, so this integration intentionally does not connect to
-Google or Gmail.
+The recording-details view offers those labels in a compact picker. Quickshell
+passes only the selected stable ID to Go; `meeting-record` resolves the parent
+page, streams `meeting.m4a` through `ntn files create`, and creates a native
+Notion AI meeting-notes block. The selected destination and block ID are
+persisted so a second click cannot create a duplicate. Notion's current public
+CLI/API exposes no calendar endpoint and does not accept an event when creating
+a meeting note, so this integration intentionally does not connect to Google or
+Gmail.
 
 Compositor bindings can call the service without duplicating recorder state:
 

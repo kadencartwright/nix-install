@@ -612,8 +612,13 @@ in
     voxtypeHistory
   ];
 
-  home.sessionVariables = lib.mkIf (isDesktop && meetingRecorderCfg.notionParentPageId != null) {
-    MEETING_RECORD_NOTION_PARENT_PAGE_ID = meetingRecorderCfg.notionParentPageId;
+  xdg.configFile."meeting-record/config.json" = lib.mkIf isDesktop {
+    text = builtins.toJSON {
+      notion.destinations = lib.mapAttrsToList (id: destination: {
+        inherit id;
+        inherit (destination) label parentPageId;
+      }) meetingRecorderCfg.notionDestinations;
+    } + "\n";
   };
 
   xdg.configFile."obsbot-cli/config.toml" = lib.mkIf isDesktop {
@@ -725,17 +730,13 @@ in
     Install.WantedBy = [ "graphical-session.target" ];
   };
 
-  systemd.user.services.quickshell.Service.Environment = lib.mkIf isDesktop (
-    [
-      "DISPLAY_CONTROL_BINARY=${displayControl}/bin/display-control"
-      "NETWORK_PANEL_HELPER_BINARY=${networkPanelHelper}/bin/network-panel-helper"
-      "NETWORK_SPEEDTEST_BINARY=${networkSpeedtest}/bin/network-speedtest"
-      "MEETING_RECORD_BINARY=${meetingRecord}/bin/meeting-record"
-      "TRAY_WINDOW_TOGGLE_BINARY=${trayWindowToggle}/bin/tray-window-toggle"
-    ]
-    ++ lib.optional (meetingRecorderCfg.notionParentPageId != null)
-      "MEETING_RECORD_NOTION_PARENT_PAGE_ID=${meetingRecorderCfg.notionParentPageId}"
-  );
+  systemd.user.services.quickshell.Service.Environment = lib.mkIf isDesktop [
+    "DISPLAY_CONTROL_BINARY=${displayControl}/bin/display-control"
+    "NETWORK_PANEL_HELPER_BINARY=${networkPanelHelper}/bin/network-panel-helper"
+    "NETWORK_SPEEDTEST_BINARY=${networkSpeedtest}/bin/network-speedtest"
+    "MEETING_RECORD_BINARY=${meetingRecord}/bin/meeting-record"
+    "TRAY_WINDOW_TOGGLE_BINARY=${trayWindowToggle}/bin/tray-window-toggle"
+  ];
 
   systemd.user.services.battery-history = lib.mkIf isDesktop {
     Unit = {

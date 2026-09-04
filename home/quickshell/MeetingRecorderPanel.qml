@@ -3,10 +3,19 @@ import QtQuick
 Item {
     id: root
     implicitWidth: 410
-    implicitHeight: 524
+    implicitHeight: 568
 
     property var selectedSession: null
     property bool confirmingDelete: false
+    property string selectedDestinationId: ""
+
+    function reconcileDestination() {
+        const choices = MeetingRecorder.destinations || []
+        for (let index = 0; index < choices.length; index++) {
+            if (String(choices[index].id) === selectedDestinationId) return
+        }
+        selectedDestinationId = choices.length > 0 ? String(choices[0].id) : ""
+    }
 
     function duration(seconds) { return MeetingRecorder.formatElapsed(seconds) }
     function sessionDate(session) {
@@ -75,6 +84,7 @@ Item {
                 root.selectedSession = null
             }
         }
+        function onDestinationsChanged() { root.reconcileDestination() }
     }
 
     Column {
@@ -171,6 +181,7 @@ Item {
                     onClicked: {
                         root.selectedSession = sessionRow.modelData
                         root.confirmingDelete = false
+                        root.reconcileDestination()
                         MeetingRecorder.error = ""
                     }
                 }
@@ -230,13 +241,71 @@ Item {
             ActionButton { width: (parent.width - 7) / 2; label: "Output only"; icon: "󰓃"; onClicked: MeetingRecorder.playRemote(root.selectedSession.id) }
         }
 
+        Column {
+            width: parent.width
+            spacing: 5
+            visible: !Boolean(root.selectedSession && root.selectedSession.notion)
+
+            Text {
+                text: "NOTION DESTINATION"
+                color: Theme.muted
+                font.family: Theme.font
+                font.pixelSize: 10
+                font.weight: Font.DemiBold
+            }
+            ListView {
+                width: parent.width
+                height: 34
+                orientation: ListView.Horizontal
+                spacing: 6
+                clip: true
+                model: MeetingRecorder.destinations
+                delegate: Rectangle {
+                    id: destinationChoice
+                    required property var modelData
+                    height: 32
+                    width: Math.max(108, destinationLabel.implicitWidth + 24)
+                    radius: 8
+                    color: root.selectedDestinationId === String(modelData.id)
+                        ? Qt.rgba(Theme.primary.r, Theme.primary.g, Theme.primary.b, 0.16)
+                        : (destinationMouse.containsMouse ? Qt.lighter(Theme.elevated, 1.12) : Theme.elevated)
+                    border.width: 1
+                    border.color: root.selectedDestinationId === String(modelData.id) ? Theme.primary : "#414852"
+                    Text {
+                        id: destinationLabel
+                        anchors.centerIn: parent
+                        text: destinationChoice.modelData.label
+                        color: root.selectedDestinationId === String(destinationChoice.modelData.id) ? Theme.primary : Theme.fg
+                        font.family: Theme.font
+                        font.pixelSize: 11
+                        font.weight: Font.DemiBold
+                    }
+                    MouseArea {
+                        id: destinationMouse
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: root.selectedDestinationId = String(destinationChoice.modelData.id)
+                    }
+                }
+                Text {
+                    anchors.verticalCenter: parent.verticalCenter
+                    visible: MeetingRecorder.destinations.length === 0
+                    text: "No destinations configured"
+                    color: Theme.muted
+                    font.family: Theme.font
+                    font.pixelSize: 11
+                }
+            }
+        }
+
         ActionButton {
             width: parent.width
-            label: root.selectedSession && root.selectedSession.notion ? "Notion meeting note created" : (MeetingRecorder.busy ? "Uploading to Notion…" : "Create Notion meeting note")
+            label: root.selectedSession && root.selectedSession.notion ? "Notion meeting note created" : (MeetingRecorder.destinations.length === 0 ? "Configure a Notion destination" : (MeetingRecorder.busy ? "Uploading to Notion…" : "Create Notion meeting note"))
             icon: root.selectedSession && root.selectedSession.notion ? "󰄬" : "󰅧"
             accent: root.selectedSession && root.selectedSession.notion ? Theme.green : Theme.primary
-            enabled: !MeetingRecorder.busy && Boolean(root.selectedSession && root.selectedSession.mergedFile) && !Boolean(root.selectedSession && root.selectedSession.notion)
-            onClicked: MeetingRecorder.uploadSession(root.selectedSession.id)
+            enabled: !MeetingRecorder.busy && root.selectedDestinationId !== "" && Boolean(root.selectedSession && root.selectedSession.mergedFile) && !Boolean(root.selectedSession && root.selectedSession.notion)
+            onClicked: MeetingRecorder.uploadSession(root.selectedSession.id, root.selectedDestinationId)
         }
 
         Rectangle {
@@ -286,5 +355,8 @@ Item {
         }
     }
 
-    Component.onCompleted: MeetingRecorder.popupOpened()
+    Component.onCompleted: {
+        MeetingRecorder.popupOpened()
+        reconcileDestination()
+    }
 }

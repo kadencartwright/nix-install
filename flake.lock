@@ -65,11 +65,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1788539690,
-        "narHash": "sha256-y0ns3TUPxl3q7df5tvA32zcXq8HTWzsND4pymLGrxZI=",
+        "lastModified": 1788546542,
+        "narHash": "sha256-YS7Zw2cMsDpv+4ClP0XQxUNio9KLLiu/zXWlUVylGu8=",
         "owner": "kadencartwright",
         "repo": "meeting-record",
-        "rev": "1be6d575e5ba002fcece2501998f9866bad27cc8",
+        "rev": "4032b9a22ae7376b4552590615522f60262cb609",
         "type": "github"
       },
       "original": {
