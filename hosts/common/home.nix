@@ -22,4 +22,15 @@
   };
 
   programs.home-manager.enable = true;
+
+  services.kaden.meetingRecorder.notionDestinations = {
+    team = {
+      label = "Team meetings";
+      parentPageId = "3d12d5f2-8d7d-8067-ad48-c686bec6fb0a";
+    };
+    personal = {
+      label = "Personal notes";
+      parentPageId = "3d12d5f2-8d7d-804a-a6db-d6938bf100f7";
+    };
+  };
 }
