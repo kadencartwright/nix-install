@@ -273,4 +273,3 @@ Item {
 
     Component.onCompleted: MeetingRecorder.popupOpened()
 }
-
