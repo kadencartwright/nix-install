@@ -655,6 +655,9 @@ in
       # Clipboard paste avoids wtype's per-character keycode corruption in
       # Chromium/Electron text fields such as the ChatGPT desktop composer.
       mode = "paste"
+      # Codex reserves Ctrl+V for image attachments; Shift+Insert remains a
+      # normal text paste in terminals and Chromium/Electron applications.
+      paste_keys = "shift+insert"
       restore_clipboard = true
       restore_clipboard_delay_ms = 300
 
