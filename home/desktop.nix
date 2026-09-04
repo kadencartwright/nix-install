@@ -618,6 +618,10 @@ in
         inherit id;
         inherit (destination) label parentPageId;
       }) meetingRecorderCfg.notionDestinations;
+      externalRecorders = lib.mapAttrsToList (id: recorder: {
+        inherit id;
+        inherit (recorder) label filesystemUuid recordingsPath;
+      }) meetingRecorderCfg.externalRecorders;
     } + "\n";
   };
 

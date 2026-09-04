@@ -63,8 +63,9 @@ Desktop hosts install the pinned
 [`meeting-record`](https://github.com/kadencartwright/meeting-record) flake and
 expose a compact recorder control in every Quickshell bar. Idle bars show a
 quiet record glyph; an active recording shows a red glyph and locally computed
-elapsed time. The popup displays the resolved microphone and full output sink,
-starts and stops recording, lists the 20 newest sessions, and provides detail,
+elapsed time. The popup inventories available PipeWire microphones and sinks,
+lets the user select each source without changing WirePlumber defaults, supports
+start/pause/resume/stop, lists the 20 newest sessions, and provides detail,
 play, open-folder, Notion-upload, and confirmed-delete actions.
 
 The QML singleton is deliberately only a client. It runs short-lived
@@ -72,7 +73,7 @@ The QML singleton is deliberately only a client. It runs short-lived
 `$XDG_RUNTIME_DIR/meeting-record/state.json`; the Go supervisor owns both
 `pw-record` children in its own transient user-systemd service. As a result,
 closing the popup or restarting Quickshell does not interrupt recording. The
-supervisor accepts Stop over
+supervisor accepts pause, resume, and stop over
 `$XDG_RUNTIME_DIR/meeting-record/control.sock`, finalizes both FLAC files, and
 creates a mixed `meeting.m4a` suitable for playback and upload. It
 stores sessions under
@@ -97,12 +98,21 @@ services.kaden.meetingRecorder.notionDestinations = {
 
 The recording-details view offers those labels in a compact picker. Quickshell
 passes only the selected stable ID to Go; `meeting-record` resolves the parent
-page, streams `meeting.m4a` through `ntn files create`, and creates a native
-Notion AI meeting-notes block. The selected destination and block ID are
-persisted so a second click cannot create a duplicate. Notion's current public
+page, streams `meeting.m4a` through `ntn files create`, creates a titled subpage,
+and places the native Notion AI meeting-notes block inside it. The selected
+destination, page URL, and block ID are persisted so a second click cannot
+create a duplicate. Notion's current public
 CLI/API exposes no calendar endpoint and does not accept an event when creating
 a meeting note, so this integration intentionally does not connect to Google or
 Gmail.
+
+The same popup also has a USB voice-recorder browser. The shared laptop config
+identifies the recorder by its FAT32 filesystem UUID (`5AA7-563B`) and scans its
+`RECORD` directory. Opening the browser mounts the device read-only through
+UDisks if necessary, then shows the WAV filename, timestamp, duration, and
+upload state. A selected memo can be played locally or sent to any configured
+Notion destination; Go converts it to a temporary M4A and creates the same
+titled child-page/meeting-note structure without modifying the recorder.
 
 Compositor bindings can call the service without duplicating recorder state:
 
@@ -110,6 +120,8 @@ Compositor bindings can call the service without duplicating recorder state:
 qs ipc call meetingRecorder toggle
 qs ipc call meetingRecorder start
 qs ipc call meetingRecorder stop
+qs ipc call meetingRecorder pause
+qs ipc call meetingRecorder resume
 qs ipc call meetingRecorder status
 ```
 

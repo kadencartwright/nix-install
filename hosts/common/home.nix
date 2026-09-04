@@ -33,4 +33,10 @@
       parentPageId = "3d12d5f2-8d7d-804a-a6db-d6938bf100f7";
     };
   };
+
+  services.kaden.meetingRecorder.externalRecorders.voice-memos = {
+    label = "Voice recorder";
+    filesystemUuid = "5AA7-563B";
+    recordingsPath = "RECORD";
+  };
 }

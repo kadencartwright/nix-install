@@ -16,19 +16,31 @@ QtObject {
     }
 
     property bool recording: false
+    property bool paused: false
     property bool busy: false
     property string error: ""
     property string sessionId: ""
     property string startedAt: ""
     property double startedAtMs: 0
+    property double pausedAtMs: 0
+    property double pausedDurationSeconds: 0
     property string directory: ""
     property var microphone: ({ description: "Resolving microphone…", nodeName: "" })
     property var output: ({ description: "Resolving output…", nodeName: "" })
+    property var availableMicrophones: []
+    property var availableOutputs: []
+    property string selectedMicrophoneNode: ""
+    property string selectedOutputNode: ""
     property var sessions: []
     property var destinations: []
+    property var externalRecorders: []
+    property var externalFiles: []
+    property string externalError: ""
     property double clockNow: Date.now()
+    readonly property double currentPauseSeconds: paused && pausedAtMs > 0
+        ? Math.max(0, (clockNow - pausedAtMs) / 1000) : 0
     readonly property int elapsedSeconds: recording && startedAtMs > 0
-        ? Math.max(0, Math.floor((clockNow - startedAtMs) / 1000)) : 0
+        ? Math.max(0, Math.floor((clockNow - startedAtMs) / 1000 - pausedDurationSeconds - currentPauseSeconds)) : 0
 
     signal operationFinished(string operation, bool succeeded)
 
@@ -66,17 +78,25 @@ QtObject {
         recording = Boolean(state && state.recording && state.session)
         if (recording) {
             const session = state.session
+            paused = Boolean(state.paused)
             sessionId = String(session.id || "")
             startedAt = String(session.startedAt || "")
             startedAtMs = parseDate(startedAt).getTime()
+            pausedAtMs = session.pausedAt ? parseDate(session.pausedAt).getTime() : 0
+            pausedDurationSeconds = Number(session.pausedDurationSeconds || 0)
             directory = String(session.directory || "")
             microphone = session.microphone || ({ description: "Unknown microphone", nodeName: "" })
             output = session.output || ({ description: "Unknown output", nodeName: "" })
+            selectedMicrophoneNode = String(microphone.nodeName || "")
+            selectedOutputNode = String(output.nodeName || "")
             clockNow = Date.now()
         } else {
+            paused = false
             sessionId = ""
             startedAt = ""
             startedAtMs = 0
+            pausedAtMs = 0
+            pausedDurationSeconds = 0
             directory = ""
             if (wasRecording) {
                 refreshDevices()
@@ -89,6 +109,10 @@ QtObject {
         if (busy || recording) return
         busy = true
         error = ""
+        const command = [binary, "start", "--detach"]
+        if (selectedMicrophoneNode) command.push("--microphone", selectedMicrophoneNode)
+        if (selectedOutputNode) command.push("--output", selectedOutputNode)
+        startProcess.command = command
         startProcess.running = true
     }
 
@@ -97,6 +121,49 @@ QtObject {
         busy = true
         error = ""
         stopProcess.running = true
+    }
+
+    function pause() {
+        if (busy || !recording || paused) return
+        runRecordingControl("pause")
+    }
+
+    function resume() {
+        if (busy || !recording || !paused) return
+        runRecordingControl("resume")
+    }
+
+    function runRecordingControl(operation) {
+        busy = true
+        error = ""
+        controlProcess.operation = operation
+        controlProcess.command = [binary, operation]
+        controlProcess.running = true
+    }
+
+    function findDevice(devices, nodeName) {
+        for (let index = 0; index < devices.length; index++) {
+            if (String(devices[index].nodeName || "") === String(nodeName || "")) return devices[index]
+        }
+        return null
+    }
+
+    function selectMicrophone(nodeName) {
+        if (recording || busy) return
+        const device = findDevice(availableMicrophones, nodeName)
+        if (device) {
+            selectedMicrophoneNode = String(device.nodeName)
+            microphone = device
+        }
+    }
+
+    function selectOutput(nodeName) {
+        if (recording || busy) return
+        const device = findDevice(availableOutputs, nodeName)
+        if (device) {
+            selectedOutputNode = String(device.nodeName)
+            output = device
+        }
     }
 
     function toggle() {
@@ -120,6 +187,10 @@ QtObject {
         if (!destinationsProcess.running) destinationsProcess.running = true
     }
 
+    function refreshExternal() {
+        if (!externalProcess.running) externalProcess.running = true
+    }
+
     function popupOpened() {
         reconcileStatus()
         refreshDevices()
@@ -132,6 +203,17 @@ QtObject {
     function playMeeting(id) { runAction([binary, "play", String(id), "meeting"], "play") }
     function playLocal(id) { runAction([binary, "play", String(id), "local"], "play") }
     function playRemote(id) { runAction([binary, "play", String(id), "remote"], "play") }
+    function playExternal(id) { runAction([binary, "recorder", "play", String(id)], "play") }
+    function viewExternalNotion(id) { runAction([binary, "recorder", "notion", String(id)], "open") }
+
+    function uploadExternal(id, destinationId) {
+        if (busy || actionProcess.running) return
+        busy = true
+        error = ""
+        actionProcess.operation = "externalUpload"
+        actionProcess.command = [binary, "recorder", "upload", String(id), "--destination", String(destinationId), "--json"]
+        actionProcess.running = true
+    }
 
     function uploadSession(id, destinationId) {
         if (busy || actionProcess.running) return
@@ -171,7 +253,7 @@ QtObject {
     property Timer elapsedTimer: Timer {
         interval: 1000
         repeat: true
-        running: root.recording
+        running: root.recording && !root.paused
         triggeredOnStart: true
         onTriggered: root.clockNow = Date.now()
     }
@@ -210,6 +292,18 @@ QtObject {
         }
     }
 
+    property Process controlProcess: Process {
+        property string operation: ""
+        stdout: StdioCollector { id: controlStdout }
+        stderr: StdioCollector { id: controlStderr }
+        onExited: (exitCode, exitStatus) => {
+            root.busy = false
+            if (exitCode !== 0) root.error = root.cleanError(controlStderr.text)
+            root.reconcileStatus()
+            root.operationFinished(operation, exitCode === 0)
+        }
+    }
+
     property Process statusProcess: Process {
         command: [root.binary, "status", "--json"]
         stdout: StdioCollector { id: statusStdout }
@@ -231,9 +325,17 @@ QtObject {
             }
             try {
                 const devices = JSON.parse(devicesStdout.text)
+                root.availableMicrophones = devices.microphones || []
+                root.availableOutputs = devices.outputs || []
                 if (!root.recording) {
-                    root.microphone = devices.microphone
-                    root.output = devices.output
+                    let selectedMicrophone = root.findDevice(root.availableMicrophones, root.selectedMicrophoneNode)
+                    if (!selectedMicrophone) selectedMicrophone = devices.microphone
+                    let selectedOutput = root.findDevice(root.availableOutputs, root.selectedOutputNode)
+                    if (!selectedOutput) selectedOutput = devices.output
+                    root.microphone = selectedMicrophone || ({ description: "Unknown microphone", nodeName: "" })
+                    root.output = selectedOutput || ({ description: "Unknown output", nodeName: "" })
+                    root.selectedMicrophoneNode = String(root.microphone.nodeName || "")
+                    root.selectedOutputNode = String(root.output.nodeName || "")
                 }
             } catch (exception) {
                 root.error = "Device information is malformed"
@@ -281,15 +383,47 @@ QtObject {
         }
     }
 
+    property Process externalProcess: Process {
+        command: [root.binary, "recorder", "list", "--json"]
+        stdout: StdioCollector { id: externalStdout }
+        stderr: StdioCollector { id: externalStderr }
+        onExited: (exitCode, exitStatus) => {
+            if (exitCode !== 0) {
+                root.externalRecorders = []
+                root.externalFiles = []
+                root.externalError = root.cleanError(externalStderr.text)
+                return
+            }
+            try {
+                const result = JSON.parse(externalStdout.text)
+                root.externalRecorders = result.recorders || []
+                let files = []
+                let firstError = ""
+                for (let index = 0; index < root.externalRecorders.length; index++) {
+                    const recorder = root.externalRecorders[index]
+                    files = files.concat(recorder.files || [])
+                    if (!firstError && recorder.error) firstError = String(recorder.error)
+                }
+                root.externalFiles = files
+                root.externalError = firstError
+            } catch (exception) {
+                root.externalRecorders = []
+                root.externalFiles = []
+                root.externalError = "Voice recorder information is malformed"
+            }
+        }
+    }
+
     property Process actionProcess: Process {
         property string operation: ""
         stdout: StdioCollector { id: actionStdout }
         stderr: StdioCollector { id: actionStderr }
         onExited: (exitCode, exitStatus) => {
-            if (operation === "delete" || operation === "upload") root.busy = false
+            if (operation === "delete" || operation === "upload" || operation === "externalUpload") root.busy = false
             if (exitCode !== 0) root.error = root.cleanError(actionStderr.text)
             if ((operation === "delete" || operation === "upload") && exitCode === 0)
                 root.refreshSessions()
+            if (operation === "externalUpload" && exitCode === 0) root.refreshExternal()
             root.operationFinished(operation, exitCode === 0)
         }
     }
@@ -307,6 +441,16 @@ QtObject {
             return root.recording ? "stopping" : "not recording"
         }
 
+        function pause(): string {
+            root.pause()
+            return root.paused ? "already paused" : "pausing"
+        }
+
+        function resume(): string {
+            root.resume()
+            return root.paused ? "resuming" : "not paused"
+        }
+
         function toggle(): string {
             const action = root.recording ? "stopping" : "starting"
             root.toggle()
@@ -315,7 +459,7 @@ QtObject {
 
         function status(): string {
             root.reconcileStatus()
-            return root.recording ? "recording " + root.formatElapsed(root.elapsedSeconds) : "idle"
+            return root.recording ? (root.paused ? "paused " : "recording ") + root.formatElapsed(root.elapsedSeconds) : "idle"
         }
 
     }
