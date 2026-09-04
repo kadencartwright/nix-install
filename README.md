@@ -57,6 +57,42 @@ Quickshell is the active desktop panel, with its configuration managed directly
 by Home Manager. Its Codex usage dropdown is backed by the packaged `codexbar`
 command and the existing Codex CLI login.
 
+### Meeting recorder
+
+Desktop hosts install the pinned
+[`meeting-record`](https://github.com/kadencartwright/meeting-record) flake and
+expose a compact recorder control in every Quickshell bar. Idle bars show a
+quiet record glyph; an active recording shows a red glyph and locally computed
+elapsed time. The popup displays the resolved microphone and full output sink,
+starts and stops recording, lists the 20 newest sessions, and provides detail,
+play, open-folder, and confirmed-delete actions.
+
+The QML singleton is deliberately only a client. It runs short-lived
+`meeting-record` commands and watches
+`$XDG_RUNTIME_DIR/meeting-record/state.json`; the Go supervisor owns both
+`pw-record` children in its own transient user-systemd service. As a result,
+closing the popup or restarting Quickshell does not interrupt recording. The
+supervisor accepts Stop over
+`$XDG_RUNTIME_DIR/meeting-record/control.sock`, finalizes both FLAC files, and
+stores sessions under
+`${XDG_DATA_HOME:-$HOME/.local/share}/meeting-record/`.
+
+Compositor bindings can call the service without duplicating recorder state:
+
+```bash
+qs ipc call meetingRecorder toggle
+qs ipc call meetingRecorder start
+qs ipc call meetingRecorder stop
+qs ipc call meetingRecorder status
+```
+
+For a lifecycle check, start via IPC, note the supervisor PID with
+`systemctl --user show meeting-record-supervisor.service -p MainPID`, restart
+`quickshell.service`, and confirm both the PID and elapsed session remain. Stop
+from the reloaded shell and inspect both FLAC files. Killing the supervisor with
+SIGKILL exercises stale-state recovery; the singleton's 30-second safety
+reconciliation returns the UI to idle and marks the session failed.
+
 SSH authentication uses Home Manager's standard OpenSSH agent and regular key
 files. Bitwarden remains installed as a password manager, but the dotfiles'
 Bitwarden `SSH_AUTH_SOCK` override is removed from the generated Hyprland config.

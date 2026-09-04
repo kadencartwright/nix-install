@@ -58,6 +58,26 @@
         "type": "github"
       }
     },
+    "meeting-record": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs-unstable"
+        ]
+      },
+      "locked": {
+        "lastModified": 1788535044,
+        "narHash": "sha256-BktYOSeu/htn2qXpsEMeSgzKswKQtykxdSX6Xu8AgNw=",
+        "owner": "kadencartwright",
+        "repo": "meeting-record",
+        "rev": "61146de4a262ccb497fbd1e0be8aed6e069c54a7",
+        "type": "github"
+      },
+      "original": {
+        "owner": "kadencartwright",
+        "repo": "meeting-record",
+        "type": "github"
+      }
+    },
     "nixos-hardware": {
       "locked": {
         "lastModified": 1779258371,
@@ -234,6 +254,7 @@
         "disko": "disko",
         "dotfiles": "dotfiles",
         "home-manager": "home-manager",
+        "meeting-record": "meeting-record",
         "nixos-hardware": "nixos-hardware",
         "nixpkgs": "nixpkgs",
         "nixpkgs-unstable": "nixpkgs-unstable",

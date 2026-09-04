@@ -1,4 +1,5 @@
 {
+  inputs,
   isDesktop ? false,
   lib,
   pkgs,
@@ -8,6 +9,7 @@
 
 let
   displayControl = import ../packages/display-control.nix { inherit pkgs pkgsUnstable; };
+  meetingRecord = inputs.meeting-record.packages.${pkgs.system}.default;
   lyre = pkgs.buildNpmPackage {
     pname = "lyre-tui";
     version = "1.3.5";
@@ -600,6 +602,7 @@ in
     displayControl
     networkPanelHelper
     networkSpeedtest
+    meetingRecord
     trayWindowToggle
     voxtype
     voxtypeHistory
@@ -718,6 +721,7 @@ in
     "DISPLAY_CONTROL_BINARY=${displayControl}/bin/display-control"
     "NETWORK_PANEL_HELPER_BINARY=${networkPanelHelper}/bin/network-panel-helper"
     "NETWORK_SPEEDTEST_BINARY=${networkSpeedtest}/bin/network-speedtest"
+    "MEETING_RECORD_BINARY=${meetingRecord}/bin/meeting-record"
     "TRAY_WINDOW_TOGGLE_BINARY=${trayWindowToggle}/bin/tray-window-toggle"
   ];
 

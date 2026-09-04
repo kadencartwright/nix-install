@@ -16,6 +16,11 @@
       inputs.nixpkgs.follows = "nixpkgs-unstable";
     };
 
+    meeting-record = {
+      url = "github:kadencartwright/meeting-record";
+      inputs.nixpkgs.follows = "nixpkgs-unstable";
+    };
+
     disko = {
       url = "github:nix-community/disko/latest";
       inputs.nixpkgs.follows = "nixpkgs";

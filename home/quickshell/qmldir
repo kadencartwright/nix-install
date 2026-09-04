@@ -1,4 +1,5 @@
 singleton Theme 1.0 Theme.qml
+singleton MeetingRecorder 1.0 MeetingRecorder.qml
 Command 1.0 Command.qml
 BarButton 1.0 BarButton.qml
 SectionTitle 1.0 SectionTitle.qml
@@ -14,4 +15,5 @@ CalendarPanel 1.0 CalendarPanel.qml
 BatteryPanel 1.0 BatteryPanel.qml
 VoxtypePanel 1.0 VoxtypePanel.qml
 ThemePanel 1.0 ThemePanel.qml
+MeetingRecorderPanel 1.0 MeetingRecorderPanel.qml
 KeyboardMenu 1.0 KeyboardMenu.qml
