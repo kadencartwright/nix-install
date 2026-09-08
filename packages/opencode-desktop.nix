@@ -6,10 +6,10 @@
 
 let
   pname = "opencode-desktop";
-  version = "1.18.27";
+  version = "1.18.29";
   src = fetchurl {
     url = "https://github.com/anomalyco/opencode/releases/download/v${version}/opencode-desktop-linux-x86_64.AppImage";
-    hash = "sha256-YK9gaa81xiNkD4Qm/t8RXTkOw8sKuH9Ayecr3NDyOwM=";
+    hash = "sha256-o0TMVsDgzXLd/fljUnDlx4EP+y3vRTZWVZwMw7I2K+Q=";
   };
   appimageContents = appimageTools.extract {
     inherit pname version src;
