@@ -20,6 +20,7 @@ in
       hyprwhspr
       localsend
       obsidian
+      rapidraw
       slack
     ])
     ++ [ obsbotCli ];
