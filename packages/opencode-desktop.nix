@@ -6,10 +6,10 @@
 
 let
   pname = "opencode-desktop";
-  version = "1.18.31";
+  version = "2.0.6";
   src = fetchurl {
-    url = "https://github.com/anomalyco/opencode/releases/download/v${version}/opencode-desktop-linux-x86_64.AppImage";
-    hash = "sha256-HQAy5SfLCAD3AD3qmexS5fYST7r9PS7opzmSEE1rQRs=";
+    url = "https://opencode.ai/files/bin/${version}/opencode-desktop-linux-x86_64.AppImage";
+    hash = "sha256-9QLN77gyLzGM936J/eMDGm2NFL+Q1CusSusaUWTzNDU=";
   };
   appimageContents = appimageTools.extract {
     inherit pname version src;
@@ -25,21 +25,13 @@ appimageTools.wrapType2 {
       cp -r ${appimageContents}/usr/share/* "$out/share/"
     fi
 
-    desktop_file="$(find "$out/share" -type f -name '*.desktop' | head -n 1 || true)"
-    if [ -z "$desktop_file" ]; then
-      desktop_source="$(find ${appimageContents} -maxdepth 2 -type f -name '*.desktop' | head -n 1 || true)"
-      if [ -n "$desktop_source" ]; then
-        desktop_file="$out/share/applications/$(basename "$desktop_source")"
-        install -Dm444 "$desktop_source" "$desktop_file"
-      fi
-    fi
-
-    if [ -n "$desktop_file" ]; then
-      sed -i \
-        -e 's|Exec=AppRun|Exec=${pname}|g' \
-        -e 's|TryExec=AppRun|TryExec=${pname}|g' \
-        "$desktop_file"
-    fi
+    # ai.opencode.desktop is the executable; the launcher has two suffixes.
+    desktop_file="$out/share/applications/ai.opencode.desktop.desktop"
+    install -Dm644 ${appimageContents}/ai.opencode.desktop.desktop "$desktop_file"
+    sed -i \
+      -e 's|^Exec=[^ ]*|Exec=${pname}|' \
+      -e 's|^TryExec=.*|TryExec=${pname}|' \
+      "$desktop_file"
 
     if [ -f ${appimageContents}/.DirIcon ]; then
       install -Dm444 ${appimageContents}/.DirIcon "$out/share/pixmaps/${pname}.png"

@@ -7,15 +7,16 @@
 }:
 
 let
-  version = "1.18.31";
+  # V2 native binaries are published to npm under @opencode/cli-*.
+  version = "2.0.6";
   sources = {
     x86_64-linux = {
       suffix = "linux-x64";
-      hash = "sha256-6TEr517YA7dBX8Kuq9ofT+k4kSo5Zzdi3Aw4wOEeveQ=";
+      hash = "sha512-ot+ddgyt7MZML0SBGEpVqxlWlGF7Kcc/fHMoeXpZbrODvFeXhmwKJAiVomPhYPa0g2Tb7jOuLHuhgsXm7QjOoQ==";
     };
     aarch64-linux = {
       suffix = "linux-arm64";
-      hash = "sha256-1OMy9GsidEhYLA2fx19vgm3+lcn3UbwgEfxNk3oEK+Y=";
+      hash = "sha512-jc1QLJpkdsExK6I7Thh5fC7UZyPehdauQGlS88GXxIZ92wJupEhrYZe5Oqpfpx8/cRBBdc3TkUjjESO+nZVw5A==";
     };
   };
   source = sources.${stdenv.hostPlatform.system};
@@ -25,11 +26,11 @@ stdenv.mkDerivation {
   inherit version;
 
   src = fetchurl {
-    url = "https://github.com/anomalyco/opencode/releases/download/v${version}/opencode-${source.suffix}.tar.gz";
+    url = "https://registry.npmjs.org/@opencode/cli-${source.suffix}/-/cli-${source.suffix}-${version}.tgz";
     inherit (source) hash;
   };
 
-  sourceRoot = ".";
+  sourceRoot = "package";
   nativeBuildInputs = [ makeWrapper ];
   dontBuild = true;
   dontStrip = true;
@@ -40,7 +41,7 @@ stdenv.mkDerivation {
     # Bun standalone executables store application data in an ELF trailer.
     # patchelf rewrites that trailer and makes this binary run as plain Bun,
     # so keep it byte-for-byte intact and invoke it through glibc's loader.
-    install -Dm755 opencode "$out/libexec/opencode/opencode"
+    install -Dm755 bin/opencode "$out/libexec/opencode/opencode"
     makeWrapper ${stdenv.cc.bintools.dynamicLinker} "$out/bin/opencode" \
       --add-flags "--library-path ${lib.makeLibraryPath [ glibc ]}" \
       --add-flags "$out/libexec/opencode/opencode"
