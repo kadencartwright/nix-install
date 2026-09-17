@@ -73,7 +73,15 @@ let
           x = 4
           y = 4''
       ]
-      (builtins.readFile "${dotfiles}/alacritty/alacritty.toml");
+      (builtins.readFile "${dotfiles}/alacritty/alacritty.toml")
+  + ''
+
+    # Voxtype fills the clipboard, not the primary selection used by default.
+    [[keyboard.bindings]]
+    key = "Insert"
+    mods = "Shift"
+    action = "Paste"
+  '';
   alacrittyDir = pkgs.linkFarm "alacritty-config" [
     {
       name = "alacritty.toml";
