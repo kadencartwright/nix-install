@@ -1,6 +1,6 @@
 ---
-name: update_versions
-description: Update pinned T3 Code, ChatGPT desktop, Codex CLI, and OpenCode versions and source hashes in the nix-install repository. Use when asked to bump these apps to latest or invoke update_versions; includes release discovery, package builds, and reporting apps already current.
+name: update-versions
+description: Update pinned T3 Code, ChatGPT desktop, Codex CLI, and OpenCode versions and source hashes in the nix-install repository. Use when asked to bump these apps to latest or invoke update-versions; includes release discovery, package builds, and reporting apps already current.
 ---
 
 # Update versions
