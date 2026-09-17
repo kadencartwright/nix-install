@@ -11,6 +11,7 @@ let
   platformSystem = pkgs.stdenv.hostPlatform.system;
   chatgptVersion = "26.908.70816";
   codex = pkgsUnstable.callPackage ../packages/codex.nix { };
+  herdr = pkgs.callPackage ../packages/herdr.nix { };
   tm = pkgs.callPackage ../packages/tm.nix {
     tm-src = inputs.tm;
   };
@@ -48,10 +49,10 @@ in
     tmux
     zoxide
   ] ++ (with pkgsUnstable; [
-    herdr
     pi-coding-agent
   ])
   ++ [ codex ]
+  ++ [ herdr ]
   ++ [ opencode ]
   ++ [ portmux ]
   ++ lib.optional isDesktop opencodeDesktop
