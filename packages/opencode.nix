@@ -7,15 +7,15 @@
 }:
 
 let
-  version = "1.18.30";
+  version = "1.18.31";
   sources = {
     x86_64-linux = {
       suffix = "linux-x64";
-      hash = "sha256-VQByRoWBZUlv+FuhwrZI90IejiATv0GJpoDJ/45pnRc=";
+      hash = "sha256-6TEr517YA7dBX8Kuq9ofT+k4kSo5Zzdi3Aw4wOEeveQ=";
     };
     aarch64-linux = {
       suffix = "linux-arm64";
-      hash = "sha256-QRGlXCoCwPrDFL1R6aIzAoDm0p0rhblVT/9tYmElZu0=";
+      hash = "sha256-1OMy9GsidEhYLA2fx19vgm3+lcn3UbwgEfxNk3oEK+Y=";
     };
   };
   source = sources.${stdenv.hostPlatform.system};

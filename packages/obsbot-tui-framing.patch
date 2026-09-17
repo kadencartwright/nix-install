@@ -1,0 +1,25 @@
+diff --git a/crates/obsbot-tui/src/main.rs b/crates/obsbot-tui/src/main.rs
+index a2cc9f9..fe9ece8 100644
+--- a/crates/obsbot-tui/src/main.rs
++++ b/crates/obsbot-tui/src/main.rs
+@@ -189,6 +189,20 @@ impl App {
+                 self.camera.set_gesture_auto_frame(next)
+             }
+             Control::Framing => {
++                // This firmware's framing write also enables group AI and
++                // persists it as the boot mode. Never let this control turn
++                // tracking back on after the user explicitly disabled it.
++                match self.status().map(|s| s.ai_mode) {
++                    Some(AiMode::None) => {
++                        self.last_error = Some("Framing requires AI mode to be enabled".into());
++                        return;
++                    }
++                    None => {
++                        self.last_error = Some("Cannot change framing without camera status".into());
++                        return;
++                    }
++                    _ => {}
++                }
+                 let next = match self.framing {
+                     Framing::CloseUp => Framing::UpperBody,
+                     Framing::UpperBody => Framing::CloseUp,

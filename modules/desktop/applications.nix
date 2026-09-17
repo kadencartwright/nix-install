@@ -9,7 +9,9 @@
 let
   codexbar = pkgs.callPackage ../../packages/codexbar.nix { };
   hyprwhspr = pkgsUnstable.callPackage ../../packages/hyprwhspr.nix { };
-  obsbotCli = inputs.obsbot-cli.packages.${pkgs.stdenv.hostPlatform.system}.default;
+  obsbotCli = pkgs.callPackage ../../packages/obsbot-cli.nix {
+    upstream = inputs.obsbot-cli.packages.${pkgs.stdenv.hostPlatform.system}.default;
+  };
 in
 {
   environment.systemPackages =
