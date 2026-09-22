@@ -173,6 +173,9 @@ full-precision Parakeet TDT 0.6B v3 model through ONNX Runtime and
 compositor-managed keys. `Alt+G` toggles recording, replacing the previous
 hyprwhspr action. The model is fetched by Nix, so no separate `voxtype setup`
 step is required. Whisper's Vulkan backend remains compiled in as a fallback.
+ChatGPT desktop launches with native Wayland via `chatgpt-flags.conf` so
+Voxtype's paste keystrokes do not cross the XWayland keymap boundary. Fully
+quit and reopen ChatGPT after changing this setting.
 
 `Alt+Shift+T` freezes the desktop, selects a region, runs Omarchy's Tesseract
 OCR settings, and copies the extracted text to the clipboard. Set

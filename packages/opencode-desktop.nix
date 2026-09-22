@@ -6,10 +6,10 @@
 
 let
   pname = "opencode-desktop";
-  version = "2.0.6";
+  version = "2.0.14";
   src = fetchurl {
     url = "https://opencode.ai/files/bin/${version}/opencode-desktop-linux-x86_64.AppImage";
-    hash = "sha256-9QLN77gyLzGM936J/eMDGm2NFL+Q1CusSusaUWTzNDU=";
+    hash = "sha256-E//Nc5o6u+/ujBWZHKNImq1OjQrUxk9T67hnZIYhi3U=";
   };
   appimageContents = appimageTools.extract {
     inherit pname version src;
