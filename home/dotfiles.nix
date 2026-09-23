@@ -268,6 +268,11 @@ hl.bind("ALT + G", hl.dsp.exec_cmd("voxtype record toggle"), {
       (builtins.readFile "${dotfiles}/hyprland/hyprland.lua")
     + pkgs.lib.optionalString isDesktop ''
 
+      hl.bind("XF86AudioMicMute", hl.dsp.exec_cmd("wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle"), {
+        description = "Toggle microphone mute",
+        locked = true,
+      })
+
       hl.bind("ALT + semicolon", hl.dsp.exec_cmd("qs ipc call barMenu toggle"), {
         description = "Open bar command center",
       })
