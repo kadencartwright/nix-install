@@ -34,6 +34,8 @@ let
   '';
 in
 {
+  imports = [ ./battery-care.nix ];
+
   options.services.power-profiles-daemon.autoSwitchOnPowerSource.enable =
     lib.mkEnableOption "automatic performance-on-AC and balanced-on-battery profile switching";
 

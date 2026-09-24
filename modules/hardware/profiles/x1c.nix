@@ -16,6 +16,7 @@
   hardware.graphics.enable = true;
 
   services.power-profiles-daemon.autoSwitchOnPowerSource.enable = true;
+  hardware.batteryCare.enable = true;
 
   # The X1C is a Gen 12 / Meteor Lake system.  Keep i915 out of stage 1 so
   # disk unlock and root mounting do not depend on early graphics startup.

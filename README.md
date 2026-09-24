@@ -378,3 +378,19 @@ off, but it does not provide strong boot-chain tamper resistance in that state;
 changing the firmware or Secure Boot policy can require the retained recovery
 passphrase. User `k` is provisioned by the flake config; after first boot, use
 your SSH key or console login path for that host.
+
+## Battery preservation
+
+Z16, T16, and X1C use an 85% charge cap and start charging below 80%.
+The firmware controls charging; these limits do not deliberately discharge the
+battery. Unsupported batteries are skipped. The battery popup shows the active
+cap and battery health, and provides a **Charge to full for travel** button.
+
+You can also run `sudo battery-charge full` while plugged in, or
+`sudo battery-charge default` to restore the configured limit. The temporary
+full-charge override resets on unplugging or rebooting. A power-supply event
+handler and a 30-second timer keep the limits applied, including after resume.
+
+Per-host limits can be changed with `hardware.batteryCare.startThreshold` and
+`hardware.batteryCare.stopThreshold`. Once changes are committed to `origin/main`,
+run `nhr` on each laptop to apply them.

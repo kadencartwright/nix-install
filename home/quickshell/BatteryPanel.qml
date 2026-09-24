@@ -4,7 +4,9 @@ import Quickshell.Io
 
 Item {
     id: root
-    implicitWidth: 380; implicitHeight: 390
+    implicitWidth: 380; implicitHeight: 440
+    property int chargeLimit: 0
+    property string chargeError: ""
     property int percent: 0
     property string status: "Unknown"
     property real energyNow: 0
@@ -25,8 +27,10 @@ Item {
     }
     readonly property int health: energyDesign > 0 ? Math.round(energyFull / energyDesign * 100) : 0
     readonly property string remaining: {
+        if (status !== "Charging" && status !== "Discharging") return "Plugged in"
         if (power <= 0) return "Calculating…"
-        let hours = status === "Charging" ? (energyFull-energyNow)/power : energyNow/power
+        let target = energyFull * (chargeLimit > 0 ? chargeLimit : 100) / 100
+        let hours = status === "Charging" ? Math.max(0, target-energyNow)/power : energyNow/power
         return Math.floor(hours) + "h " + Math.round((hours-Math.floor(hours))*60) + "m"
     }
     readonly property string historyLabel: {
@@ -94,6 +98,22 @@ Item {
             }
         }
     }
+    Command {
+        id: chargeStatus
+        command: ["sh", "-c", "cat /sys/class/power_supply/BAT0/charge_control_end_threshold 2>/dev/null || echo 0"]
+        interval: 2000
+        onOutputChanged: root.chargeLimit = Number(output) || 0
+    }
+    Process {
+        id: chargeControl
+        property string mode: "full"
+        command: ["sudo", "-n", "/run/current-system/sw/bin/battery-charge", mode]
+        stderr: StdioCollector { onStreamFinished: root.chargeError = text.trim() }
+        onExited: (exitCode) => {
+            if (exitCode !== 0 && !root.chargeError) root.chargeError = "Could not change charge limit."
+            chargeStatus.run()
+        }
+    }
     component Stat: Column {
         property string value: ""; property string label: ""
         width: 82; spacing: 3
@@ -105,11 +125,42 @@ Item {
         Row { width:parent.width
             Column { width:parent.width-90; spacing:3
                 Text { text:root.percent+"%";color:Theme.fg;font.pixelSize:30;font.weight:Font.Light }
-                Text { text:root.status+" · "+root.remaining+" remaining";color:Theme.muted;font.pixelSize:12 }
+                Text { text:root.status+" · "+root.remaining;color:Theme.muted;font.pixelSize:12 }
             }
             Text { anchors.verticalCenter:parent.verticalCenter;text:root.status==="Charging"?"":root.percent<20?"":root.percent<40?"":root.percent<60?"":root.percent<80?"":"";color:root.percent<15?Theme.red:Theme.green;font.family:Theme.iconFont;font.pixelSize:34 }
         }
         Rectangle { width:parent.width;height:1;color:"#4a515c" }
+        Row {
+            width: parent.width; spacing: 8
+            visible: root.chargeLimit > 0
+            Text {
+                width: 140; anchors.verticalCenter: parent.verticalCenter
+                text: "Charge limit: " + root.chargeLimit + "%"
+                color: Theme.muted; font.pixelSize: 12
+            }
+            Rectangle {
+                width: 190; height: 30; radius: 5; color: Theme.elevated
+                opacity: chargeControl.running ? 0.5 : 1
+                Text {
+                    anchors.centerIn: parent
+                    text: root.chargeLimit === 100 ? "Restore default limit" : "Charge to full for travel"
+                    color: Theme.fg; font.pixelSize: 11
+                }
+                MouseArea {
+                    anchors.fill: parent; enabled: !chargeControl.running
+                    onClicked: {
+                        root.chargeError = ""
+                        chargeControl.mode = root.chargeLimit === 100 ? "default" : "full"
+                        chargeControl.running = true
+                    }
+                }
+            }
+        }
+        Text {
+            visible: root.chargeError.length > 0
+            width: parent.width; text: root.chargeError; elide: Text.ElideRight
+            color: Theme.red; font.pixelSize: 11
+        }
         Text { text:"CHARGE HISTORY";color:Theme.muted;font.pixelSize:11;font.weight:Font.DemiBold }
         Rectangle {
             width:parent.width;height:120;color:Theme.elevated
