@@ -82,14 +82,22 @@ in
       {
         users = [ "k" ];
         commands =
-          map
-            (mode: {
-              command = "${control}/bin/battery-charge ${mode}";
-              options = [ "NOPASSWD" ];
-            })
+          lib.concatMap
+            (
+              command:
+              map
+                (mode: {
+                  command = "${command} ${mode}";
+                  options = [ "NOPASSWD" ];
+                })
+                [
+                  "full"
+                  "default"
+                ]
+            )
             [
-              "full"
-              "default"
+              "${control}/bin/battery-charge"
+              "/run/current-system/sw/bin/battery-charge"
             ];
       }
     ];
