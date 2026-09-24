@@ -63,11 +63,11 @@ in
     enable = lib.mkEnableOption "persistent battery charge thresholds and a temporary full-charge override";
     startThreshold = lib.mkOption {
       type = lib.types.ints.between 1 99;
-      default = 80;
+      default = 90;
     };
     stopThreshold = lib.mkOption {
       type = lib.types.ints.between 2 100;
-      default = 85;
+      default = 95;
     };
   };
   config = lib.mkIf cfg.enable {

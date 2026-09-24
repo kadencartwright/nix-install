@@ -381,7 +381,7 @@ your SSH key or console login path for that host.
 
 ## Battery preservation
 
-Z16, T16, and X1C use an 85% charge cap and start charging below 80%.
+Z16, T16, and X1C use a 95% charge cap and start charging below 90%.
 The firmware controls charging; these limits do not deliberately discharge the
 battery. Unsupported batteries are skipped. The battery popup shows the active
 cap and battery health, and provides a **Charge to full for travel** button.
