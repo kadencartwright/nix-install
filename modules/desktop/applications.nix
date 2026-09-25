@@ -19,6 +19,7 @@ in
       bluetui
       buildkit
       codexbar
+      gnome-firmware
       hyprwhspr
       localsend
       obsidian
@@ -28,6 +29,8 @@ in
     ++ [ obsbotCli ];
 
   services.udev.packages = [ obsbotCli ];
+
+  services.fwupd.enable = true;
 
   programs.ydotool.enable = true;
 
