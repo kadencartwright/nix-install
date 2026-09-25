@@ -86,7 +86,7 @@ before the real hardware install.
 | `systemd-ukify` | Boot hardening | NixOS UKI/systemd tooling | Later |
 | `otf-font-awesome` | Font | `pkgs.font-awesome` | Added |
 | `pi-coding-agent` | Home Manager package | Nixpkgs package overridden to upstream `v0.87.1` | Added |
-| `openai-codex` | Home Manager package | In-repo package pinned to the official `v0.157.0` Linux release | Added |
+| `openai-codex` | Home Manager package | In-repo package pinned to the official `v0.157.0` Linux release, retaining the complete package for background-server bootstrap | Added |
 | `profile-sync-daemon` | User service | package/module if still wanted | Later |
 | `thunderbird` | Desktop user app | `pkgs.thunderbird` | Still omitted; decide per-host later |
 | `lazygit` | Home Manager package | `pkgs.lazygit` | Added |
@@ -101,7 +101,7 @@ before the real hardware install.
 | `bluetuith-bin` | User package | no direct Nixpkgs package | Omitted; `pkgs.bluetui` provides the Bluetooth TUI used on desktop hosts |
 | `codexbar` | Quickshell Codex/ChatGPT usage module | Custom package pinned to upstream `v0.6.1` | Added for desktop hosts with wrapped runtime dependencies |
 | `hyprwhspr` | System-wide speech-to-text | Custom package pinned to upstream `v1.41.0` | Added for desktop hosts; the Hyprland hotkey and fallback Waybar integration use Nix store paths |
-| `openai-chatgpt-desktop` | Desktop user app | `openai-chatgpt-desktop-nix` packaging with the official Debian package pinned to `26.917.71314` | Added on supported x86_64 hosts |
+| `openai-chatgpt-desktop` | Desktop user app | `openai-chatgpt-desktop-nix` packaging with the official Debian package pinned to `26.924.20706` | Added on supported x86_64 hosts |
 | `reflector-simple` | Removed | NixOS uses pinned flake inputs, not mirror ranking for system config | Excluded |
 | `slack-desktop` | Desktop user app, unfree | `pkgs.slack` | Added for desktop hosts |
 | `t3code` / `t3` | Home Manager packages | In-repo packages pinned to upstream `v0.0.42` | Both added on supported x86_64 Linux hosts |

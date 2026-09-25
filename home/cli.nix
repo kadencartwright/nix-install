@@ -9,19 +9,24 @@
 
 let
   platformSystem = pkgs.stdenv.hostPlatform.system;
-  chatgptVersion = "26.917.71314";
+  chatgptVersion = "26.924.20706";
   codex = pkgsUnstable.callPackage ../packages/codex.nix { };
   herdr = pkgs.callPackage ../packages/herdr.nix { };
   tm = pkgs.callPackage ../packages/tm.nix {
     tm-src = inputs.tm;
   };
   openaiChatgptDesktop =
-    inputs.openai-chatgpt-desktop-nix.packages.${platformSystem}.default.overrideAttrs (_: {
+    inputs.openai-chatgpt-desktop-nix.packages.${platformSystem}.default.overrideAttrs (oldAttrs: {
       version = chatgptVersion;
       src = pkgs.fetchurl {
         url = "https://persistent.oaistatic.com/codex-app-prod/linux/deb/pool/main/c/chatgpt/chatgpt_${chatgptVersion}_amd64.deb";
-        hash = "sha256-hR7Ci2W94v8dqfN9zfW24gqRXHVo+LLOmTwAQo8BiuU=";
+        hash = "sha256-dgoKmNzAWkDL2KNv7B3Xsycz5qHypShThq5/r5pqsDM=";
       };
+      # Tectonic moved out of the LaTeX plugin in the September 24 package.
+      installPhase = builtins.replaceStrings
+        [ "resources/plugins/openai-bundled/plugins/latex/bin/tectonic" ]
+        [ "resources/tectonic/tectonic" ]
+        oldAttrs.installPhase;
     });
   opencode = pkgsUnstable.callPackage ../packages/opencode.nix { };
   opencodeDesktop = pkgsUnstable.callPackage ../packages/opencode-desktop.nix { };

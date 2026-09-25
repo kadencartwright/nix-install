@@ -19,11 +19,9 @@ let
   hashes = {
     x86_64-linux = {
       codex = "sha256-BC+FHqP8EIPEUVdSBSCUT8eQYytT68WA/JjqylWGKiU=";
-      codeModeHost = "sha256-R9MkGeiVyc3btmSiiQv7JQ7w4/3tPacOXyvGFHnxmJw=";
     };
     aarch64-linux = {
       codex = "sha256-wcNr6rC09yd5rfU7qenklL98v75PNQagj/Z6JPXwDQg=";
-      codeModeHost = "sha256-OzE1gTXha/gJDvywQExEgHxRKk/YI4feA6UqUe0FyRA=";
     };
   };
 in
@@ -36,21 +34,20 @@ stdenvNoCC.mkDerivation rec {
     hash = hashes.${system}.codex;
   };
 
-  codeModeHost = fetchurl {
-    url = "https://github.com/openai/codex/releases/download/rust-v${version}/codex-code-mode-host-${arch}-unknown-linux-musl.tar.gz";
-    hash = hashes.${system}.codeModeHost;
-  };
-
   sourceRoot = ".";
   nativeBuildInputs = [ makeWrapper ];
+  dontStrip = true;
+  dontPatchELF = true;
 
   installPhase = ''
     runHook preInstall
 
-    install -Dm755 bin/codex "$out/bin/codex"
-    tar -xzf "$codeModeHost"
-    install -Dm755 codex-code-mode-host-${arch}-unknown-linux-musl "$out/bin/codex-code-mode-host"
-    wrapProgram "$out/bin/codex" \
+    # Daemon bootstrap validates and copies this complete package. Keep its
+    # entrypoint unwrapped so the copied binary matches the running executable.
+    mkdir -p "$out/lib/codex" "$out/bin"
+    cp -a bin codex-package.json codex-path codex-resources "$out/lib/codex/"
+    ln -s "$out/lib/codex/bin/codex-code-mode-host" "$out/bin/codex-code-mode-host"
+    makeWrapper "$out/lib/codex/bin/codex" "$out/bin/codex" \
       --prefix PATH : "${
         lib.makeBinPath [
           bubblewrap
