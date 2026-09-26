@@ -187,6 +187,91 @@ uses its native parallel fprintd integration with password fallback. Enroll a
 finger once with `sudo fprintd-enroll k`; the enrolled print is then available
 to sudo and the lock screen.
 
+## Shared Photos
+
+Z16, T16, and X1C synchronize `~/Photos` with the same Google Drive folder,
+`photos-drive:Photos`. Local filesystem events trigger sync after three seconds
+without changes, including changes in nested or newly created folders. Remote
+changes are checked every minute, without an added random delay. These services
+run while the user service manager is running. Transfers take additional time;
+an already-running sync finishes before the next one starts. Changes observed
+during a sync queue a follow-up run. Reading files does not trigger sync.
+Each device keeps a full local copy for offline use. Additions, edits, and
+deletions propagate in both directions; this includes changes made in Drive.
+Offline devices catch up when connected again. Initialize devices one at a time,
+letting each initial upload/download finish before starting the next.
+
+Normal sync conflicts keep both versions with numbered `.conflict` names for
+manual resolution. During the initial merge, the newer modification time wins
+for matching paths; the replaced version goes to history. Deleted/replaced
+cloud files move to `Photos-history/<hostname>/remote/<UTC timestamp>`.
+Deleted/replaced local files move to `~/.local/share/photos-sync-history` and
+are copied to `Photos-history/<hostname>/local` after successful syncs. Local
+history remains available if its upload fails; a later successful run retries it.
+History is outside the shared folder and is not automatically pruned, so allow
+disk and Drive space for it. These copies are recovery history, not an independent
+backup protected from loss of the Google account.
+
+All regular files, including darktable sidecars, are included; symlinks are not
+followed. Darktable's database outside `~/Photos` is not synchronized. Avoid
+editing the same photo on multiple devices before sync completes. The local
+lock prevents overlapping runs on one device; it is not a lock across computers.
+
+On each desktop:
+
+1. Create a personal Google OAuth client using
+   [rclone's instructions](https://rclone.org/drive/#making-your-own-client-id).
+   Its shared client is being retired during 2026. A personal client can be
+   reused across devices. Follow the instructions for publishing the OAuth
+   app so its authorization does not expire after seven days in Testing mode.
+2. Run `rclone config`, create a Google Drive remote named `photos-drive`,
+   enter that client ID and secret, choose the `drive.file` scope for files
+   created by this app, and finish browser authorization. Use the same Google
+   account and OAuth client on every device so they see the same files. Files
+   uploaded separately through the Drive website may require the full `drive`
+   scope instead. Keep the mutable
+   `~/.config/rclone/rclone.conf` and its tokens out of Git and the Nix store.
+3. After this configuration reaches `origin/main`, run `nhr` on each desktop.
+4. Create the local folder and preview the initial merge:
+
+   ```bash
+   mkdir -p ~/Photos
+   rclone mkdir photos-drive:Photos
+   rclone about photos-drive:
+   photos-sync preview
+   ```
+
+5. Initialize this device after reviewing the preview. This merges the existing
+   local and cloud libraries and enables subsequent scheduled syncs:
+
+   ```bash
+   photos-sync init
+   systemctl --user start --no-block photos-sync
+   journalctl --user -u photos-sync -u photos-sync-local -f
+   systemctl --user list-timers photos-sync
+   systemctl --user status photos-sync-watch
+   ```
+
+Both automatic triggers wait for successful initialization. The recursive
+inotify watcher starts when `~/Photos` exists and restarts if the folder is
+replaced. A downloaded file can trigger one follow-up check; read-only checks
+do not create an endless sync loop. The one-minute timer also catches changes
+missed while the watcher was stopped. Sync checks for the hidden
+`.photos-sync-check` file on both sides and stops if it is missing; do not remove
+it. Deletions above 25% stop the run for review. Persistent bisync listings live
+in `~/.local/state/photos-sync/bisync`; do not delete these or share them between
+devices. Temporary failures retry on later runs, but serious failures can require
+manual recovery. Inspect the journal before running `photos-sync init` again:
+reinitializing merges both sides and can resurrect previously deleted files.
+The job never automatically reinitializes itself. Check logs for completion;
+a scheduled timer alone does not mean files have been synchronized.
+
+To download the current shared library into a separate recovery folder:
+
+```bash
+rclone copy photos-drive:Photos ~/Photos-restored --progress
+```
+
 ## Cloud Music
 
 The Home Manager profiles include a reusable

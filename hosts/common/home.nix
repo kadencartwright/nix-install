@@ -7,6 +7,7 @@
     ../../home/editors.nix
     ../../home/git.nix
     ../../home/meeting-recorder.nix
+    ../../home/photos-sync.nix
     ../../home/shell.nix
     ../../home/terminals.nix
     ../../home/theme.nix
