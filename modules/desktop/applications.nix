@@ -19,6 +19,7 @@ in
       bluetui
       buildkit
       codexbar
+      darktable
       gnome-firmware
       hyprwhspr
       localsend
