@@ -9,7 +9,7 @@
 
 let
   platformSystem = pkgs.stdenv.hostPlatform.system;
-  chatgptVersion = "26.924.20706";
+  chatgptVersion = "26.924.50649";
   codex = pkgsUnstable.callPackage ../packages/codex.nix { };
   herdr = pkgs.callPackage ../packages/herdr.nix { };
   tm = pkgs.callPackage ../packages/tm.nix {
@@ -20,7 +20,7 @@ let
       version = chatgptVersion;
       src = pkgs.fetchurl {
         url = "https://persistent.oaistatic.com/codex-app-prod/linux/deb/pool/main/c/chatgpt/chatgpt_${chatgptVersion}_amd64.deb";
-        hash = "sha256-dgoKmNzAWkDL2KNv7B3Xsycz5qHypShThq5/r5pqsDM=";
+        hash = "sha256-oPy4RcWhx6Gu5RNyh8c6Qxw6UcROzeabf6gzbcgiiGs=";
       };
       # Tectonic moved out of the LaTeX plugin in the September 24 package.
       installPhase = builtins.replaceStrings

@@ -8,15 +8,15 @@
 
 let
   # V2 native binaries are published to npm under @opencode/cli-*.
-  version = "2.0.16";
+  version = "2.0.18";
   sources = {
     x86_64-linux = {
       suffix = "linux-x64";
-      hash = "sha512-BVmvVddA7c4VhSXgTiGtZB9pU+xTyFgsd56KkvQoYMydqy8xfzPGu9BRwQVCG/RTxGhRAwda/MYEWarddscIUg==";
+      hash = "sha512-94dH7lwB+tpmzI1/NIfzFxLBIeshZSNtyx2sskL0C0kgYjMaiVMIHvQLYIECUOWSuVz5/dH/KPUIOGn7ML311g==";
     };
     aarch64-linux = {
       suffix = "linux-arm64";
-      hash = "sha512-BThpExec9wEIhC4U9iRY/jWecM8bVOVuYw2YTYYZ/qNn2r/RljDG2flngDmCZFM1cC6miu2kqOgPkVnVeqaapQ==";
+      hash = "sha512-OjKG0staG+KRG9sNORb2vIPcfthMVk9RtCamU1vMWPquV70bQEYUM0JUT+t0A49eAc2H4lZWhqkpH2gpg87D+Q==";
     };
   };
   source = sources.${stdenv.hostPlatform.system};
