@@ -32,6 +32,22 @@ Store optimization is enabled automatically.
 Avahi/mDNS is enabled, so hosts should be discoverable on the LAN as names like
 `Z16.local`, `T16.local`, `MINI.local`, and `pi5.local` when the local network supports it.
 
+Desktop hosts (`Z16`, `T16`, and `X1C`) include CUPS printing, automatic network
+printer discovery, and driverless USB printing. Open **Print Settings** from the
+app launcher (or run `system-config-printer`) to add a printer, choose a default,
+manage jobs, or print a test page. Connect to the printer's network or plug it
+in over USB, then select **Add**. Prefer **IPP Everywhere / driverless** when
+available; Gutenprint and HP drivers are included for older models. Some older
+printers need an additional model-specific driver.
+
+The CUPS web interface is available at <http://localhost:631>; printer sharing
+and remote administration are disabled by default. **Document Scanner**
+(`simple-scan`) supports compatible USB and network scanners, including
+AirScan/eSCL multifunction printers.
+
+After these changes reach `origin/main`, run `nhr` on each desktop to install
+and activate the printer tools.
+
 `pi5` is an `aarch64-linux` Raspberry Pi 5 configuration. Build it from an
 aarch64 machine or a builder that can handle that target.
 It currently targets a microSD boot with a plain FAT firmware partition and

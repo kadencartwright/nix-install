@@ -20,6 +20,7 @@
     ../../modules/desktop/lemurs.nix
     ../../modules/desktop/hyprland.nix
     ../../modules/desktop/portals.nix
+    ../../modules/desktop/printing.nix
     ../../modules/hardware/bluetooth.nix
     ../../modules/hardware/fingerprint.nix
     ../../modules/hardware/power.nix
