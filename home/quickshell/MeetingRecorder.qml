@@ -19,6 +19,9 @@ QtObject {
     property bool paused: false
     property bool busy: false
     property string error: ""
+    property string deviceError: ""
+    readonly property string displayError: error || deviceError
+    property int deviceRetryCount: 0
     property string sessionId: ""
     property string startedAt: ""
     property double startedAtMs: 0
@@ -176,7 +179,10 @@ QtObject {
     }
 
     function refreshDevices() {
-        if (!devicesProcess.running) devicesProcess.running = true
+        if (devicesProcess.running) return
+        deviceRetryTimer.stop()
+        deviceRetryCount = 0
+        devicesProcess.running = true
     }
 
     function refreshSessions() {
@@ -320,7 +326,13 @@ QtObject {
         stderr: StdioCollector { id: devicesStderr }
         onExited: (exitCode, exitStatus) => {
             if (exitCode !== 0) {
-                root.error = root.cleanError(devicesStderr.text)
+                root.deviceError = root.cleanError(devicesStderr.text)
+                // Default nodes can briefly disappear during output/profile changes.
+                if (/resolve default (output sink|microphone|input source)|Translate ID error/.test(root.deviceError)
+                        && root.deviceRetryCount < 3) {
+                    root.deviceRetryCount += 1
+                    deviceRetryTimer.restart()
+                }
                 return
             }
             try {
@@ -337,9 +349,19 @@ QtObject {
                     root.selectedMicrophoneNode = String(root.microphone.nodeName || "")
                     root.selectedOutputNode = String(root.output.nodeName || "")
                 }
+                root.deviceError = ""
+                root.deviceRetryCount = 0
+                deviceRetryTimer.stop()
             } catch (exception) {
-                root.error = "Device information is malformed"
+                root.deviceError = "Device information is malformed"
             }
+        }
+    }
+
+    property Timer deviceRetryTimer: Timer {
+        interval: 500
+        onTriggered: {
+            if (!devicesProcess.running) devicesProcess.running = true
         }
     }
 

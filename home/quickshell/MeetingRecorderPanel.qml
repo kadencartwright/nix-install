@@ -245,9 +245,9 @@ Item {
         }
 
         Text {
-            visible: MeetingRecorder.error !== ""
+            visible: MeetingRecorder.displayError !== ""
             width: parent.width
-            text: MeetingRecorder.error
+            text: MeetingRecorder.displayError
             color: Theme.red
             font.family: Theme.font
             font.pixelSize: 11
@@ -445,9 +445,9 @@ Item {
         }
 
         Text {
-            visible: MeetingRecorder.error !== ""
+            visible: MeetingRecorder.displayError !== ""
             width: parent.width
-            text: MeetingRecorder.error
+            text: MeetingRecorder.displayError
             color: Theme.red
             font.family: Theme.font
             font.pixelSize: 11
@@ -596,8 +596,8 @@ Item {
         }
 
         Text {
-            visible: MeetingRecorder.error !== ""
-            width: parent.width; text: MeetingRecorder.error; color: Theme.red
+            visible: MeetingRecorder.displayError !== ""
+            width: parent.width; text: MeetingRecorder.displayError; color: Theme.red
             font.family: Theme.font; font.pixelSize: 11; wrapMode: Text.Wrap
         }
     }
