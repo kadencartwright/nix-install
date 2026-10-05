@@ -9,7 +9,7 @@
 
 let
   platformSystem = pkgs.stdenv.hostPlatform.system;
-  chatgptVersion = "26.928.31416";
+  chatgptVersion = "26.930.51102";
   codex = pkgsUnstable.callPackage ../packages/codex.nix { };
   herdr = pkgs.callPackage ../packages/herdr.nix { };
   tm = pkgs.callPackage ../packages/tm.nix {
@@ -21,7 +21,7 @@ let
         version = chatgptVersion;
         src = pkgs.fetchurl {
           url = "https://persistent.oaistatic.com/codex-app-prod/linux/deb/pool/main/c/chatgpt/chatgpt_${chatgptVersion}_amd64.deb";
-          hash = "sha256-xGNyfx7V3O14M4yOKmXYib0VMnb/Nz/XdpjMua8y0YE=";
+          hash = "sha256-Y3w8lLxQ+O4zoV4uKOx/kqeH8JQ+cA7+ERvAvw1IE7Q=";
         };
         # Tectonic moved out of the LaTeX plugin in the September 24 package.
         installPhase =
@@ -34,14 +34,14 @@ let
   opencodeDesktop = pkgsUnstable.callPackage ../packages/opencode-desktop.nix { };
   pi = pkgsUnstable.pi-coding-agent.overrideAttrs (
     finalAttrs: oldAttrs: {
-      version = "0.99.2";
+      version = "1.0.3";
       src = pkgsUnstable.fetchFromGitHub {
         owner = "earendil-works";
         repo = "pi";
         tag = "v${finalAttrs.version}";
-        hash = "sha256-ukN//DNSnCr9gZHKSzexAGEZu95eMzTGJLjLc5B+Hwo=";
+        hash = "sha256-2SfC8zEf6emG1sDG1J7hjjSBt+3hFIz1/TcwBLa/hRU=";
       };
-      npmDepsHash = "sha256-eKghIpCAKawZm0Uf2iG6y1fz21Z5jNnMiAFJ5Quj3GI=";
+      npmDepsHash = "sha256-SpbadDFtPdwn+H2TXDl1TGAI+ejb6dbRvALZoUIvx3c=";
       npmDeps = pkgsUnstable.fetchNpmDeps {
         inherit (finalAttrs) src;
         name = "pi-coding-agent-${finalAttrs.version}-npm-deps";
@@ -49,7 +49,7 @@ let
       };
       modelData = pkgsUnstable.fetchurl {
         url = "https://registry.npmjs.org/@earendil-works/pi-ai/-/pi-ai-${finalAttrs.version}.tgz";
-        hash = "sha512-9RFOEdY+ZTJ1AI+UuAFs4RM0tF2Tje/R/CEv9gWTJHt0iTu8XHZs64U/EIZxNSllFmec/4HfwsOxYj1qQek9bg==";
+        hash = "sha512-p+/EUrbmfT0xWOtL/NJRtWOsyzcKKFSyiivHLDBMG0DUVpHdaIykd5jFibq0YZDFGBN/nv61zdOelMb+ylPfSg==";
       };
       # Build new workspaces before their consumers; upstream now uses tsc.
       buildPhase = builtins.replaceStrings [ "npx tsgo" ] [ "npx tsc" ] (
@@ -58,14 +58,12 @@ let
             "npx tsgo -p packages/tui/tsconfig.build.json"
             "npx tsgo -p packages/ai/tsconfig.build.json"
             "npx tsgo -p packages/agent/tsconfig.build.json"
-            "npx tsgo -p packages/protocol/tsconfig.build.json"
             "npm run build --workspace=packages/coding-agent"
           ]
           [
             "npx tsgo -p packages/chord/tsconfig.build.json\n    npx tsgo -p packages/tui/tsconfig.build.json"
             "npx tsgo -p packages/codemode/tsconfig.build.json\n    npx tsgo -p packages/mcp/tsconfig.build.json\n    npx tsgo -p packages/ai/tsconfig.build.json"
             "npx tsgo -p packages/durable/tsconfig.build.json\n    npx tsgo -p packages/agent/tsconfig.build.json"
-            "npx tsgo -p packages/session-backends/sqlite-node/tsconfig.build.json\n    npx tsgo -p packages/protocol/tsconfig.build.json"
             "npx tsgo -p packages/server/tsconfig.build.json\n    npm run build --workspace=packages/coding-agent"
           ]
           oldAttrs.buildPhase
