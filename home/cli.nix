@@ -84,6 +84,7 @@ in
 
 {
   home.packages = with pkgs; [
+    awscli2
     bat
     bubblewrap
     btop
