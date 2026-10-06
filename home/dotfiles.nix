@@ -11,7 +11,6 @@ let
   dotfiles = inputs.dotfiles;
   hyprwhspr = if isDesktop then pkgsUnstable.callPackage ../packages/hyprwhspr.nix { } else null;
   displayControl = if isDesktop then import ../packages/display-control.nix { inherit pkgs pkgsUnstable; } else null;
-  hyprsunsetConfig = pkgs.writeText "hyprsunset-manual.conf" "# Controlled by display-control.\n";
   hyprwhsprRoot = if isDesktop then "${hyprwhspr}/lib/hyprwhspr" else "/usr/lib/hyprwhspr";
   omarchyThemeState = "${config.home.homeDirectory}/.local/state/omarchy/current";
   omarchyAlacrittyPalette = "${config.home.homeDirectory}/.local/state/omarchy/alacritty.toml";
@@ -379,7 +378,7 @@ in
     };
 
     Service = {
-      ExecStart = "${pkgsUnstable.hyprsunset}/bin/hyprsunset --config ${hyprsunsetConfig} --identity";
+      ExecStart = "${pkgsUnstable.hyprsunset}/bin/hyprsunset --identity";
       ExecStartPost = "${displayControl}/bin/display-control blue-light restore";
       Restart = "on-failure";
       RestartSec = 1;
@@ -396,6 +395,7 @@ in
     "fontconfig/fonts.conf".source = "${dotfiles}/fontconfig/fonts.conf";
     "fuzzel/fuzzel.ini".text = fuzzelConfig;
     "hypr/hypridle.conf".source = "${dotfiles}/hyprland/hypridle.conf";
+    "hypr/hyprsunset.conf".text = "# Controlled by display-control.\n";
     "hypr/hyprland.lua".text = hyprlandConfig;
     "hypr/hyprlock.conf".text = hyprlockConfig;
     "hypr/monitors.lua".source = "${dotfiles}/hyprland/monitors.lua";
