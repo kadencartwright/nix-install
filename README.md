@@ -328,6 +328,8 @@ screen to the selected display. Layout changes are restored at the next
 Hyprland login. The separate brightness section uses the kernel backlight for
 laptop panels and DDC/CI for external monitors; if an external slider is absent,
 enable DDC/CI in that monitor's on-screen settings if it supports the feature.
+The Blue Light Filter toggle warms all Hyprland displays to 4500 K. Its setting
+is restored at the next login; switching it off restores normal colors.
 
 ## VM Test
 

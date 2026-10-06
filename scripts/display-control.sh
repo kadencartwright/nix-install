@@ -2,8 +2,66 @@ set -euo pipefail
 
 state_dir="${XDG_STATE_HOME:-$HOME/.local/state}/display-control"
 state_file="$state_dir/layout"
+blue_light_file="$state_dir/blue-light"
 runtime_dir="${XDG_RUNTIME_DIR:-/tmp}/display-control"
 ddc_cache="$runtime_dir/ddc-detect"
+
+blue_light_identity() {
+  local identity
+  identity=$(hyprctl hyprsunset identity get 2>/dev/null) || return 1
+  [[ "$identity" == true || "$identity" == false ]] || return 1
+  printf '%s\n' "$identity"
+}
+
+blue_light_status_json() {
+  local identity
+  if identity=$(blue_light_identity); then
+    if [[ "$identity" == false ]]; then
+      printf '{"available":true,"enabled":true}\n'
+    else
+      printf '{"available":true,"enabled":false}\n'
+    fi
+  else
+    printf '{"available":false,"enabled":false}\n'
+  fi
+}
+
+apply_blue_light() {
+  local response
+  if [[ "$1" == on ]]; then
+    response=$(hyprctl hyprsunset temperature 4500 2>&1) || return 1
+  else
+    response=$(hyprctl hyprsunset identity 2>&1) || return 1
+  fi
+  [[ "$response" == ok ]]
+}
+
+set_blue_light() {
+  local requested=$1 identity tmp
+  if [[ "$requested" == toggle ]]; then
+    identity=$(blue_light_identity) || { echo "Blue light filter is unavailable" >&2; return 1; }
+    if [[ "$identity" == true ]]; then requested=on; else requested=off; fi
+  fi
+  [[ "$requested" == on || "$requested" == off ]] \
+    || { echo "Usage: display-control blue-light on|off|toggle|restore" >&2; return 2; }
+  apply_blue_light "$requested" \
+    || { echo "Could not set the blue light filter" >&2; return 1; }
+  mkdir -p "$state_dir"
+  tmp=$(mktemp "$state_dir/blue-light.XXXXXX")
+  printf '%s\n' "$requested" > "$tmp"
+  mv "$tmp" "$blue_light_file"
+}
+
+restore_blue_light() {
+  local attempt
+  [[ -r "$blue_light_file" && $(<"$blue_light_file") == on ]] || return 0
+  for ((attempt = 0; attempt < 30; attempt++)); do
+    if apply_blue_light on; then return 0; fi
+    sleep 0.1
+  done
+  echo "Could not restore the blue light filter" >&2
+  return 1
+}
 
 monitors_json() {
   hyprctl monitors all -j
@@ -477,6 +535,11 @@ case "$command" in
   status) status_json ;;
   layout-status) layout_status_json ;;
   brightness-status) brightness_status_json ;;
+  blue-light-status) blue_light_status_json ;;
+  blue-light)
+    [[ $# -eq 2 ]] || { echo "Usage: display-control blue-light on|off|toggle|restore" >&2; exit 2; }
+    if [[ "$2" == restore ]]; then restore_blue_light; else set_blue_light "$2"; fi
+    ;;
   focused-brightness)
     monitor=$(focused_monitor)
     [[ -n "$monitor" ]] && read_brightness "$monitor"

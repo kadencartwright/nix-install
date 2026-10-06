@@ -99,6 +99,7 @@ in
       hyprpolkitagent
       hyprpicker
       hyprshot
+      hyprsunset
     ]);
 
   services.gnome.gnome-keyring.enable = true;

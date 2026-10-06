@@ -10,6 +10,8 @@
 let
   dotfiles = inputs.dotfiles;
   hyprwhspr = if isDesktop then pkgsUnstable.callPackage ../packages/hyprwhspr.nix { } else null;
+  displayControl = if isDesktop then import ../packages/display-control.nix { inherit pkgs pkgsUnstable; } else null;
+  hyprsunsetConfig = pkgs.writeText "hyprsunset-manual.conf" "# Controlled by display-control.\n";
   hyprwhsprRoot = if isDesktop then "${hyprwhspr}/lib/hyprwhspr" else "/usr/lib/hyprwhspr";
   omarchyThemeState = "${config.home.homeDirectory}/.local/state/omarchy/current";
   omarchyAlacrittyPalette = "${config.home.homeDirectory}/.local/state/omarchy/alacritty.toml";
@@ -235,8 +237,7 @@ hl.env("GNOME_KEYRING_CONTROL", (os.getenv("XDG_RUNTIME_DIR") or "") .. "/keyrin
         ''-- Hyprpaper is managed by hyprland-session.target.''
         ''hl.exec_cmd("hypridle")
 	hl.exec_cmd("display-control restore")''
-        ''hl.exec_cmd("dbus-update-activation-environment --systemd DISPLAY HYPRLAND_INSTANCE_SIGNATURE WAYLAND_DISPLAY XDG_CURRENT_DESKTOP XDG_SESSION_TYPE")
-	hl.exec_cmd("systemctl --user start hyprland-session.target")''
+        ''hl.exec_cmd("dbus-update-activation-environment --systemd DISPLAY HYPRLAND_INSTANCE_SIGNATURE WAYLAND_DISPLAY XDG_CURRENT_DESKTOP XDG_SESSION_TYPE && systemctl --user start hyprland-session.target")''
         ''	decoration = {
 		rounding = 12,
 		rounding_power = 4.0,
@@ -363,6 +364,23 @@ in
 
     Service = {
       ExecStart = "${pkgs.hyprpaper}/bin/hyprpaper";
+      Restart = "on-failure";
+      RestartSec = 1;
+    };
+
+    Install.WantedBy = [ "hyprland-session.target" ];
+  };
+
+  systemd.user.services.hyprsunset = pkgs.lib.mkIf isDesktop {
+    Unit = {
+      Description = "Blue light filter for Hyprland displays";
+      After = [ "graphical-session.target" ];
+      PartOf = [ "hyprland-session.target" ];
+    };
+
+    Service = {
+      ExecStart = "${pkgsUnstable.hyprsunset}/bin/hyprsunset --config ${hyprsunsetConfig} --identity";
+      ExecStartPost = "${displayControl}/bin/display-control blue-light restore";
       Restart = "on-failure";
       RestartSec = 1;
     };

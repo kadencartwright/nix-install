@@ -286,7 +286,7 @@ ShellRoot {
                     BarButton { height:28; icon:"󰖩"; label:bar.networkName; accent:Theme.blue; selected:bar.popupKind==="network"&&dropdown.visible; onClicked:x=>bar.togglePopup("network",x) }
                     BarButton { height:28; icon:"󰐥"; label:bar.profile; accent:Theme.muted; mouseArea.onClicked:bar.cyclePowerProfile() }
                     BarButton { visible:bar.battery!==""; height:28; icon:bar.batteryStatus==="Charging"?"":(Number(bar.battery.replace("%",""))<20?"":Number(bar.battery.replace("%",""))<40?"":Number(bar.battery.replace("%",""))<60?"":Number(bar.battery.replace("%",""))<80?"":""); label:bar.battery; accent:Theme.green; selected:bar.popupKind==="battery"&&dropdown.visible; onClicked:x=>bar.togglePopup("battery",x) }
-                    BarButton { height:28; icon:"󰃠"; label:bar.displayBrightness; accent:Theme.blue; selected:bar.popupKind==="display"&&dropdown.visible; onClicked:x=>bar.togglePopup("display",x); mouseArea.onWheel:w=>Quickshell.execDetached(["display-control","brightness","main",w.angleDelta.y>0?"+5":"-5"]) }
+                    BarButton { height:28; icon:"󰍹"; label:bar.displayBrightness; accent:Theme.blue; selected:bar.popupKind==="display"&&dropdown.visible; onClicked:x=>bar.togglePopup("display",x); mouseArea.onWheel:w=>Quickshell.execDetached(["display-control","brightness","main",w.angleDelta.y>0?"+5":"-5"]) }
                     BarButton { height:28; icon:"󰕾"; label:bar.volume; accent:Theme.muted; selected:bar.popupKind==="audio"&&dropdown.visible; onClicked:x=>bar.togglePopup("audio",x); mouseArea.onWheel: w=>Quickshell.execDetached(["wpctl","set-volume","@DEFAULT_AUDIO_SINK@",w.angleDelta.y>0?"4%+":"4%-"]) }
                 }
                 }

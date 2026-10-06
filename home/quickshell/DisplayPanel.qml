@@ -5,13 +5,16 @@ import Quickshell.Io
 Item {
     id: root
     implicitWidth: 430
-    implicitHeight: 418
+    implicitHeight: 501
         + Math.max(1,activeMonitors.length)*34 + Math.max(0,activeMonitors.length-1)*6
         + Math.max(1,brightnessMonitors.length)*34 + Math.max(0,brightnessMonitors.length-1)*6
+        + (errorLabel.visible ? errorLabel.implicitHeight+8 : 0)
 
     property string initialMonitor: ""
     property var displayState: ({ "mode": "extend", "monitors": [] })
     property var brightnessState: ({})
+    property bool blueLightAvailable: false
+    property bool blueLightEnabled: false
     property var monitors: displayState.monitors || []
     property string selectedName: ""
     property string errorText: ""
@@ -65,6 +68,7 @@ Item {
     function refresh() {
         layoutCommand.run()
         brightnessCommand.run()
+        blueLightCommand.run()
     }
 
     function runAction(arguments, isLayoutApply) {
@@ -238,6 +242,22 @@ Item {
                 root.brightnessState = JSON.parse(output).readings || {}
             } catch (error) {
                 root.errorText = "Could not read display brightness"
+            }
+        }
+    }
+
+    Command {
+        id: blueLightCommand
+        command: [root.helperBinary, "blue-light-status"]
+        interval: 3000
+        onOutputChanged: {
+            if (!output) return
+            try {
+                let state = JSON.parse(output)
+                root.blueLightAvailable = state.available === true
+                root.blueLightEnabled = state.enabled === true
+            } catch (error) {
+                root.blueLightAvailable = false
             }
         }
     }
@@ -624,6 +644,17 @@ Item {
             font.family: Theme.font
             font.pixelSize: 9
         }
-        Text { visible:root.errorText!==""; width:parent.width; text:root.errorText; wrapMode:Text.WordWrap; color:Theme.red; font.family:Theme.font; font.pixelSize:9 }
+        SectionTitle { icon:"󰖔"; title:"Blue Light Filter" }
+        PanelButton {
+            width: parent.width
+            icon: "󰖔"
+            label: root.blueLightAvailable
+                ? (root.blueLightEnabled ? "On · Warmer colors" : "Off · Normal colors")
+                : "Unavailable"
+            active: root.blueLightEnabled
+            enabled: root.blueLightAvailable
+            onClicked: root.runAction(["blue-light", "toggle"])
+        }
+        Text { id:errorLabel; visible:root.errorText!==""; width:parent.width; text:root.errorText; wrapMode:Text.WordWrap; color:Theme.red; font.family:Theme.font; font.pixelSize:9 }
     }
 }
