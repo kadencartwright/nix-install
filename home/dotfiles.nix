@@ -316,6 +316,10 @@ hl.bind("ALT + G", hl.dsp.exec_cmd("voxtype record toggle"), {
     cp ${./nvim/lazy.lua} "$out/lua/config/lazy.lua"
     cp ${./nvim/omarchy_theme.lua} "$out/lua/omarchy_theme.lua"
     cp ${./nvim/omarchy-theme.lua} "$out/lua/plugins/omarchy-theme.lua"
+    # StyLua is already supplied by programs.neovim.extraPackages.
+    substituteInPlace "$out/lua/plugins/lspconfig.lua" \
+      --replace-fail 'vim.list_extend(ensure_installed, { "stylua", "tailwindcss" })' \
+        'vim.list_extend(ensure_installed, { { "stylua", condition = function() return vim.fn.executable("stylua") == 0 end }, "tailwindcss" })'
   '';
 in
 {
