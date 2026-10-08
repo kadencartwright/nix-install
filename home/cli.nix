@@ -9,7 +9,7 @@
 
 let
   platformSystem = pkgs.stdenv.hostPlatform.system;
-  chatgptVersion = "26.930.51102";
+  chatgptVersion = "26.1002.52244";
   codex = pkgsUnstable.callPackage ../packages/codex.nix { };
   herdr = pkgs.callPackage ../packages/herdr.nix { };
   tm = pkgs.callPackage ../packages/tm.nix {
@@ -21,7 +21,7 @@ let
         version = chatgptVersion;
         src = pkgs.fetchurl {
           url = "https://persistent.oaistatic.com/codex-app-prod/linux/deb/pool/main/c/chatgpt/chatgpt_${chatgptVersion}_amd64.deb";
-          hash = "sha256-Y3w8lLxQ+O4zoV4uKOx/kqeH8JQ+cA7+ERvAvw1IE7Q=";
+          hash = "sha256-lJjkFxMaJ4vONb//YnXSUsDTMvF6/AMT4LeCdJ9NNIo=";
         };
         # Tectonic moved out of the LaTeX plugin in the September 24 package.
         installPhase =
@@ -34,14 +34,14 @@ let
   opencodeDesktop = pkgsUnstable.callPackage ../packages/opencode-desktop.nix { };
   pi = pkgsUnstable.pi-coding-agent.overrideAttrs (
     finalAttrs: oldAttrs: {
-      version = "1.0.3";
+      version = "1.1.0";
       src = pkgsUnstable.fetchFromGitHub {
         owner = "earendil-works";
         repo = "pi";
         tag = "v${finalAttrs.version}";
-        hash = "sha256-2SfC8zEf6emG1sDG1J7hjjSBt+3hFIz1/TcwBLa/hRU=";
+        hash = "sha256-lwjspkMGrW+8Fl/yBEDEFsHZJA57OKOhmVQmi6zfej4=";
       };
-      npmDepsHash = "sha256-SpbadDFtPdwn+H2TXDl1TGAI+ejb6dbRvALZoUIvx3c=";
+      npmDepsHash = "sha256-GOh5WG+rRgzoy/yVHY5PoEKJZGQcEGhISrDDJxkP8W4=";
       npmDeps = pkgsUnstable.fetchNpmDeps {
         inherit (finalAttrs) src;
         name = "pi-coding-agent-${finalAttrs.version}-npm-deps";
@@ -49,7 +49,7 @@ let
       };
       modelData = pkgsUnstable.fetchurl {
         url = "https://registry.npmjs.org/@earendil-works/pi-ai/-/pi-ai-${finalAttrs.version}.tgz";
-        hash = "sha512-p+/EUrbmfT0xWOtL/NJRtWOsyzcKKFSyiivHLDBMG0DUVpHdaIykd5jFibq0YZDFGBN/nv61zdOelMb+ylPfSg==";
+        hash = "sha512-1T7LAkc/5Bvc0v6w4vAGVdCrli0o/E0pEmYKTnixu95vSFArBjvbhS/G4ZwI0RUePgf0Imcu0VyqlM4EcXxqfw==";
       };
       # Build new workspaces before their consumers; upstream now uses tsc.
       buildPhase = builtins.replaceStrings [ "npx tsgo" ] [ "npx tsc" ] (

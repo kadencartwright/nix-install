@@ -25,6 +25,8 @@ in
       localsend
       obsidian
       rapidraw
+      # The Flutter client includes Wayland capture via PipeWire/desktop portals.
+      rustdesk-flutter
       slack
     ])
     ++ [ obsbotCli ];
