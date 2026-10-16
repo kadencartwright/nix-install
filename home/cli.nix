@@ -32,51 +32,7 @@ let
       });
   opencode = pkgsUnstable.callPackage ../packages/opencode.nix { };
   opencodeDesktop = pkgsUnstable.callPackage ../packages/opencode-desktop.nix { };
-  pi = pkgsUnstable.pi-coding-agent.overrideAttrs (
-    finalAttrs: oldAttrs: {
-      version = "1.1.0";
-      src = pkgsUnstable.fetchFromGitHub {
-        owner = "earendil-works";
-        repo = "pi";
-        tag = "v${finalAttrs.version}";
-        hash = "sha256-lwjspkMGrW+8Fl/yBEDEFsHZJA57OKOhmVQmi6zfej4=";
-      };
-      npmDepsHash = "sha256-GOh5WG+rRgzoy/yVHY5PoEKJZGQcEGhISrDDJxkP8W4=";
-      npmDeps = pkgsUnstable.fetchNpmDeps {
-        inherit (finalAttrs) src;
-        name = "pi-coding-agent-${finalAttrs.version}-npm-deps";
-        hash = finalAttrs.npmDepsHash;
-      };
-      modelData = pkgsUnstable.fetchurl {
-        url = "https://registry.npmjs.org/@earendil-works/pi-ai/-/pi-ai-${finalAttrs.version}.tgz";
-        hash = "sha512-1T7LAkc/5Bvc0v6w4vAGVdCrli0o/E0pEmYKTnixu95vSFArBjvbhS/G4ZwI0RUePgf0Imcu0VyqlM4EcXxqfw==";
-      };
-      # Build new workspaces before their consumers; upstream now uses tsc.
-      buildPhase = builtins.replaceStrings [ "npx tsgo" ] [ "npx tsc" ] (
-        builtins.replaceStrings
-          [
-            "npx tsgo -p packages/tui/tsconfig.build.json"
-            "npx tsgo -p packages/ai/tsconfig.build.json"
-            "npx tsgo -p packages/agent/tsconfig.build.json"
-            "npm run build --workspace=packages/coding-agent"
-          ]
-          [
-            "npx tsgo -p packages/chord/tsconfig.build.json\n    npx tsgo -p packages/tui/tsconfig.build.json"
-            "npx tsgo -p packages/codemode/tsconfig.build.json\n    npx tsgo -p packages/mcp/tsconfig.build.json\n    npx tsgo -p packages/ai/tsconfig.build.json"
-            "npx tsgo -p packages/durable/tsconfig.build.json\n    npx tsgo -p packages/agent/tsconfig.build.json"
-            "npx tsgo -p packages/server/tsconfig.build.json\n    npm run build --workspace=packages/coding-agent"
-          ]
-          oldAttrs.buildPhase
-      );
-      postInstall =
-        builtins.replaceStrings
-          [ "for ws in " ]
-          [
-            "for ws in @earendil-works/chord:packages/chord @earendil-works/pi-codemode:packages/codemode @earendil-works/pi-mcp:packages/mcp "
-          ]
-          oldAttrs.postInstall;
-    }
-  );
+  pi = inputs.pi.packages.${platformSystem}.default;
   portmux = inputs.portmux.packages.${platformSystem}.default;
   t3 = pkgsUnstable.callPackage ../packages/t3-cli { inherit codex; };
   t3code = pkgsUnstable.callPackage ../packages/t3code.nix { inherit codex; };

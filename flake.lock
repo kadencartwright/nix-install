@@ -229,6 +229,30 @@
         "type": "github"
       }
     },
+    "pi": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs-unstable"
+        ],
+        "nixpkgs-darwin-x64": [
+          "nixpkgs-unstable"
+        ]
+      },
+      "locked": {
+        "lastModified": 1792090647,
+        "narHash": "sha256-AsutbwnjiwwLkB5tqLW+1GdGZyLmXsU0W+SNdNhJu7U=",
+        "owner": "earendil-works",
+        "repo": "pi",
+        "rev": "71023aec1546d6d677a65669c5665c0927ce0dd0",
+        "type": "github"
+      },
+      "original": {
+        "owner": "earendil-works",
+        "ref": "v1.3.0",
+        "repo": "pi",
+        "type": "github"
+      }
+    },
     "portmux": {
       "inputs": {
         "nixpkgs": [
@@ -262,6 +286,7 @@
         "omarchy": "omarchy",
         "onedark-wallpapers": "onedark-wallpapers",
         "openai-chatgpt-desktop-nix": "openai-chatgpt-desktop-nix",
+        "pi": "pi",
         "portmux": "portmux",
         "sops-nix": "sops-nix",
         "tm": "tm"

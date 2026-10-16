@@ -18,16 +18,16 @@ let
       throw "codex: unsupported platform ${system}";
   hashes = {
     x86_64-linux = {
-      codex = "sha256-BNirnby53w7fPGfcpQcqN0ur/fdiqbxK5kmuFAuOLPA=";
+      codex = "sha256-WCZGxr8FYesN5UD3/IW5EhsAkagmvG6Wgwt/FyISIYI=";
     };
     aarch64-linux = {
-      codex = "sha256-PALirjS+DQbmJVfpj8XAp4O+xaL+1Ab+AOVlgDv4Tug=";
+      codex = "sha256-nY7PLRnT4YSHeYOQLWyF3kiziI3LcsOCqKDJdYRZJ/s=";
     };
   };
 in
 stdenvNoCC.mkDerivation rec {
   pname = "codex";
-  version = "0.161.0";
+  version = "0.163.0";
 
   src = fetchurl {
     url = "https://github.com/openai/codex/releases/download/rust-v${version}/codex-package-${arch}-unknown-linux-musl.tar.gz";
