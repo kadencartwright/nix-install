@@ -59,6 +59,7 @@ in
     zoxide
   ] ++ [ pi ]
   ++ [ codex ]
+  ++ [ pkgsUnstable.claude-code ]
   ++ [ herdr ]
   ++ [ opencode ]
   ++ [ portmux ]
