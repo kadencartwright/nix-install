@@ -53,6 +53,7 @@ Item {
             wrapMode: Text.WrapAnywhere
             font.family: Theme.font; font.pixelSize: 11
         }
+        Action { visible: ScreenRecorder.lastFile !== ""; label: "Play last recording"; onClicked: ScreenRecorder.playLast() }
         Action { visible: ScreenRecorder.lastFile !== ""; label: "Open recordings folder"; onClicked: ScreenRecorder.openFolder() }
     }
 }

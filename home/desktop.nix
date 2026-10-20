@@ -766,6 +766,23 @@ in
     Install.WantedBy = [ "timers.target" ];
   };
 
+  # Tumbler already includes ffmpegthumbnailer; allow previews of local videos.
+  xfconf.settings = lib.mkIf isDesktop {
+    thunar."/misc-thumbnail-mode" = "THUNAR_THUMBNAIL_MODE_ONLY_LOCAL";
+  };
+
+  programs.mpv = lib.mkIf isDesktop {
+    enable = true;
+    scripts = with pkgs.mpvScripts; [ uosc thumbfast mpris ];
+    config = {
+      osc = false; # uosc replaces the built-in controls.
+      "osd-bar" = false;
+      border = false;
+      "hwdec" = "auto-safe";
+      "keep-open" = true;
+    };
+  };
+
   xdg.enable = true;
 
   xdg.mimeApps = {
@@ -773,7 +790,15 @@ in
     associations.added = {
       "x-scheme-handler/slack" = "slack.desktop";
     };
-    defaultApplications = {
+    defaultApplications = (lib.optionalAttrs isDesktop {
+      "video/mp4" = "mpv.desktop";
+      "video/x-matroska" = "mpv.desktop";
+      "video/webm" = "mpv.desktop";
+      "video/quicktime" = "mpv.desktop";
+      "video/x-msvideo" = "mpv.desktop";
+      "video/mpeg" = "mpv.desktop";
+      "video/ogg" = "mpv.desktop";
+    }) // {
       "application/pdf" = "chromium-browser.desktop";
       "application/xhtml+xml" = "chromium-browser.desktop";
       "text/html" = "chromium-browser.desktop";

@@ -28,6 +28,9 @@ Singleton {
         status = "stopping"
         process.write("stop\n")
     }
+    function playLast() {
+        if (lastFile) Quickshell.execDetached(["mpv", "--", lastFile])
+    }
     function openFolder() {
         if (lastFile) Quickshell.execDetached(["xdg-open", lastFile.slice(0, lastFile.lastIndexOf("/"))])
     }

@@ -110,4 +110,5 @@ in
   services.udev.packages = [ pkgs.brightnessctl ];
   services.gvfs.enable = true;
   services.tumbler.enable = true;
+  programs.xfconf.enable = true;
 }
