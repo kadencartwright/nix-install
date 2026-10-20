@@ -9,6 +9,7 @@
 }:
 
 let
+  screenRecord = import ../packages/screen-record.nix { inherit pkgs; };
   meetingRecorderCfg = config.services.kaden.meetingRecorder;
   displayControl = import ../packages/display-control.nix { inherit pkgs pkgsUnstable; };
   meetingRecord = inputs.meeting-record.packages.${pkgs.stdenv.hostPlatform.system}.default;
@@ -603,6 +604,7 @@ in
     batteryHistory
     lyreLauncher
     displayControl
+    screenRecord
     networkPanelHelper
     networkSpeedtest
     meetingRecord

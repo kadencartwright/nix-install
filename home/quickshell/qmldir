@@ -1,5 +1,7 @@
 singleton Theme 1.0 Theme.qml
 singleton MeetingRecorder 1.0 MeetingRecorder.qml
+singleton ScreenRecorder 1.0 ScreenRecorder.qml
+ScreenRecorderPanel 1.0 ScreenRecorderPanel.qml
 Command 1.0 Command.qml
 BarButton 1.0 BarButton.qml
 SectionTitle 1.0 SectionTitle.qml

@@ -280,6 +280,7 @@ ShellRoot {
                     anchors.centerIn:parent;height:28;spacing:4
                     BarButton { height:28; icon:"󰅩"; label:bar.codex; accent:Theme.green; selected:bar.popupKind==="codex"&&dropdown.visible; onClicked:x=>bar.togglePopup("codex",x) }
                     BarButton { height:28; icon:"󰏘"; accent:Theme.primary; selected:bar.popupKind==="theme"&&dropdown.visible; onClicked:x=>bar.togglePopup("theme",x) }
+                    BarButton { height:28; icon:"󰕧"; label:ScreenRecorder.recording?ScreenRecorder.duration:ScreenRecorder.busy?"…":""; accent:ScreenRecorder.busy?Theme.red:Theme.muted; selected:bar.popupKind==="screen"&&dropdown.visible; onClicked:x=>bar.togglePopup("screen",x) }
                     BarButton { height:28; icon:"󰑋"; label:MeetingRecorder.recording?MeetingRecorder.formatElapsed(MeetingRecorder.elapsedSeconds):""; accent:MeetingRecorder.recording?Theme.red:Theme.muted; selected:bar.popupKind==="meeting"&&dropdown.visible; onClicked:x=>bar.togglePopup("meeting",x) }
                     BarButton { height:28; icon:bar.voxtypeState==="transcribing"?"󰔟":"󰍬"; accent:bar.voxtypeState==="recording"||bar.voxtypeState==="streaming"?Theme.red:bar.voxtypeState==="transcribing"?Theme.primary:Theme.muted; selected:bar.popupKind==="voxtype"&&dropdown.visible; onClicked:x=>bar.togglePopup("voxtype",x) }
                     BarButton { height:28; icon:"󰎆"; accent:Theme.blue; onClicked:x=>bar.togglePopup("media",x) }
@@ -307,7 +308,7 @@ ShellRoot {
                 anchor.rect.x: Math.max(4, Math.min(bar.width - width - 8, bar.popupAnchorX - width/2))
                 anchor.rect.y: bar.height + 3
                 implicitWidth: bar.popupKind === "theme" ? 440 : bar.popupKind === "audio" || bar.popupKind === "display" ? 430 : bar.popupKind === "voxtype" || bar.popupKind === "meeting" ? 410 : bar.popupKind === "network" || bar.popupKind === "calendar" ? 350 : bar.popupKind === "codex" ? 340 : bar.popupKind === "battery" ? 380 : 390
-                implicitHeight: bar.popupKind === "theme" ? 520 : bar.popupKind === "meeting" ? 611 : bar.popupKind === "display" ? (panelLoader.item ? panelLoader.item.implicitHeight+43 : 420) : bar.popupKind === "network" || bar.popupKind === "voxtype" ? 498 : bar.popupKind === "audio" || bar.popupKind === "calendar" ? 488 : bar.popupKind === "battery" ? 483 : bar.popupKind === "codex" ? 433 : 283
+                implicitHeight: bar.popupKind === "theme" ? 520 : bar.popupKind === "meeting" ? 611 : bar.popupKind === "display" || bar.popupKind === "screen" ? (panelLoader.item ? panelLoader.item.implicitHeight+43 : 420) : bar.popupKind === "network" || bar.popupKind === "voxtype" ? 498 : bar.popupKind === "audio" || bar.popupKind === "calendar" ? 488 : bar.popupKind === "battery" ? 483 : bar.popupKind === "codex" ? 433 : 283
                 onVisibleChanged: if (!visible) {
                     expanded = false
                     bar.popupKind = ""
@@ -336,8 +337,8 @@ ShellRoot {
                                 color: Theme.elevated
                             }
                             Row { anchors.fill:parent; anchors.leftMargin:13; anchors.rightMargin:13; spacing:9
-                                Text { anchors.verticalCenter:parent.verticalCenter; text:bar.popupKind==="theme"?"󰏘":bar.popupKind==="network"?"󰖩":bar.popupKind==="audio"?"󰕾":bar.popupKind==="display"?"󰍹":bar.popupKind==="media"?"󰎆":bar.popupKind==="calendar"?"󰃭":bar.popupKind==="battery"?"":bar.popupKind==="voxtype"?"󰍬":bar.popupKind==="meeting"?"󰑋":"󰅩"; color:bar.popupKind==="meeting"&&MeetingRecorder.recording?Theme.red:Theme.primary; font.family:Theme.iconFont; font.pixelSize:18 }
-                                Text { anchors.verticalCenter:parent.verticalCenter; text:bar.popupKind==="theme"?"Themes":bar.popupKind==="codex"?"Codex Usage":bar.popupKind==="display"?"Displays":bar.popupKind==="voxtype"?"Voxtype History":bar.popupKind==="meeting"?"Meeting Recorder":bar.popupKind.charAt(0).toUpperCase()+bar.popupKind.slice(1); color:Theme.fg; font.family:Theme.font; font.pixelSize:14; font.weight:Font.DemiBold }
+                                Text { anchors.verticalCenter:parent.verticalCenter; text:bar.popupKind==="screen"?"󰕧":bar.popupKind==="theme"?"󰏘":bar.popupKind==="network"?"󰖩":bar.popupKind==="audio"?"󰕾":bar.popupKind==="display"?"󰍹":bar.popupKind==="media"?"󰎆":bar.popupKind==="calendar"?"󰃭":bar.popupKind==="battery"?"":bar.popupKind==="voxtype"?"󰍬":bar.popupKind==="meeting"?"󰑋":"󰅩"; color:bar.popupKind==="meeting"&&MeetingRecorder.recording?Theme.red:Theme.primary; font.family:Theme.iconFont; font.pixelSize:18 }
+                                Text { anchors.verticalCenter:parent.verticalCenter; text:bar.popupKind==="screen"?"Screen Recorder":bar.popupKind==="theme"?"Themes":bar.popupKind==="codex"?"Codex Usage":bar.popupKind==="display"?"Displays":bar.popupKind==="voxtype"?"Voxtype History":bar.popupKind==="meeting"?"Meeting Recorder":bar.popupKind.charAt(0).toUpperCase()+bar.popupKind.slice(1); color:Theme.fg; font.family:Theme.font; font.pixelSize:14; font.weight:Font.DemiBold }
                                 Item { width: parent.width-(bar.popupKind==="network"?168:80); height:1 }
                                 Rectangle {
                                     visible: bar.popupKind === "network"
@@ -369,8 +370,8 @@ ShellRoot {
                             id: panelLoader
                             width: parent.width; height: parent.height - (bar.popupKind === "codex" ? 0 : 43)
                             clip: true
-                            sourceComponent: bar.popupKind==="theme"?themeComponent:bar.popupKind==="network"?networkComponent:bar.popupKind==="audio"?audioComponent:bar.popupKind==="display"?displayComponent:bar.popupKind==="calendar"?calendarComponent:bar.popupKind==="codex"?codexComponent:bar.popupKind==="battery"?batteryComponent:bar.popupKind==="voxtype"?voxtypeComponent:bar.popupKind==="meeting"?meetingComponent:mediaComponent
-                            onLoaded: if (bar.popupKind === "display" && item) item.initialMonitor = bar.screen.name
+                            sourceComponent: bar.popupKind==="screen"?screenComponent:bar.popupKind==="theme"?themeComponent:bar.popupKind==="network"?networkComponent:bar.popupKind==="audio"?audioComponent:bar.popupKind==="display"?displayComponent:bar.popupKind==="calendar"?calendarComponent:bar.popupKind==="codex"?codexComponent:bar.popupKind==="battery"?batteryComponent:bar.popupKind==="voxtype"?voxtypeComponent:bar.popupKind==="meeting"?meetingComponent:mediaComponent
+                            onLoaded: if ((bar.popupKind === "display" || bar.popupKind === "screen") && item) item.initialMonitor = bar.screen.name
                         }
                     }
                 }
@@ -434,5 +435,6 @@ ShellRoot {
     Component { id: voxtypeComponent; VoxtypePanel {} }
     Component { id: themeComponent; ThemePanel {} }
     Component { id: meetingComponent; MeetingRecorderPanel {} }
+    Component { id: screenComponent; ScreenRecorderPanel {} }
     KeyboardMenu { id: keyboardMenu }
 }
