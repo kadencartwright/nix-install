@@ -10,7 +10,7 @@ before the real hardware install.
 - `MINI` is headless and imports only the base/headless stack, AMD CPU hardware, Tailscale, OpenSSH, and CLI/Home Manager config. It intentionally omits the desktop AMD GPU graphics stack.
 - `pi5` is a Raspberry Pi 5 microSD target and does not import the shared x86 encrypted `disko` layout.
 - Desktop dotfiles are intentionally excluded from `MINI`; it only links shell/editor/CLI dotfiles.
-- OpenCode CLI is pinned to v2.0.31 using the official `@opencode/cli` native packages on x86_64 and ARM64 Linux. OpenCode Desktop v2.0.31 is included on desktop hosts using the official AppImage from `opencode.ai`, with an application launcher entry and the `opencode-desktop` command.
+- OpenCode CLI is pinned to v2.1.4 using the official `@opencode/cli` native packages on x86_64 and ARM64 Linux. OpenCode Desktop v2.1.4 is included on desktop hosts using the official AppImage from `opencode.ai`, with an application launcher entry and the `opencode-desktop` command.
 
 ## `packages/wm.txt`
 
@@ -85,8 +85,8 @@ before the real hardware install.
 | `ripgrep` | Home Manager/system package | `pkgs.ripgrep` | Added |
 | `systemd-ukify` | Boot hardening | NixOS UKI/systemd tooling | Later |
 | `otf-font-awesome` | Font | `pkgs.font-awesome` | Added |
-| `pi-coding-agent` | Home Manager package | Official upstream Nix flake pinned to `v1.3.0` | Added |
-| `openai-codex` | Home Manager package | In-repo package pinned to the official `v0.163.0` Linux release, retaining the complete package for background-server bootstrap | Added |
+| `pi-coding-agent` | Home Manager package | Official upstream Nix flake pinned to `v1.4.0` | Added |
+| `openai-codex` | Home Manager package | In-repo package pinned to the official `v0.164.0` Linux release, retaining the complete package for background-server bootstrap | Added |
 | `profile-sync-daemon` | User service | package/module if still wanted | Later |
 | `thunderbird` | Desktop user app | `pkgs.thunderbird` | Still omitted; decide per-host later |
 | `lazygit` | Home Manager package | `pkgs.lazygit` | Added |
@@ -104,7 +104,7 @@ before the real hardware install.
 | `openai-chatgpt-desktop` | Desktop user app | `openai-chatgpt-desktop-nix` packaging with the official Debian package pinned to `26.1002.52244` | Added on supported x86_64 hosts |
 | `reflector-simple` | Removed | NixOS uses pinned flake inputs, not mirror ranking for system config | Excluded |
 | `slack-desktop` | Desktop user app, unfree | `pkgs.slack` | Added for desktop hosts |
-| `t3code` / `t3` | Home Manager packages | In-repo packages pinned to upstream `v0.1.0` | Both added on supported x86_64 Linux hosts |
+| `t3code` / `t3` | Home Manager packages | In-repo packages pinned to upstream `v0.1.2`, with the CLI runtime fetched at build time | Both added on supported x86_64 Linux hosts |
 | `wayle` | Replaced desktop shell and panel | `pkgs.quickshell` | Replaced by the in-repo Quickshell configuration |
 | `tmux-sessionizer-bin` | User script/package | custom Home Manager script | Later |
 | `ttf-apple-emoji` | Font | possible unfree/custom font package | Later |

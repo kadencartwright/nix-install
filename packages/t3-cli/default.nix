@@ -18,14 +18,20 @@ let
 in
 buildNpmPackage rec {
   pname = "t3-cli";
-  version = "0.1.0";
+  version = "0.1.2";
   nodejs = nodejs_22;
 
   src = fetchurl {
     url = "https://registry.npmjs.org/t3/-/t3-${version}.tgz";
-    hash = "sha512-kesDReGXOxh17i//xe6UIGtYZDIZBZBJeZ7CFAsjLugRBz89La1sbx9kzEW60hkjnheUikMOkdkvQfR9QP3hHg==";
+    hash = "sha512-QEsJOSU8qUnOlHFPPF/w4sAEtjkt2wzMWIoNoENd+uC8ddeFSqclcFJDA2+loqvBCRKGpHfQibGTXwntYc83Eg==";
   };
   sourceRoot = "package";
+
+  # Since 0.1.2 npm only ships a downloader; pin its runtime at build time.
+  runtime = fetchurl {
+    url = "https://github.com/pingdotgg/t3code/releases/download/v${version}/t3-${version}-linux-x64.tar.gz";
+    hash = "sha256-eu1iXLlhk43xdMGgZ8DwUjU2CUC1PogqFkMSa3VNoWw=";
+  };
 
   npmDeps = importNpmLock {
     package = packageJsonForNpm;
@@ -65,7 +71,13 @@ buildNpmPackage rec {
     mkdir -p "$out/lib/node_modules/t3" "$out/bin"
     cp -r . "$out/lib/node_modules/t3"
 
-    platform_dir="$out/lib/node_modules/t3/node_modules/@t3code/t3-linux-x64"
+    platform_dir="$out/lib/t3-runtime"
+    mkdir -p "$platform_dir"
+    tar -xzf ${runtime} -C "$platform_dir" --strip-components=1
+    printf '%s\n' '${version}' > "$platform_dir/.install-complete"
+    substituteInPlace "$out/lib/node_modules/t3/bin/t3.mjs" \
+      --replace-fail 'path.join(t3Home(), "runtime", "versions", version)' \
+        "\"$platform_dir\""
     # Node resolves bundled modules relative to its executable, so patch the
     # interpreter directly instead of invoking the executable through a loader.
     patchelf \

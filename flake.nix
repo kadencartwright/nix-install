@@ -5,7 +5,7 @@
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
     nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixos-unstable";
     pi = {
-      url = "github:earendil-works/pi/v1.3.0";
+      url = "github:earendil-works/pi/v1.4.0";
       inputs.nixpkgs.follows = "nixpkgs-unstable";
       inputs.nixpkgs-darwin-x64.follows = "nixpkgs-unstable";
     };
