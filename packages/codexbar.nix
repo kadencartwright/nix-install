@@ -12,13 +12,13 @@
 
 stdenvNoCC.mkDerivation (finalAttrs: {
   pname = "codexbar";
-  version = "0.6.1";
+  version = "0.8.5";
 
   src = fetchFromGitHub {
     owner = "mryll";
     repo = "codexbar";
     rev = "v${finalAttrs.version}";
-    hash = "sha256-wZhSYrDoLCQQvxXz9NIsp8n1+YIXlGZNGfBwvZEIAZk=";
+    hash = "sha256-rVLrZtIzXLNElmn78egDDQ9BYrZVIMMbKB+F6mhYT8k=";
   };
 
   nativeBuildInputs = [

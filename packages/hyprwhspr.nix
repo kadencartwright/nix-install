@@ -44,6 +44,7 @@ let
   pythonEnv = python3.withPackages (ps: [
     ps."dbus-python"
     ps.evdev
+    ps.jsonschema
     ps.numpy
     ps.pycairo
     ps.pygobject3
@@ -53,6 +54,7 @@ let
     ps.requests
     ps.rich
     ps.sounddevice
+    ps.soundfile
     ps.soxr
   ]);
 
@@ -98,11 +100,11 @@ let
 in
 stdenvNoCC.mkDerivation (finalAttrs: {
   pname = "hyprwhspr";
-  version = "1.41.0";
+  version = "1.49.2";
 
   src = fetchurl {
     url = "https://github.com/goodroot/hyprwhspr/archive/refs/tags/v${finalAttrs.version}.tar.gz";
-    hash = "sha256-w64ddT8Cmt4AFAiTfcXS6Q3IJgnf8hZ7fsE67SNEoEc=";
+    hash = "sha256-l4TSGZ8t8XJ2yh3IEeuCfUJYGgAA6fQR6qqeUctfezI=";
   };
 
   nativeBuildInputs = [ makeWrapper ];
@@ -118,9 +120,12 @@ stdenvNoCC.mkDerivation (finalAttrs: {
 
     # The upstream launchers intentionally avoid version-manager Python
     # installations. Add this package's Python environment to that clean search.
-    substituteInPlace \
-      "$packageRoot/bin/hyprwhspr" \
-      "$packageRoot/config/hyprland/hyprwhspr-tray.sh" \
+    substituteInPlace "$packageRoot/bin/hyprwhspr" \
+      --replace-fail \
+        'SYSTEM_PYTHON_CANDIDATES=(' \
+        'SYSTEM_PYTHON_CANDIDATES=( ${pythonEnv}/bin/python3'
+
+    substituteInPlace "$packageRoot/config/hyprland/hyprwhspr-tray.sh" \
       --replace-fail \
         '/usr/bin:/bin:/usr/local/bin:/usr/local/sbin:/usr/sbin:/sbin' \
         '${pythonEnv}/bin:/usr/bin:/bin:/usr/local/bin:/usr/local/sbin:/usr/sbin:/sbin'

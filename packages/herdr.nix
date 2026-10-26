@@ -8,18 +8,18 @@ let
   sources = {
     x86_64-linux = {
       arch = "x86_64";
-      hash = "sha256-KgL+0WvrZR7wBuHUPwSPZSyk3FitBTzS1ERQVj1cVLc=";
+      hash = "sha256-FNnovItKngEY13wyJm921GHwm0A0LrI3UpYL2J9Zkp0=";
     };
     aarch64-linux = {
       arch = "aarch64";
-      hash = "sha256-9Mz03nRfLLmjmpg+m6NwPa1Q7CpY3qgwJs6rchu9jZ4=";
+      hash = "sha256-F9dTby2lCFlSNoDvJ53/ysjkojX05G/o2mwuxEFBiXw=";
     };
   };
   source = sources.${stdenvNoCC.hostPlatform.system};
 in
 stdenvNoCC.mkDerivation rec {
   pname = "herdr";
-  version = "0.9.1";
+  version = "0.9.5";
 
   src = fetchurl {
     url = "https://github.com/herdrdev/herdr/releases/download/v${version}/herdr-linux-${source.arch}";

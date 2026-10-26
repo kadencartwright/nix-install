@@ -1,17 +1,12 @@
 {
-  buildGoModule,
+  rustPlatform,
   tm-src,
 }:
 
-buildGoModule {
+rustPlatform.buildRustPackage {
   pname = "tm";
-  version = "0-unstable";
+  version = "0.1.0";
 
   src = tm-src;
-  vendorHash = "sha256-6yCXfcOIlbPJrRkGIoed58kQb0XF/KGcpzELXXPlNs0=";
-
-  ldflags = [
-    "-s"
-    "-w"
-  ];
+  cargoLock.lockFile = "${tm-src}/Cargo.lock";
 }

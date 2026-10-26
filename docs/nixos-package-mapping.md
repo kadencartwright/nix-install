@@ -99,9 +99,9 @@ before the real hardware install.
 | `appimagelauncher` | AppImage compatibility | `programs.appimage` | Added with binfmt support |
 | `bemoji` | Desktop user package | `pkgs.bemoji` | Added for desktop hosts |
 | `bluetuith-bin` | User package | no direct Nixpkgs package | Omitted; `pkgs.bluetui` provides the Bluetooth TUI used on desktop hosts |
-| `codexbar` | Quickshell Codex/ChatGPT usage module | Custom package pinned to upstream `v0.6.1` | Added for desktop hosts with wrapped runtime dependencies |
-| `hyprwhspr` | System-wide speech-to-text | Custom package pinned to upstream `v1.41.0` | Added for desktop hosts; the Hyprland hotkey and fallback Waybar integration use Nix store paths |
-| `openai-chatgpt-desktop` | Desktop user app | `openai-chatgpt-desktop-nix` packaging with the official Debian package pinned to `26.1002.52244` | Added on supported x86_64 hosts |
+| `codexbar` | Quickshell Codex/ChatGPT usage module | Custom package pinned to upstream `v0.8.5` | Added for desktop hosts with wrapped runtime dependencies |
+| `hyprwhspr` | System-wide speech-to-text | Custom package pinned to upstream `v1.49.2` | Added for desktop hosts; the Hyprland hotkey and fallback Waybar integration use Nix store paths |
+| `openai-chatgpt-desktop` | Desktop user app | `openai-chatgpt-desktop-nix` packaging with the official Debian package pinned to `26.1021.22027` | Added on supported x86_64 hosts |
 | `reflector-simple` | Removed | NixOS uses pinned flake inputs, not mirror ranking for system config | Excluded |
 | `slack-desktop` | Desktop user app, unfree | `pkgs.slack` | Added for desktop hosts |
 | `t3code` / `t3` | Home Manager packages | In-repo packages pinned to upstream `v0.1.2`, with the CLI runtime fetched at build time | Both added on supported x86_64 Linux hosts |

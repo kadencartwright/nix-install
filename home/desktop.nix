@@ -20,8 +20,8 @@ let
     src = pkgs.fetchFromGitHub {
       owner = "DeadZone-0";
       repo = "lyre";
-      rev = "bd8f407dc4101a082ef137cf77ff9f565f099161";
-      hash = "sha256-TjhiGImVrlHxlG5FBdJS6c2Oj+KTcRXG28fUahEhYIw=";
+      rev = "e35d4be6ec066840ecd230f7cd55ad84259522af";
+      hash = "sha256-oU1yeM4AKjz8BLrgzLA6vJiMGxon6Q1rmKPZnXG6tB8=";
     };
     npmDepsHash = "sha256-PxfF0Z7pldeNsXozpBYCPoqF7rw38EkVidEGOtzFam4=";
 
