@@ -10,7 +10,8 @@ before the real hardware install.
 - `MINI` is headless and imports only the base/headless stack, AMD CPU hardware, Tailscale, OpenSSH, and CLI/Home Manager config. It intentionally omits the desktop AMD GPU graphics stack.
 - `pi5` is a Raspberry Pi 5 microSD target and does not import the shared x86 encrypted `disko` layout.
 - Desktop dotfiles are intentionally excluded from `MINI`; it only links shell/editor/CLI dotfiles.
-- OpenCode CLI is pinned to v2.1.4 using the official `@opencode/cli` native packages on x86_64 and ARM64 Linux. OpenCode Desktop v2.1.4 is included on desktop hosts using the official AppImage from `opencode.ai`, with an application launcher entry and the `opencode-desktop` command.
+- Claude Code is pinned to v2.1.311 using the official native release binaries on x86_64 and ARM64 Linux, retaining nixpkgs' packaging and sandbox dependencies.
+- OpenCode CLI is pinned to v2.2.0 using the official `@opencode/cli` native packages on x86_64 and ARM64 Linux. OpenCode Desktop v2.2.0 is included on desktop hosts using the official AppImage from `opencode.ai`, with an application launcher entry and the `opencode-desktop` command.
 
 ## `packages/wm.txt`
 

@@ -11,6 +11,22 @@ let
   platformSystem = pkgs.stdenv.hostPlatform.system;
   chatgptVersion = "26.1021.22027";
   codex = pkgsUnstable.callPackage ../packages/codex.nix { };
+  # Pin the release manifest while retaining nixpkgs' native binary packaging.
+  claudeCode = pkgsUnstable.claude-code.override {
+    manifest = {
+      version = "2.1.311";
+      platforms = {
+        linux-x64 = {
+          binary = "claude.zst";
+          checksum = "d0c00b80761f3030f34cf0812266f6c6f8210ff9af7242f7c6c76c5600499caf";
+        };
+        linux-arm64 = {
+          binary = "claude.zst";
+          checksum = "0b6291903c4dde17f456c8a8799a3101877321bd667aa78e793dc1fe0709893c";
+        };
+      };
+    };
+  };
   herdr = pkgs.callPackage ../packages/herdr.nix { };
   tm = pkgs.callPackage ../packages/tm.nix {
     tm-src = inputs.tm;
@@ -59,7 +75,7 @@ in
     zoxide
   ] ++ [ pi ]
   ++ [ codex ]
-  ++ [ pkgsUnstable.claude-code ]
+  ++ [ claudeCode ]
   ++ [ herdr ]
   ++ [ opencode ]
   ++ [ portmux ]
