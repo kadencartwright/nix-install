@@ -5,6 +5,8 @@ let
   githubKeysUrl = "https://github.com/${githubUser}.keys";
 in
 {
+  imports = [ ./openvpn-import.nix ];
+
   networking.networkmanager.enable = true;
 
   services.avahi = {
