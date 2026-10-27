@@ -27,7 +27,7 @@ let
         temporary.replace(state_file)
 
     # Include supporting files so replacing a certificate/key triggers an import.
-    digest = hashlib.sha256()
+    digest = hashlib.sha256(b"ignore-vpn-dns-v1\0")
     for path in sorted(root.rglob("*")):
         if path.is_file():
             digest.update(str(path.relative_to(root)).encode())
@@ -52,7 +52,10 @@ let
             try:
                 nm("connection", "modify", "uuid", connection,
                    "connection.id", "VPN: " + path.stem,
-                   "connection.autoconnect", "no")
+                   "connection.autoconnect", "no",
+                   "ipv4.ignore-auto-dns", "yes", "ipv6.ignore-auto-dns", "yes",
+                   "ipv4.dns", "", "ipv6.dns", "",
+                   "ipv4.dns-search", "", "ipv6.dns-search", "")
                 if previous and previous["uuid"] in known:
                     nm("connection", "delete", "uuid", previous["uuid"])
             except Exception:

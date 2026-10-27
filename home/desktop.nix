@@ -340,8 +340,15 @@ let
         iface="$(jq -r '.[0].dev // ""' <<< "$route_json")"
         gateway="$(jq -r '.[0].gateway // ""' <<< "$route_json")"
         ip_address="$(jq -r '.[0].prefsrc // ""' <<< "$route_json")"
-        if [[ -z "$iface" ]]; then
-          return 1
+        # DNS and Wi-Fi controls must target the underlying physical connection,
+        # even when a VPN owns the route to the probe address.
+        device_type="$(nmcli -g GENERAL.TYPE device show "$iface" 2>/dev/null || true)"
+        if [[ "$device_type" != "wifi" && "$device_type" != "ethernet" ]]; then
+          iface="$(nmcli -t -f DEVICE,TYPE,STATE device status | awk -F: '$3 == "connected" && ($2 == "wifi" || $2 == "ethernet") { print $1; exit }')"
+          [[ -n "$iface" ]] || return 1
+          gateway="$(nmcli -g IP4.GATEWAY device show "$iface" | head -n 1)"
+          ip_address="$(nmcli -g IP4.ADDRESS device show "$iface" | head -n 1)"
+          ip_address="''${ip_address%%/*}"
         fi
         connection_uuid="$(nmcli -g GENERAL.CON-UUID device show "$iface" 2>/dev/null || true)"
         connection_name="$(nmcli -g GENERAL.CONNECTION device show "$iface" 2>/dev/null || true)"
@@ -558,14 +565,39 @@ let
           | qrencode -t SVG -m 2 -o -
       }
 
+      vpn_list() {
+        local uuid type name active ignored4 ignored6
+        while IFS=: read -r uuid type; do
+          [[ "$type" == "vpn" ]] || continue
+          name="$(nmcli -e no -g connection.id connection show uuid "$uuid")"
+          active="$(nmcli -g GENERAL.STATE connection show uuid "$uuid")"
+          ignored4="$(nmcli -g ipv4.ignore-auto-dns connection show uuid "$uuid")"
+          ignored6="$(nmcli -g ipv6.ignore-auto-dns connection show uuid "$uuid")"
+          jq -cn --arg uuid "$uuid" --arg name "$name" --arg state "$active" \
+            --arg dns4 "$ignored4" --arg dns6 "$ignored6" \
+            '{uuid: $uuid, name: $name, active: ($state == "activated"),
+              dnsIgnored: ($dns4 == "yes" and $dns6 == "yes")}'
+        done < <(nmcli -t -f UUID,TYPE connection show) | jq -s .
+      }
+
+      vpn_action() {
+        local action="''${1:-}" uuid="''${2:-}"
+        [[ "$action" == "up" || "$action" == "down" ]] || return 2
+        [[ -n "$uuid" && "$(nmcli -g connection.type connection show uuid "$uuid")" == "vpn" ]] \
+          || { echo "Select a saved VPN connection" >&2; return 1; }
+        nmcli --wait 45 connection "$action" uuid "$uuid"
+      }
+
       action="''${1:-status}"
       shift || true
       case "$action" in
         status) status ;;
+        vpn-list) vpn_list ;;
+        vpn) vpn_action "$@" ;;
         dns) set_dns "$@" ;;
         band) set_band "$@" ;;
         qr) wifi_qr ;;
-        *) echo "Usage: network-panel-helper [status|dns|band|qr]" >&2; exit 2 ;;
+        *) echo "Usage: network-panel-helper [status|dns|band|qr|vpn-list|vpn up/down UUID]" >&2; exit 2 ;;
       esac
     '';
   };

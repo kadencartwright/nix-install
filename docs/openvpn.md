@@ -18,7 +18,12 @@ importer. Passwords, if required, can be supplied interactively with `nmcli --as
 never embed them in Nix expressions.
 
 Imports run on directory changes, at boot, and every minute. Connections are
-**not automatically activated**. Use the desktop network menu or:
+**not automatically activated**. Imported connections ignore VPN-provided DNS
+for both IPv4 and IPv6; explicit DNS servers and search domains are cleared too.
+Your normal Wi-Fi/Ethernet DNS remains in use. Private VPN-only names may require
+a separate split-DNS setup. VPN routing is otherwise unchanged.
+
+Use the VPN section in Quickshell's network panel or:
 
 ```sh
 nmcli --ask connection up 'VPN: twi'

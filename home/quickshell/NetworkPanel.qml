@@ -22,6 +22,10 @@ Item {
     })
 
     property var info: ({ connected: false })
+    property var vpnConnections: []
+    property string vpnPending: ""
+    property string vpnError: ""
+    property string vpnStderr: ""
     property real previousRxBytes: 0
     property real previousTxBytes: 0
     property real previousSampleTime: 0
@@ -81,6 +85,10 @@ Item {
     Component.onDestruction: if (wifiDevice) wifiDevice.scannerEnabled = false
 
     function refreshStatus() {
+        if (!vpnStatusProcess.running) {
+            vpnStatusProcess.command = [helperBinary, "vpn-list"]
+            vpnStatusProcess.running = true
+        }
         if (!statusProcess.running) {
             statusProcess.command = [helperBinary, "status"]
             statusProcess.running = true
@@ -202,6 +210,15 @@ Item {
         actionProcess.running = true
     }
 
+    function toggleVpn(connection) {
+        if (vpnActionProcess.running) return
+        vpnError = ""
+        vpnStderr = ""
+        vpnPending = connection.uuid
+        vpnActionProcess.command = [helperBinary, "vpn", connection.active ? "down" : "up", connection.uuid]
+        vpnActionProcess.running = true
+    }
+
     function showQr() {
         if (qrProcess.running) return
         qrSvg = ""
@@ -231,6 +248,27 @@ Item {
             root.pendingBand = ""
             root.actionKind = ""
             statusRefresh.restart()
+        }
+    }
+    Process {
+        id: vpnStatusProcess
+        stdout: StdioCollector {
+            waitForEnd: true
+            onStreamFinished: {
+                try { root.vpnConnections = JSON.parse(text || "[]") } catch (_) {}
+            }
+        }
+    }
+    Process {
+        id: vpnActionProcess
+        stderr: StdioCollector {
+            waitForEnd: true
+            onStreamFinished: root.vpnStderr = String(text || "").trim()
+        }
+        onExited: function(exitCode) {
+            if (exitCode !== 0) root.vpnError = root.vpnStderr || "VPN change failed. If credentials are required, connect with nmcli --ask."
+            root.vpnPending = ""
+            root.refreshStatus()
         }
     }
     Timer { id: statusRefresh; interval: 500; onTriggered: root.refreshStatus() }
@@ -590,6 +628,72 @@ Item {
                     font.family: Theme.font
                     font.pixelSize: 9
                 }
+            }
+
+            Divider {}
+
+            Text {
+                text: "VPN CONNECTIONS"
+                color: Theme.muted
+                font.family: Theme.font
+                font.pixelSize: 9
+                font.weight: Font.DemiBold
+            }
+
+            Repeater {
+                model: root.vpnConnections
+                Row {
+                    required property var modelData
+                    width: content.width
+                    spacing: 8
+                    Column {
+                        width: parent.width - 98
+                        spacing: 3
+                        Text {
+                            width: parent.width
+                            text: modelData.name
+                            elide: Text.ElideRight
+                            color: Theme.fg
+                            font.family: Theme.font
+                            font.pixelSize: 11
+                        }
+                        Text {
+                            width: parent.width
+                            text: (modelData.active ? "Connected" : "Disconnected")
+                                + (modelData.dnsIgnored ? " · Local DNS" : " · VPN DNS allowed")
+                            elide: Text.ElideRight
+                            color: Theme.muted
+                            font.family: Theme.font
+                            font.pixelSize: 9
+                        }
+                    }
+                    ChoicePill {
+                        width: 90
+                        label: root.vpnPending === modelData.uuid ? "Working…" : modelData.active ? "Disconnect" : "Connect"
+                        active: modelData.active
+                        busy: root.vpnPending !== ""
+                        onClicked: root.toggleVpn(modelData)
+                    }
+                }
+            }
+
+            Text {
+                visible: root.vpnConnections.length === 0
+                width: parent.width
+                text: "Add profiles to /var/lib/openvpn-import/"
+                wrapMode: Text.Wrap
+                color: Theme.muted
+                font.family: Theme.font
+                font.pixelSize: 9
+            }
+            Text {
+                visible: root.vpnError !== ""
+                width: parent.width
+                text: root.vpnError
+                wrapMode: Text.Wrap
+                color: Theme.red
+                font.family: Theme.font
+                font.pixelSize: 9
             }
 
             Divider { visible: root.wifiDevice !== null }
