@@ -21,7 +21,13 @@ Imports run on directory changes, at boot, and every minute. Connections are
 **not automatically activated**. Imported connections ignore VPN-provided DNS
 for both IPv4 and IPv6; explicit DNS servers and search domains are cleared too.
 Your normal Wi-Fi/Ethernet DNS remains in use. Private VPN-only names may require
-a separate split-DNS setup. VPN routing is otherwise unchanged.
+a separate split-DNS setup. Both IP families also set `never-default`, preventing
+NetworkManager from choosing this VPN as the default connection. More-specific
+server-provided routes are still accepted: this is not a strict destination
+allowlist, and broad routes (such as two `/1` routes) can still redirect traffic.
+For strict split tunneling, obtain the work-network CIDRs, disable automatic VPN
+routes, and configure only those explicit routes. Do not guess private ranges:
+they may overlap local networks or other VPNs.
 
 Use the VPN section in Quickshell's network panel or:
 
