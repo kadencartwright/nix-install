@@ -14,15 +14,15 @@ let
   # Pin the release manifest while retaining nixpkgs' native binary packaging.
   claudeCode = pkgsUnstable.claude-code.override {
     manifest = {
-      version = "2.1.311";
+      version = "2.1.316";
       platforms = {
         linux-x64 = {
           binary = "claude.zst";
-          checksum = "d0c00b80761f3030f34cf0812266f6c6f8210ff9af7242f7c6c76c5600499caf";
+          checksum = "4108764100675c0773d98011d5091f427f30eebfc567aa9f1b5f4d9a54630a10";
         };
         linux-arm64 = {
           binary = "claude.zst";
-          checksum = "0b6291903c4dde17f456c8a8799a3101877321bd667aa78e793dc1fe0709893c";
+          checksum = "d4ed34a7ecd889497fccc0951c869867b2369196804e3d83b8e486d424b973e1";
         };
       };
     };

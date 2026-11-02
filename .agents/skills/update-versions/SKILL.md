@@ -1,11 +1,11 @@
 ---
 name: update-versions
-description: Update pinned T3 Code, ChatGPT desktop, Codex CLI, and OpenCode versions and source hashes in the nix-install repository. Use when asked to bump these apps to latest or invoke update-versions; includes release discovery, package builds, and reporting apps already current.
+description: Update pinned T3 Code, ChatGPT desktop, Claude Code, Codex CLI, and OpenCode versions and source hashes in the nix-install repository. Use when asked to bump these apps to latest or invoke update-versions; includes release discovery, package builds, and reporting apps already current.
 ---
 
 # Update versions
 
-Update the requested app pins in the repository containing this skill (or the user's specified checkout). Run commands from that repository root. With no app subset specified, check T3 Code, ChatGPT, Codex, and OpenCode. Resolve latest stable releases afresh every run; do not copy versions or hashes from an earlier conversation. Honor an explicit version or prerelease request.
+Update the requested app pins in the repository containing this skill (or the user's specified checkout). Run commands from that repository root. With no app subset specified, check T3 Code, ChatGPT, Claude Code, Codex, and OpenCode. Resolve latest stable releases afresh every run; do not copy versions or hashes from an earlier conversation. Honor an explicit version or prerelease request.
 
 ## Locate the active packages
 
@@ -16,6 +16,7 @@ Read applicable `AGENTS.md` instructions and `git status --short`, then inspect 
 | T3 Code desktop | `packages/t3code.nix` | GitHub `pingdotgg/t3code` |
 | T3 CLI (`t3`) | `packages/t3-cli/default.nix`, `package.json`, `package-lock.json` | npm package `t3` |
 | ChatGPT desktop | `chatgptVersion` and `src.hash` in `home/cli.nix` | OpenAI's Linux Debian repository |
+| Claude Code CLI | `claudeCode` manifest override in `home/cli.nix` | Anthropic's official native release channel and versioned manifest |
 | Codex CLI | `packages/codex.nix` | GitHub `openai/codex`, tags `rust-v…` |
 | OpenCode CLI | `packages/opencode.nix` | GitHub `anomalyco/opencode` |
 | OpenCode desktop | `packages/opencode-desktop.nix` | Same OpenCode release |
@@ -34,6 +35,8 @@ Fetch authoritative release metadata over the network. Independent lookups can r
 
 Use GitHub's latest stable release, not the highest tag including alpha builds. Confirm the expected assets exist. For T3, check npm's version separately; do not assume the desktop release has already been published to npm. Report publication gaps and update only to available releases.
 
+For Claude Code, inspect the locked nixpkgs `claude-code` derivation and its updater to locate Anthropic's current official native release base URL and channel metadata. Resolve the latest non-prerelease native version afresh and fetch its versioned `manifest.json`; do not substitute npm tarball integrity or assume the conservative `stable` channel is the newest release. Check that the manifest version matches and that both `linux-x64` and `linux-arm64` entries and their binary assets exist. Use each entry's exact `binary` filename and SHA-256 `checksum`, verifying downloads from the same version and platform paths used by nixpkgs.
+
 For ChatGPT, select the `Package: chatgpt`, `Architecture: amd64` stanza. Read its `Version`, `Filename`, and `SHA256`. Resolve `Filename` relative to `https://persistent.oaistatic.com/codex-app-prod/linux/deb/`.
 
 GitHub assets can supply a `digest` such as `sha256:HEX`; npm supplies `dist.integrity`. Convert a SHA-256 hex digest to Nix SRI using `nix hash convert --hash-algo sha256 --to sri HEX`. Preserve valid SHA-512 SRI values from npm. If metadata omits a digest, prefetch the exact asset and calculate it. Never invent hashes or leave placeholder hashes in the final changes.
@@ -51,6 +54,7 @@ nix store prefetch-file --json --hash-type sha256 \
 
 Only edit apps with an available newer requested release. Report unchanged apps as already current. Update all supported architecture hashes together:
 
+- Claude Code: update the overridden manifest version and both `linux-x64` and `linux-arm64` entries in `home/cli.nix`, including binary filenames if changed. Preserve the manifest's hexadecimal SHA-256 checksum format; convert to SRI only when needed for download verification. Retain `pkgsUnstable.claude-code.override` and nixpkgs' native packaging and sandbox dependencies rather than replacing the package or switching to npm.
 - Codex: package archive and code-mode-host archive for both `x86_64-linux` and `aarch64-linux`. Preserve the bundled host installation and wrapper PATH dependencies; check archive layout if upstream changes packaging.
 - OpenCode CLI: x64 and ARM64 archives. Preserve the glibc-loader wrapper and `dontStrip`: Bun standalone binaries contain an ELF trailer that `patchelf` can damage.
 - OpenCode and T3 desktop: x86_64 AppImage sources and their existing desktop integration wrappers.
@@ -74,9 +78,9 @@ nix build --impure --no-link --print-out-paths --expr '
 '
 ```
 
-Adapt the host, user, and pname list to the changed packages and actual checkout. Confirm the selected list includes every intended package; an empty list can build successfully without validating anything. For T3/Codex changes include their actual pnames, and rebuild dependent wrappers where relevant.
+Adapt the host, user, and pname list to the changed packages and actual checkout. Confirm the selected list includes every intended package; an empty list can build successfully without validating anything. For Claude Code changes include `claude-code`; for T3/Codex changes include their actual pnames, and rebuild dependent wrappers where relevant.
 
-Check the built OpenCode/Codex CLI with `--version` when changed. Desktop builds verify packaging, not interactive GUI behavior; do not claim GUI testing unless performed.
+Check the built Claude Code/OpenCode/Codex CLI with `--version` when changed. Desktop builds verify packaging, not interactive GUI behavior; do not claim GUI testing unless performed.
 
 On x86_64, verify ARM64 source downloads with `nix store prefetch-file --expected-hash`. Building an ARM64 `fetchurl` derivation directly can fail with a platform mismatch even though it only downloads a file. A native ARM64 package build needs a compatible builder; report that distinction accurately.
 
