@@ -102,10 +102,10 @@ before the real hardware install.
 | `bluetuith-bin` | User package | no direct Nixpkgs package | Omitted; `pkgs.bluetui` provides the Bluetooth TUI used on desktop hosts |
 | `codexbar` | Quickshell Codex/ChatGPT usage module | Custom package pinned to upstream `v0.8.5` | Added for desktop hosts with wrapped runtime dependencies |
 | `hyprwhspr` | System-wide speech-to-text | Custom package pinned to upstream `v1.49.2` | Added for desktop hosts; the Hyprland hotkey and fallback Waybar integration use Nix store paths |
-| `openai-chatgpt-desktop` | Desktop user app | `openai-chatgpt-desktop-nix` packaging with the official Debian package pinned to `26.1027.51404` | Added on supported x86_64 hosts |
+| `openai-chatgpt-desktop` | Desktop user app | `openai-chatgpt-desktop-nix` packaging with the official Debian package pinned to `26.1029.61003` | Added on supported x86_64 hosts |
 | `reflector-simple` | Removed | NixOS uses pinned flake inputs, not mirror ranking for system config | Excluded |
 | `slack-desktop` | Desktop user app, unfree | `pkgs.slack` | Added for desktop hosts |
-| `t3code` / `t3` | Home Manager packages | In-repo packages pinned to upstream `v0.1.6`, with the CLI runtime fetched at build time | Both added on supported x86_64 Linux hosts |
+| `t3code` / `t3` | Home Manager packages | In-repo packages pinned to upstream `v0.1.7`, with the CLI runtime fetched at build time | Both added on supported x86_64 Linux hosts |
 | `wayle` | Replaced desktop shell and panel | `pkgs.quickshell` | Replaced by the in-repo Quickshell configuration |
 | `tmux-sessionizer-bin` | User script/package | custom Home Manager script | Later |
 | `ttf-apple-emoji` | Font | possible unfree/custom font package | Later |

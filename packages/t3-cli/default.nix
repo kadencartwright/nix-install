@@ -18,19 +18,19 @@ let
 in
 buildNpmPackage rec {
   pname = "t3-cli";
-  version = "0.1.6";
+  version = "0.1.7";
   nodejs = nodejs_22;
 
   src = fetchurl {
     url = "https://registry.npmjs.org/t3/-/t3-${version}.tgz";
-    hash = "sha512-Gxiu4vniyTDKcXlyzA8yRQ7/xDB7DXork97rFbX66NXH7NGV8NJPBZi0/+tEMS8KmkUK4rVmPH9zMFKiWe30mg==";
+    hash = "sha512-xYwnF28/0pYox9YkwkFKSpdaaIYFm1sVsPxsb0Z6WQobPAxbGp96EDWFkcrvEBd9vYKAceUX43txeiROeTTfNw==";
   };
   sourceRoot = "package";
 
   # Since 0.1.2 npm only ships a downloader; pin its runtime at build time.
   runtime = fetchurl {
     url = "https://github.com/pingdotgg/t3code/releases/download/v${version}/t3-${version}-linux-x64.tar.gz";
-    hash = "sha256-fPMdqQ3uQfUk3VtnnrttQEY3yl2dxv2LwBlRHVe7d+Y=";
+    hash = "sha256-wImJK/eSLi5zxvRKXR6hJcmfcON4wYNhy77S+6GSDmw=";
   };
 
   npmDeps = importNpmLock {
