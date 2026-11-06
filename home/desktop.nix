@@ -632,6 +632,16 @@ let
   ];
 in
 {
+  imports = [ inputs.hex.homeManagerModules.hex ];
+
+  programs.hex = lib.mkIf isDesktop {
+    enable = true;
+    autostart = true;
+    systemdTarget = "hyprland-session.target";
+    model = "parakeet_v3";
+    installModel = true;
+  };
+
   home.packages = lib.mkIf isDesktop [
     batteryHistory
     lyreLauncher

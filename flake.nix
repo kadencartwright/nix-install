@@ -9,6 +9,10 @@
       inputs.nixpkgs.follows = "nixpkgs-unstable";
       inputs.nixpkgs-darwin-x64.follows = "nixpkgs-unstable";
     };
+    hex = {
+      url = "github:anomalyco/hex";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     openai-chatgpt-desktop-nix.url = "github:kadencartwright/openai-chatgpt-desktop-nix";
 
     obsbot-cli = {

@@ -260,9 +260,9 @@ hl.animation({ leaf = "fade", enabled = false })''
         (if isDesktop then ''-- Monitor layout is restored by display-control on session startup.'' else ''require("monitors")'')
         (if isDesktop then ''		enable_anr_dialog = false,
 		disable_autoreload = true,'' else ''		enable_anr_dialog = false,'')
-        ''-- Voxtype replaces the existing Alt+G hyprwhspr action.
-hl.bind("ALT + G", hl.dsp.exec_cmd("voxtype record toggle"), {
-	description = "Toggle Voxtype dictation",
+        ''-- Hex replaces the existing Alt+G hyprwhspr action.
+hl.bind("ALT + G", hl.dsp.exec_cmd("hex dictation toggle"), {
+	description = "Toggle Hex dictation",
 })''
       ]
       (builtins.readFile "${dotfiles}/hyprland/hyprland.lua")
