@@ -636,6 +636,12 @@ in
 
   programs.hex = lib.mkIf isDesktop {
     enable = true;
+    # Hex needs Rust >= 1.97; retain stable system libraries for graphics compatibility.
+    package = inputs.hex.packages.${pkgs.stdenv.hostPlatform.system}.default.override {
+      rustPlatform = pkgs.makeRustPlatform {
+        inherit (pkgsUnstable) cargo rustc;
+      };
+    };
     autostart = true;
     systemdTarget = "hyprland-session.target";
     model = "parakeet_v3";
