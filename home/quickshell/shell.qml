@@ -188,11 +188,19 @@ ShellRoot {
                     Repeater {
                         model: workspaceModel
                         Rectangle {
+                            id: workspaceButton
                             required property var modelData
+                            property real attentionPulse: 0
                             width: 26; height: 26
-                            color: modelData.active ? Theme.blue : "transparent"
+                            color: modelData.urgent ? Qt.alpha(Theme.red, 0.35 + attentionPulse * 0.65) : modelData.active ? Theme.blue : "transparent"
                             radius:13
-                            Text { anchors.centerIn: parent; text: modelData.name; color:modelData.active?Theme.bg:Theme.muted; font.family:Theme.font; font.pixelSize:13; font.weight:Font.DemiBold }
+                            SequentialAnimation on attentionPulse {
+                                running: workspaceButton.modelData.urgent
+                                loops: Animation.Infinite
+                                NumberAnimation { from: 0; to: 1; duration: 550; easing.type: Easing.InOutSine }
+                                NumberAnimation { from: 1; to: 0; duration: 550; easing.type: Easing.InOutSine }
+                            }
+                            Text { anchors.centerIn: parent; text: modelData.name; color:modelData.urgent?Theme.fg:modelData.active?Theme.bg:Theme.muted; font.family:Theme.font; font.pixelSize:13; font.weight:Font.DemiBold }
                             MouseArea { anchors.fill:parent; cursorShape:Qt.PointingHandCursor; onClicked: modelData.activate() }
                         }
                     }

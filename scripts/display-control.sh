@@ -277,7 +277,7 @@ apply_layout() {
       return 1
     fi
 
-    code+="hl.monitor({ output = $(lua_string "$output"), mode = $(lua_string "$mode"), position = $(lua_string "$position"), scale = $scale_value"
+    code+="hl.monitor({ output = $(lua_string "$output"), disabled = false, mode = $(lua_string "$mode"), position = $(lua_string "$position"), scale = $scale_value"
     if [[ "$option" == "mirror" && -n "$target" ]]; then
       code+=", mirror = $(lua_string "$target")"
     elif [[ -n "$option" || -n "$target" ]]; then
@@ -530,8 +530,57 @@ restore_layout() {
   apply_layout "$state_file"
 }
 
+lid_closed() {
+  local state
+  for state in /proc/acpi/button/lid/*/state; do
+    [[ -r "$state" ]] || continue
+    if [[ $(<"$state") == *closed* ]]; then return 0; fi
+  done
+  return 1
+}
+
+reconcile_lid() {
+  local json external=false name saved spec
+  json=$(monitors_json) || return 1
+  while IFS= read -r name; do
+    if ! is_internal "$name"; then external=true; fi
+  done < <(jq -r '.[] | select(.disabled != true) | .name' <<< "$json")
+
+  mkdir -p "$runtime_dir"
+  while IFS= read -r name; do
+    is_internal "$name" || continue
+    saved="$runtime_dir/lid-$name"
+    if lid_closed && [[ "$external" == true ]]; then
+      if jq -e --arg name "$name" '.[] | select(.name == $name and .disabled != true)' <<< "$json" >/dev/null; then
+        # Preserve the pre-close layout, never persist the temporary disable.
+        if [[ ! -s "$saved" ]]; then
+          spec=$(jq -r --arg name "$name" '.[] | select(.name == $name) |
+            "\(.name),\(.width)x\(.height)@\(.refreshRate),\(.x)x\(.y),\(.scale)" +
+            (if (.mirrorOf // .mirror // "none") as $m | $m != "none" and $m != "" then
+              ",mirror," + (.mirrorOf // .mirror) else "" end)' <<< "$json")
+          printf '%s\n' "$spec" > "$saved"
+        fi
+        hyprctl eval "hl.monitor({ output = $(lua_string "$name"), disabled = true })" >/dev/null
+      fi
+    elif [[ -s "$saved" ]]; then
+      apply_layout "$saved" && rm -f "$saved"
+    fi
+  done < <(jq -r '.[].name' <<< "$json")
+}
+
+watch_lid() {
+  while true; do
+    reconcile_lid || echo "Could not reconcile laptop lid display state" >&2
+    sleep 2
+  done
+}
+
+# Allow the policy functions to be exercised with mocked monitor/lid data.
+if [[ "${BASH_SOURCE[0]}" != "$0" ]]; then return 0; fi
+
 command=${1:-status}
 case "$command" in
+  lid-watch) watch_lid ;;
   status) status_json ;;
   layout-status) layout_status_json ;;
   brightness-status) brightness_status_json ;;

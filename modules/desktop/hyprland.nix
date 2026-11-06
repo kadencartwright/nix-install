@@ -49,6 +49,9 @@ let
   };
 in
 {
+  # Closing a docked laptop should leave the external display/session running.
+  services.logind.settings.Login.HandleLidSwitchDocked = "ignore";
+
   programs.hyprland = {
     enable = true;
     package = pkgsUnstable.hyprland;

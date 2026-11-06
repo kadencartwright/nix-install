@@ -762,6 +762,20 @@ in
         '';
       };
 
+  systemd.user.services.display-lid = lib.mkIf isDesktop {
+    Unit = {
+      Description = "Disable the closed laptop display while docked";
+      After = [ "graphical-session.target" ];
+      PartOf = [ "hyprland-session.target" ];
+    };
+    Service = {
+      ExecStart = "${displayControl}/bin/display-control lid-watch";
+      Restart = "on-failure";
+      RestartSec = 2;
+    };
+    Install.WantedBy = [ "hyprland-session.target" ];
+  };
+
   systemd.user.services.voxtype = lib.mkIf isDesktop {
     Unit = {
       Description = "Voxtype local voice-to-text daemon";

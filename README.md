@@ -198,6 +198,16 @@ ChatGPT desktop launches with native Wayland via `chatgpt-flags.conf` so
 Voxtype's paste keystrokes do not cross the XWayland keymap boundary. Fully
 quit and reopen ChatGPT after changing this setting.
 
+Closing the laptop lid disables its internal display while an external display
+is active (checked every two seconds). Opening the lid or disconnecting the last
+active external display restores the internal display's previous mode, position,
+and scale. The saved display layout is not overwritten. Without an external
+display, the usual lid/suspend policy is unchanged.
+
+Workspace buttons pulse red when an application on that workspace requests
+attention, including supported link-activation requests. Focusing the workspace
+clears urgency. Silent app updates that do not signal urgency cannot trigger it.
+
 `Alt+Shift+T` freezes the desktop, selects a region, runs Omarchy's Tesseract
 OCR settings, and copies the extracted text to the clipboard. Set
 `OCR_SCREENSHOT_LANGS` (for example `eng+spa`) to override the default language;
