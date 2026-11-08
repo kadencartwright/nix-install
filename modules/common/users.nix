@@ -5,6 +5,7 @@
     isNormalUser = true;
     description = "k";
     extraGroups = [
+      "dialout"
       "input"
       "networkmanager"
       "podman"
