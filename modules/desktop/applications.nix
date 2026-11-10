@@ -8,7 +8,6 @@
 
 let
   codexbar = pkgs.callPackage ../../packages/codexbar.nix { };
-  hyprwhspr = pkgsUnstable.callPackage ../../packages/hyprwhspr.nix { };
   obsbotCli = pkgs.callPackage ../../packages/obsbot-cli.nix {
     upstream = inputs.obsbot-cli.packages.${pkgs.stdenv.hostPlatform.system}.default;
   };
@@ -21,7 +20,6 @@ in
       codexbar
       darktable
       gnome-firmware
-      hyprwhspr
       localsend
       obsidian
       rapidraw

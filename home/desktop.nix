@@ -131,43 +131,6 @@ let
       exit 1
     '';
   };
-  voxtype = pkgsUnstable.voxtype.override {
-    # Keep Whisper/Vulkan available as a fallback while using Parakeet through
-    # ONNX Runtime for the active transcription engine.
-    vulkanSupport = true;
-    onnxSupport = true;
-  };
-  voxtypeHistory = pkgs.writeShellApplication {
-    name = "voxtype-history";
-    runtimeInputs = [
-      pkgs.coreutils
-      pkgs.jq
-      pkgs.util-linux
-    ];
-    text = ''
-      umask 077
-      history_dir="''${XDG_STATE_HOME:-''${HOME}/.local/state}/voxtype"
-      history_file="$history_dir/history.jsonl"
-      mkdir -p "$history_dir"
-
-      transcription="$(cat)"
-      exec 9>"$history_file.lock"
-      flock -x 9
-
-      jq -cn \
-        --arg text "$transcription" \
-        --argjson timestamp "$(date +%s)" \
-        '{ text: $text, timestamp: $timestamp }' >> "$history_file"
-
-      if (( $(wc -l < "$history_file") > 50 )); then
-        history_next="$(mktemp --tmpdir="$history_dir" history.XXXXXX)"
-        tail -n 50 "$history_file" > "$history_next"
-        mv "$history_next" "$history_file"
-      fi
-
-      printf '%s' "$transcription"
-    '';
-  };
   batteryHistory = pkgs.writeShellApplication {
     name = "battery-history-sample";
     runtimeInputs = [
@@ -601,35 +564,6 @@ let
       esac
     '';
   };
-  parakeetModelRevision = "8f23f0c03c8761650bdb5b40aaf3e40d2c15f1ce";
-  fetchParakeetModelFile =
-    name: hash:
-    pkgs.fetchurl {
-      url = "https://huggingface.co/istupakov/parakeet-tdt-0.6b-v3-onnx/resolve/${parakeetModelRevision}/${name}";
-      inherit hash;
-    };
-  parakeetModel = pkgs.linkFarm "parakeet-tdt-0.6b-v3-onnx" [
-    {
-      name = "encoder-model.onnx";
-      path = fetchParakeetModelFile "encoder-model.onnx" "sha256-mKdLIbTMABfB5wMDGaSpb0qVBuUPBwjzpRbQKnfJa7E=";
-    }
-    {
-      name = "encoder-model.onnx.data";
-      path = fetchParakeetModelFile "encoder-model.onnx.data" "sha256-miLTcsUUVcNPE0BdolILrvtxJb0WmBOXVhQj7TLSTzY=";
-    }
-    {
-      name = "decoder_joint-model.onnx";
-      path = fetchParakeetModelFile "decoder_joint-model.onnx" "sha256-6Xjd9miFJxgsEP3i60uDBoQhZImF7yP3qGvnMr6HBsE=";
-    }
-    {
-      name = "vocab.txt";
-      path = fetchParakeetModelFile "vocab.txt" "sha256-1YVEZ56kvGrFY9H1Ret9R0vWz6Rn8KbiwdwcfTfjw10=";
-    }
-    {
-      name = "config.json";
-      path = fetchParakeetModelFile "config.json" "sha256-ZmkDx2uXmMrywhCv1PbNYLCKjb+YAOyNejvA0hSKxGY=";
-    }
-  ];
 in
 {
   imports = [ inputs.hex.homeManagerModules.hex ];
@@ -658,8 +592,6 @@ in
     meetingRecord
     notionCli
     trayWindowToggle
-    voxtype
-    voxtypeHistory
   ];
 
   xdg.configFile."meeting-record/config.json" = lib.mkIf isDesktop {
@@ -689,65 +621,6 @@ in
     '';
   };
 
-  xdg.configFile."voxtype/config.toml" = lib.mkIf isDesktop {
-    text = ''
-      # Omarchy-style local dictation: Hyprland owns the keys and Voxtype owns
-      # recording, local Parakeet transcription, and typing at the cursor.
-      state_file = "auto"
-      engine = "parakeet"
-
-      [hotkey]
-      enabled = false
-
-      [audio]
-      device = "default"
-      sample_rate = 16000
-      # Allow extended brain dumps while retaining a safety cap.
-      max_duration_secs = 900
-      pause_media = true
-
-      [audio.feedback]
-      enabled = true
-      theme = "default"
-      volume = 0.5
-
-      [osd]
-      enabled = true
-      frontend = "quickshell"
-
-      [parakeet]
-      model = "${parakeetModel}"
-      model_type = "tdt"
-      on_demand_loading = false
-      streaming = false
-
-      [output]
-      # Clipboard paste avoids wtype's per-character keycode corruption in
-      # Chromium/Electron text fields such as the ChatGPT desktop composer.
-      mode = "paste"
-      # Codex reserves Ctrl+V for image attachments. Alacritty is explicitly
-      # configured to paste the clipboard (not primary selection) on Shift+Insert.
-      paste_keys = "shift+insert"
-      restore_clipboard = true
-      restore_clipboard_delay_ms = 300
-
-      [output.post_process]
-      command = "${voxtypeHistory}/bin/voxtype-history"
-      timeout_ms = 2000
-
-      [output.notification]
-      on_recording_start = false
-      on_recording_stop = false
-      on_transcription = true
-    '';
-  };
-
-  # Voxtype launches this as a separate Quickshell config so the recording
-  # overlay stays isolated from (and cannot restart) the desktop shell.
-  xdg.dataFile."voxtype/quickshell" = lib.mkIf isDesktop {
-    source = ./voxtype-quickshell;
-  };
-
   # Lemurs currently registers the graphical login without seat0. Disable
   # WirePlumber's seat gate so its BlueZ monitor still registers A2DP endpoints.
   xdg.configFile."wireplumber/wireplumber.conf.d/10-bluez-no-seat-gating.conf" =
@@ -774,28 +647,6 @@ in
       RestartSec = 2;
     };
     Install.WantedBy = [ "hyprland-session.target" ];
-  };
-
-  systemd.user.services.voxtype = lib.mkIf isDesktop {
-    Unit = {
-      Description = "Voxtype local voice-to-text daemon";
-      After = [
-        "graphical-session.target"
-        "pipewire.service"
-        "pipewire-pulse.service"
-      ];
-      PartOf = [ "graphical-session.target" ];
-      X-Restart-Triggers = [ "${./voxtype-quickshell}" ];
-    };
-    Service = {
-      ExecStart = "${voxtype}/bin/voxtype -q daemon";
-      Environment = [
-        "VOXTYPE_AUDIO_BRIDGE_BINARY=${voxtype}/bin/voxtype-audio-bridge"
-      ];
-      Restart = "on-failure";
-      RestartSec = 5;
-    };
-    Install.WantedBy = [ "graphical-session.target" ];
   };
 
   systemd.user.services.quickshell.Service.Environment = lib.mkIf isDesktop [

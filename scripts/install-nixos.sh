@@ -476,7 +476,7 @@ else
 fi
 printf 'At Lemurs, log in as k with the bootstrap password: nixos\n' >"$TTY_DEVICE"
 printf 'Immediately run passwd after login; PAM will update the login keyring too.\n' >"$TTY_DEVICE"
-printf 'Then run hyprwhspr setup and sudo tailscale up as needed.\n\n' >"$TTY_DEVICE"
+printf 'Then run sudo tailscale up as needed.\n\n' >"$TTY_DEVICE"
 printf 'Reboot now? [y/N]: ' >"$TTY_DEVICE"
 IFS= read -r reboot_answer <"$TTY_DEVICE"
 case "$reboot_answer" in

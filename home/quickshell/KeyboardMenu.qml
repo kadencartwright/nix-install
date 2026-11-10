@@ -29,7 +29,6 @@ PanelWindow {
     property string batterySummary: ""
     property string codexSummary: ""
     property string currentTheme: ""
-    property var voxtypeEntries: []
 
     readonly property string displayBinary: {
         const configured = Quickshell.env("DISPLAY_CONTROL_BINARY")
@@ -61,7 +60,6 @@ PanelWindow {
         { kind: "calendar", label: "Calendar", icon: "󰃭" },
         { kind: "tray", label: "Tray Apps", icon: "󰀻" },
         { kind: "codex", label: "Codex Usage", icon: "󰅩" },
-        { kind: "voxtype", label: "Voxtype", icon: "󰍬" },
         { kind: "media", label: "Media", icon: "󰎆" },
         { kind: "network", label: "Network", icon: "󰖩" },
         { kind: "theme", label: "Themes", icon: "󰏘" },
@@ -94,19 +92,6 @@ PanelWindow {
         function toggle(): void { root.toggleMenu() }
         function open(): void { root.openMenu() }
         function close(): void { root.closeMenu() }
-    }
-
-    FileView {
-        id: voxtypeHistory
-        path: {
-            const stateHome = Quickshell.env("XDG_STATE_HOME")
-            return (stateHome && stateHome.length > 0 ? stateHome : Quickshell.env("HOME") + "/.local/state")
-                + "/voxtype/history.jsonl"
-        }
-        watchChanges: true
-        printErrors: false
-        onLoaded: root.loadVoxtype(text())
-        onFileChanged: reload()
     }
 
     FileView {
@@ -193,19 +178,6 @@ PanelWindow {
         profileStatus.run()
         batteryStatus.run()
         codexStatus.run()
-        voxtypeHistory.reload()
-    }
-    function loadVoxtype(raw) {
-        const entries = []
-        const lines = (raw || "").split("\n")
-        for (let index = 0; index < lines.length; index++) {
-            if (!lines[index].trim()) continue
-            try {
-                const entry = JSON.parse(lines[index])
-                if (entry.text && entry.text.trim()) entries.push(entry)
-            } catch (_) {}
-        }
-        voxtypeEntries = entries.slice(-10).reverse()
     }
     function nodeLabel(node, fallback) {
         if (!node) return fallback
@@ -239,12 +211,6 @@ PanelWindow {
                 actions.push({ label: items[index].title || items[index].id, detail: "Activate tray application", icon: "󰀻", type: "tray", object: items[index] })
         } else if (kind === "codex") {
             actions = [panelAction("codex"), { label: "Refresh usage", detail: codexSummary || "Codex limits", icon: "󰑓", type: "refresh" }]
-        } else if (kind === "voxtype") {
-            actions = [panelAction("voxtype"), { label: "Toggle recording", detail: "Start or stop dictation", icon: "󰍬", type: "command", command: ["voxtype", "record", "toggle"] }]
-            for (let index = 0; index < voxtypeEntries.length; index++) {
-                const text = voxtypeEntries[index].text
-                actions.push({ label: text, detail: "Copy transcription", icon: "󰆏", type: "copy", value: text })
-            }
         } else if (kind === "media") {
             actions = [panelAction("media"),
                 { label: "Previous track", detail: player ? player.trackArtist || "Media" : "No player", icon: "󰒮", type: "player", value: "previous", enabled: player && player.canGoPrevious },

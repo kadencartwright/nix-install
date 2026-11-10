@@ -190,13 +190,8 @@ and starts with the Hyprland session. Its Parakeet v3 model downloads into the
 user data directory automatically; wait for `hex-model.service` to finish before
 first use. Run `hex` to open settings.
 
-Voxtype remains available as a fallback via the bar menu or `voxtype record
-toggle`, with its Nix-managed full-precision Parakeet TDT 0.6B v3 model and
-Whisper Vulkan backend. The existing bar history still belongs to Voxtype,
-not Hex.
-ChatGPT desktop launches with native Wayland via `chatgpt-flags.conf` so
-Voxtype's paste keystrokes do not cross the XWayland keymap boundary. Fully
-quit and reopen ChatGPT after changing this setting.
+ChatGPT desktop launches with native Wayland via `chatgpt-flags.conf` for
+native input integration. Fully quit and reopen ChatGPT after changing this setting.
 
 Closing the laptop lid disables its internal display while an external display
 is active (checked every two seconds). Opening the lid or disconnecting the last
