@@ -46,8 +46,6 @@ let
             [ "resources/tectonic/tectonic" ]
             oldAttrs.installPhase;
       });
-  opencode = pkgsUnstable.callPackage ../packages/opencode.nix { };
-  opencodeDesktop = pkgsUnstable.callPackage ../packages/opencode-desktop.nix { };
   pi = inputs.pi.packages.${platformSystem}.default;
   portmux = inputs.portmux.packages.${platformSystem}.default;
   t3 = pkgsUnstable.callPackage ../packages/t3-cli { inherit codex; };
@@ -77,9 +75,7 @@ in
   ++ [ codex ]
   ++ [ claudeCode ]
   ++ [ herdr ]
-  ++ [ opencode ]
   ++ [ portmux ]
-  ++ lib.optional isDesktop opencodeDesktop
   ++ lib.optionals pkgs.stdenv.hostPlatform.isx86_64 [
     t3
     t3code

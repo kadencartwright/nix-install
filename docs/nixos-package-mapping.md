@@ -11,7 +11,7 @@ before the real hardware install.
 - `pi5` is a Raspberry Pi 5 microSD target and does not import the shared x86 encrypted `disko` layout.
 - Desktop dotfiles are intentionally excluded from `MINI`; it only links shell/editor/CLI dotfiles.
 - Claude Code is pinned to v2.1.328 using the official native release binaries on x86_64 and ARM64 Linux, retaining nixpkgs' packaging and sandbox dependencies.
-- OpenCode CLI is pinned to v2.3.2 using the official `@opencode/cli` native packages on x86_64 and ARM64 Linux. OpenCode Desktop v2.3.2 is included on desktop hosts using the official AppImage from `opencode.ai`, with an application launcher entry and the `opencode-desktop` command.
+- OpenCode CLI/TUI and Desktop are not installed by the shared configuration. Their package definitions remain available in `packages/`.
 
 ## `packages/wm.txt`
 

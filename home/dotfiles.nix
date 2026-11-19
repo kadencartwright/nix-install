@@ -394,13 +394,6 @@ in
     "kdeglobals".source = "${dotfiles}/kde/kdeglobals";
     "kitty/kitty.conf".text = kittyConfig;
     "nvim".source = nvimConfig;
-    "opencode/agent".source = "${dotfiles}/opencode/agent";
-    "opencode/bun.lock".source = "${dotfiles}/opencode/bun.lock";
-    "opencode/opencode.json".source = "${dotfiles}/opencode/opencode.jsonc";
-    "opencode/opencode.jsonc".source = "${dotfiles}/opencode/opencode.jsonc";
-    "opencode/package.json".source = "${dotfiles}/opencode/package.json";
-    "opencode/prompts".source = "${dotfiles}/opencode/prompts";
-    "opencode/tool".source = "${dotfiles}/opencode/tool";
     "sketchybar".source = "${dotfiles}/sketchybar";
     "starship".source = "${dotfiles}/starship";
     "sway".source = "${dotfiles}/sway";
