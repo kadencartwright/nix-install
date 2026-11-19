@@ -187,7 +187,10 @@ structure while Omarchy only owns generated color files under
 Desktop hosts use Voxtype for local dictation: `Alt+G` runs `voxtype record toggle`
 to start recording, then stop and transcribe. The daemon starts with the graphical
 session and uses the Nix-managed full-precision Parakeet TDT 0.6B v3 ONNX model;
-no separate setup is required. Whisper/Vulkan remains available as a fallback.
+no separate setup is required. `packages/voxtype-bin.nix` pins upstream's prebuilt
+ONNX/AVX2 daemon, audio bridge, and Quickshell launchers, avoiding local Rust and
+Whisper/Vulkan compilation. Desktop CPUs must support AVX2; this package does
+not include the previous Vulkan fallback.
 The Quickshell bar provides recording status and transcription history, with a
 separate recording overlay. Hex is no longer installed.
 

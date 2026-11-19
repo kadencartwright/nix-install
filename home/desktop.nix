@@ -131,12 +131,7 @@ let
       exit 1
     '';
   };
-  voxtype = pkgsUnstable.voxtype.override {
-    # Keep Whisper/Vulkan available as a fallback while using Parakeet through
-    # ONNX Runtime for the active transcription engine.
-    vulkanSupport = true;
-    onnxSupport = true;
-  };
+  voxtype = pkgs.callPackage ../packages/voxtype-bin.nix { };
   voxtypeHistory = pkgs.writeShellApplication {
     name = "voxtype-history";
     runtimeInputs = [
