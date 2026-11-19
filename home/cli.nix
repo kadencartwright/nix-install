@@ -9,20 +9,20 @@
 
 let
   platformSystem = pkgs.stdenv.hostPlatform.system;
-  chatgptVersion = "26.1106.51428";
+  chatgptVersion = "26.1111.71704";
   codex = pkgsUnstable.callPackage ../packages/codex.nix { };
   # Pin the release manifest while retaining nixpkgs' native binary packaging.
   claudeCode = pkgsUnstable.claude-code.override {
     manifest = {
-      version = "2.1.322";
+      version = "2.1.328";
       platforms = {
         linux-x64 = {
           binary = "claude.zst";
-          checksum = "9bb7558bd992ca457e6458bf1686572f7a3156b8331dd8443391dbfe590c1eed";
+          checksum = "10f24c9cfcbf3c586e6d281815dce9b561eb8acc6b8c0f26b8f0af5e56fa7605";
         };
         linux-arm64 = {
           binary = "claude.zst";
-          checksum = "2c6be1e9fca1dcb894e47e11672f4432f4cf8a879f5e530289ad30802100c5d7";
+          checksum = "c92f528d76713f97e5c7f443fc2459670a833182cb4314575ec939dadb4c77b5";
         };
       };
     };
@@ -37,7 +37,7 @@ let
         version = chatgptVersion;
         src = pkgs.fetchurl {
           url = "https://persistent.oaistatic.com/codex-app-prod/linux/deb/pool/main/c/chatgpt/chatgpt_${chatgptVersion}_amd64.deb";
-          hash = "sha256-g1anghkwsTW3QTR/rMvEPhaStEJMPqtxCpr1bAvrsTU=";
+          hash = "sha256-Ae73x3yDX34a+5K6HCkXikwZ1sZlc73TuGUg4qv4BqQ=";
         };
         # Tectonic moved out of the LaTeX plugin in the September 24 package.
         installPhase =
