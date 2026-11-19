@@ -184,11 +184,12 @@ Quickshell bar update in place. Home Manager continues to own the application
 structure while Omarchy only owns generated color files under
 `~/.local/state/omarchy/current`.
 
-Desktop hosts use Hex for local dictation: `Alt+G` runs `hex dictation toggle`
-to start recording, then stop and transcribe. Hex is installed through its flake
-and starts with the Hyprland session. Its Parakeet v3 model downloads into the
-user data directory automatically; wait for `hex-model.service` to finish before
-first use. Run `hex` to open settings.
+Desktop hosts use Voxtype for local dictation: `Alt+G` runs `voxtype record toggle`
+to start recording, then stop and transcribe. The daemon starts with the graphical
+session and uses the Nix-managed full-precision Parakeet TDT 0.6B v3 ONNX model;
+no separate setup is required. Whisper/Vulkan remains available as a fallback.
+The Quickshell bar provides recording status and transcription history, with a
+separate recording overlay. Hex is no longer installed.
 
 ChatGPT desktop launches with native Wayland via `chatgpt-flags.conf` for
 native input integration. Fully quit and reopen ChatGPT after changing this setting.

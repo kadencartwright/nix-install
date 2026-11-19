@@ -245,9 +245,9 @@ hl.animation({ leaf = "fade", enabled = false })''
         (if isDesktop then ''-- Monitor layout is restored by display-control on session startup.'' else ''require("monitors")'')
         (if isDesktop then ''		enable_anr_dialog = false,
 		disable_autoreload = true,'' else ''		enable_anr_dialog = false,'')
-        ''-- Hex owns the dictation shortcut.
-hl.bind("ALT + G", hl.dsp.exec_cmd("hex dictation toggle"), {
-	description = "Toggle Hex dictation",
+        ''-- Voxtype owns the dictation shortcut.
+hl.bind("ALT + G", hl.dsp.exec_cmd("voxtype record toggle"), {
+	description = "Toggle Voxtype dictation",
 })''
       ]
       (builtins.readFile "${dotfiles}/hyprland/hyprland.lua")
