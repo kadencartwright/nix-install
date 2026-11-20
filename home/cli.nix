@@ -9,20 +9,20 @@
 
 let
   platformSystem = pkgs.stdenv.hostPlatform.system;
-  chatgptVersion = "26.1111.71704";
+  chatgptVersion = "26.1117.31558";
   codex = pkgsUnstable.callPackage ../packages/codex.nix { };
   # Pin the release manifest while retaining nixpkgs' native binary packaging.
   claudeCode = pkgsUnstable.claude-code.override {
     manifest = {
-      version = "2.1.328";
+      version = "2.1.329";
       platforms = {
         linux-x64 = {
           binary = "claude.zst";
-          checksum = "10f24c9cfcbf3c586e6d281815dce9b561eb8acc6b8c0f26b8f0af5e56fa7605";
+          checksum = "e5e52a50cfab8a3573a4896846f499488d822b34e89a4994d8bc990aaf2846c4";
         };
         linux-arm64 = {
           binary = "claude.zst";
-          checksum = "c92f528d76713f97e5c7f443fc2459670a833182cb4314575ec939dadb4c77b5";
+          checksum = "d5ffa30ef2d305feb76882125a7d2ed4524baf08843ebd21f4bff0409b2c62e9";
         };
       };
     };
@@ -37,13 +37,15 @@ let
         version = chatgptVersion;
         src = pkgs.fetchurl {
           url = "https://persistent.oaistatic.com/codex-app-prod/linux/deb/pool/main/c/chatgpt/chatgpt_${chatgptVersion}_amd64.deb";
-          hash = "sha256-Ae73x3yDX34a+5K6HCkXikwZ1sZlc73TuGUg4qv4BqQ=";
+          hash = "sha256-bAcgYxT3i8G+URRFmeAdJ4CKUfeOXXjD3rHGgPcEPAM=";
         };
-        # Tectonic moved out of the LaTeX plugin in the September 24 package.
+        # New releases omit the bundled Tectonic binary (and its bin directory).
+        # Keep the upstream replacement symlink at the path the plugin probes.
         installPhase =
           builtins.replaceStrings
-            [ "resources/plugins/openai-bundled/plugins/latex/bin/tectonic" ]
-            [ "resources/tectonic/tectonic" ]
+            [ ''rm "$out/lib/chatgpt/resources/plugins/openai-bundled/plugins/latex/bin/tectonic"'' ]
+            [ ''mkdir -p "$out/lib/chatgpt/resources/plugins/openai-bundled/plugins/latex/bin"
+rm -f "$out/lib/chatgpt/resources/plugins/openai-bundled/plugins/latex/bin/tectonic"'' ]
             oldAttrs.installPhase;
       });
   pi = inputs.pi.packages.${platformSystem}.default;
