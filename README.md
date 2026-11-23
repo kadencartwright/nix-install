@@ -73,6 +73,24 @@ Quickshell is the active desktop panel, with its configuration managed directly
 by Home Manager. Its Codex usage dropdown is backed by the packaged `codexbar`
 command and the existing Codex CLI login.
 
+### Ladybird browser
+
+Desktop hosts install Ladybird from the locked `nixpkgs-unstable` input, without
+changing the default browser. This is a development snapshot, not necessarily
+the alpha binary published at <https://ladybird.org/download/>; expect bugs and
+website compatibility issues.
+
+Run or install it separately on x86_64 or aarch64 Linux:
+
+```bash
+nix run .#ladybird
+nix profile add .#ladybird
+```
+
+After these changes reach `origin/main`, run `nhr` on each desktop to apply
+the system installation. Launch **Ladybird** from the app launcher or run
+`Ladybird` in a terminal.
+
 ### Meeting recorder
 
 Desktop hosts install the pinned

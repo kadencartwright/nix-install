@@ -27,7 +27,10 @@ in
       rustdesk-flutter
       slack
     ])
-    ++ [ obsbotCli ];
+    ++ [
+      obsbotCli
+      pkgsUnstable.ladybird
+    ];
 
   services.udev.packages = [ obsbotCli ];
 

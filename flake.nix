@@ -105,6 +105,10 @@
         };
     in
     {
+      packages = lib.genAttrs [ "x86_64-linux" "aarch64-linux" ] (system: {
+        ladybird = nixpkgs-unstable.legacyPackages.${system}.ladybird;
+      });
+
       homeManagerModules.cloudMusic = import ./home/cloud-music.nix;
 
       nixosConfigurations.Z16 = mkHost { hostModule = ./hosts/Z16/default.nix; };
