@@ -809,7 +809,8 @@ in
 
   # Tumbler already includes ffmpegthumbnailer; allow previews of local videos.
   xfconf.settings = lib.mkIf isDesktop {
-    thunar."/misc-thumbnail-mode" = "THUNAR_THUMBNAIL_MODE_ONLY_LOCAL";
+    # Home Manager adds the leading slash to xfconf property names.
+    thunar."misc-thumbnail-mode" = "THUNAR_THUMBNAIL_MODE_ONLY_LOCAL";
   };
 
   programs.mpv = lib.mkIf isDesktop {
