@@ -9,20 +9,20 @@
 
 let
   platformSystem = pkgs.stdenv.hostPlatform.system;
-  chatgptVersion = "26.1117.31558";
+  chatgptVersion = "26.1117.41037";
   codex = pkgsUnstable.callPackage ../packages/codex.nix { };
   # Pin the release manifest while retaining nixpkgs' native binary packaging.
   claudeCode = pkgsUnstable.claude-code.override {
     manifest = {
-      version = "2.1.329";
+      version = "2.1.330";
       platforms = {
         linux-x64 = {
           binary = "claude.zst";
-          checksum = "e5e52a50cfab8a3573a4896846f499488d822b34e89a4994d8bc990aaf2846c4";
+          checksum = "d53a3f9aab93c87bba0813d1101677677b457100824f5c3604fea9915ac5237a";
         };
         linux-arm64 = {
           binary = "claude.zst";
-          checksum = "d5ffa30ef2d305feb76882125a7d2ed4524baf08843ebd21f4bff0409b2c62e9";
+          checksum = "fd32a5b1552693c801e6f6cb3dc77e39c2438a873d00600558bae8bdc06b20bd";
         };
       };
     };
@@ -37,7 +37,7 @@ let
         version = chatgptVersion;
         src = pkgs.fetchurl {
           url = "https://persistent.oaistatic.com/codex-app-prod/linux/deb/pool/main/c/chatgpt/chatgpt_${chatgptVersion}_amd64.deb";
-          hash = "sha256-bAcgYxT3i8G+URRFmeAdJ4CKUfeOXXjD3rHGgPcEPAM=";
+          hash = "sha256-gw4lG2ykrUX+aQQSenkOjwD3wm7UyAOUc/cyPHxOJpI=";
         };
         # New releases omit the bundled Tectonic binary (and its bin directory).
         # Keep the upstream replacement symlink at the path the plugin probes.

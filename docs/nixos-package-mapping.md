@@ -10,7 +10,7 @@ before the real hardware install.
 - `MINI` is headless and imports only the base/headless stack, AMD CPU hardware, Tailscale, OpenSSH, and CLI/Home Manager config. It intentionally omits the desktop AMD GPU graphics stack.
 - `pi5` is a Raspberry Pi 5 microSD target and does not import the shared x86 encrypted `disko` layout.
 - Desktop dotfiles are intentionally excluded from `MINI`; it only links shell/editor/CLI dotfiles.
-- Claude Code is pinned to v2.1.329 using the official native release binaries on x86_64 and ARM64 Linux, retaining nixpkgs' packaging and sandbox dependencies.
+- Claude Code is pinned to v2.1.330 using the official native release binaries on x86_64 and ARM64 Linux, retaining nixpkgs' packaging and sandbox dependencies.
 - OpenCode CLI/TUI and Desktop are not installed by the shared configuration. Their package definitions remain available in `packages/`.
 
 ## `packages/wm.txt`
@@ -101,7 +101,7 @@ before the real hardware install.
 | `bemoji` | Desktop user package | `pkgs.bemoji` | Added for desktop hosts |
 | `bluetuith-bin` | User package | no direct Nixpkgs package | Omitted; `pkgs.bluetui` provides the Bluetooth TUI used on desktop hosts |
 | `codexbar` | Quickshell Codex/ChatGPT usage module | Custom package pinned to upstream `v0.8.5` | Added for desktop hosts with wrapped runtime dependencies |
-| `openai-chatgpt-desktop` | Desktop user app | `openai-chatgpt-desktop-nix` packaging with the official Debian package pinned to `26.1117.31558` | Added on supported x86_64 hosts |
+| `openai-chatgpt-desktop` | Desktop user app | `openai-chatgpt-desktop-nix` packaging with the official Debian package pinned to `26.1117.41037` | Added on supported x86_64 hosts |
 | `reflector-simple` | Removed | NixOS uses pinned flake inputs, not mirror ranking for system config | Excluded |
 | `slack-desktop` | Desktop user app, unfree | `pkgs.slack` | Added for desktop hosts |
 | `t3code` / `t3` | Home Manager packages | In-repo packages pinned to upstream `v0.1.11`, with the CLI runtime fetched at build time | Both added on supported x86_64 Linux hosts |

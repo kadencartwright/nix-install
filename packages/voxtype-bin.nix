@@ -16,17 +16,17 @@
 }:
 
 let
-  version = "1.3.0";
+  version = "1.3.1";
   fetchBinary =
     variant: hash:
     fetchurl {
       url = "https://github.com/peteonrails/voxtype/releases/download/v${version}/voxtype-${version}-linux-x86_64-${variant}";
       inherit hash;
     };
-  daemon = fetchBinary "onnx-avx2" "sha256-BEHaJ/envM1377OLWbCTSxqalEZeuIigzErUOymkkXo=";
-  audioBridge = fetchBinary "audio-bridge" "sha256-F5HfP6JUSn9g0he6kMHOcEQg83KW0PwsnbYict22r0s=";
-  osd = fetchBinary "osd" "sha256-Hp4r+gNQqSzwF2GsPEJHxhAC/fWONyvRvUPAXuWc1LA=";
-  osdQuickshell = fetchBinary "osd-quickshell" "sha256-nspbQJKflHqJy8hvwM//PAFXupEU0PrU/1R+rXBztHs=";
+  daemon = fetchBinary "onnx-avx2" "sha256-W3caGMHXav4gjquMbhGPhYYA5uE33ioQ12MOeBpqD/o=";
+  audioBridge = fetchBinary "audio-bridge" "sha256-ywv5k6crx9CM6+vBDPFDYCVF+ZJaDNra2UCIjZyv/xo=";
+  osd = fetchBinary "osd" "sha256-07luPvkUUr8Y1M7hIFdKGqpEcwctjBZba2a4OXk5/EY=";
+  osdQuickshell = fetchBinary "osd-quickshell" "sha256-2gIgDBt+kaFC5aRs9tL515wNb2BZThi078TaRB7B5Bo=";
 in
 stdenv.mkDerivation {
   pname = "voxtype-bin";
